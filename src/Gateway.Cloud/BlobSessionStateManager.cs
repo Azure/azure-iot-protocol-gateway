@@ -1,0 +1,185 @@
+// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+namespace Microsoft.Azure.Devices.Gateway.Cloud
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Globalization;
+    using System.IO;
+    using System.Runtime.Serialization;
+    using System.Threading.Tasks;
+    using DotNetty.Codecs.Mqtt.Packets;
+    using Microsoft.Azure.Devices.Gateway.Core.Mqtt;
+    using Microsoft.WindowsAzure.Storage;
+    using Microsoft.WindowsAzure.Storage.Blob;
+    using Newtonsoft.Json;
+
+    public class BlobSessionStateManager : ISessionStateManager
+    {
+        readonly CloudBlobContainer container;
+        readonly TaskCompletionSource<int> initializationCompletionSource;
+
+        internal BlobSessionStateManager(string connectionString, string containerName)
+        {
+            CloudStorageAccount cloudStorageAccount;
+            if (!CloudStorageAccount.TryParse(connectionString, out cloudStorageAccount))
+            {
+                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture,
+                    "Could not parse CloudStorageAccount having value: {0}",
+                    connectionString));
+            }
+
+            this.initializationCompletionSource = new TaskCompletionSource<int>();
+
+            CloudBlobClient blobClient = cloudStorageAccount.CreateCloudBlobClient();
+            this.container = blobClient.GetContainerReference(containerName);
+        }
+
+        public static async Task<BlobSessionStateManager> CreateAsync(string connectionString, string containerName)
+        {
+            var manager = new BlobSessionStateManager(connectionString, containerName);
+            await manager.InitializeAsync();
+            return manager;
+        }
+
+        async Task InitializeAsync()
+        {
+            try
+            {
+                await this.container.CreateIfNotExistsAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Failed to initialize Blob Storage Manager.", ex); // todo: custom exception type
+            }
+        }
+
+        public Task InitializationCompletion
+        {
+            get { return this.initializationCompletionSource.Task; }
+        }
+
+        public ISessionState Create(bool transient)
+        {
+            return new SessionState(transient);
+        }
+
+        public async Task<ISessionState> GetAsync(string id)
+        {
+            // todo: handle server busy (throttle?)
+
+            CloudBlockBlob blob = this.container.GetBlockBlobReference(id);
+            JsonSerializer serializer = JsonSerializer.Create();
+
+            try
+            {
+                using (Stream stream = await blob.OpenReadAsync())
+                {
+                    using (var memoryStream = new MemoryStream(new byte[blob.Properties.Length])) // we don't expect it to be big (i.e. bigger than 85KB leading to LOH alloc)
+                    {
+                        await stream.CopyToAsync(memoryStream);
+
+                        memoryStream.Position = 0;
+                        using (var streamReader = new StreamReader(memoryStream))
+                        using (var jsonReader = new JsonTextReader(streamReader))
+                        {
+                            var sessionState = serializer.Deserialize<SessionState>(jsonReader);
+                            sessionState.ETag = blob.Properties.ETag;
+
+                            return sessionState;
+                        }
+                    }
+                }
+            }
+            catch (StorageException ex)
+            {
+                if (ex.RequestInformation.HttpStatusCode == 404)
+                {
+                    return null;
+                }
+                else
+                {
+                    throw;
+                }
+            }
+        }
+
+        public async Task SetAsync(string id, ISessionState sessionState)
+        {
+            var state = sessionState as SessionState;
+
+            if (state == null)
+            {
+                throw new ArgumentException("Cannot set Session State object that hasn't been acquired from provider.", "sessionState");
+            }
+
+            if (state.IsTransient)
+            {
+                throw new ArgumentException("Cannot persist transient Session State object.", "sessionState");
+            }
+
+            CloudBlockBlob blob = this.container.GetBlockBlobReference(id);
+            using (var memoryStream = new MemoryStream())
+            using (var streamWriter = new StreamWriter(memoryStream))
+            {
+                JsonSerializer serializer = JsonSerializer.Create();
+                serializer.Serialize(streamWriter, state);
+                streamWriter.Flush();
+
+                memoryStream.Position = 0;
+                AccessCondition accessCondition = state.ETag == null
+                    ? AccessCondition.GenerateIfNoneMatchCondition("*") // create
+                    : AccessCondition.GenerateIfMatchCondition(state.ETag); // update
+                await blob.UploadFromStreamAsync(memoryStream, accessCondition, null, null);
+            }
+        }
+
+        public async Task DeleteAsync(string id, ISessionState sessionState)
+        {
+            var state = sessionState as SessionState;
+
+            if (state == null)
+            {
+                throw new ArgumentException("Cannot set Session State object that hasn't been acquired from provider.", "sessionState");
+            }
+
+            CloudBlockBlob blob = this.container.GetBlockBlobReference(id);
+            await blob.DeleteIfExistsAsync(DeleteSnapshotsOption.None, new AccessCondition
+            {
+                IfMatchETag = state.ETag
+            }, null, null);
+        }
+
+        class SessionState : ISessionState
+        {
+            public SessionState()
+                : this(false)
+            {
+            }
+
+            public SessionState(bool transient)
+            {
+                this.IsTransient = transient;
+                this.Subscriptions = new List<SubscriptionRequest>();
+            }
+
+            [IgnoreDataMember]
+            public bool IsTransient { get; private set; }
+
+            [DataMember(Name = "subscriptions")] // todo: name casing seems to be ignored by the serializer
+            public List<SubscriptionRequest> Subscriptions { get; private set; } // todo: own subscription type for serialization
+
+            [IgnoreDataMember]
+            public string ETag { get; set; }
+
+            public ISessionState Copy()
+            {
+                var sessionState = new SessionState(this.IsTransient);
+                sessionState.ETag = this.ETag;
+                sessionState.Subscriptions.AddRange(this.Subscriptions);
+                return sessionState;
+            }
+        }
+    }
+}

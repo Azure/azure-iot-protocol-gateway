@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<DiagnosticsConfiguration xmlns="http://schemas.microsoft.com/ServiceHosting/2010/10/DiagnosticsConfiguration">
+  <PublicConfig xmlns="http://schemas.microsoft.com/ServiceHosting/2010/10/DiagnosticsConfiguration">
+    <WadCfg>
+      <DiagnosticMonitorConfiguration overallQuotaInMB="4096">
+        <DiagnosticInfrastructureLogs scheduledTransferLogLevelFilter="Error" />
+        <Directories scheduledTransferPeriod="PT1M" />
+        <PerformanceCounters scheduledTransferPeriod="PT1M">
+          <PerformanceCounterConfiguration counterSpecifier="\Processor(_Total)\% Processor Time" sampleRate="PT3M" />
+          <PerformanceCounterConfiguration counterSpecifier="\Memory\Available MBytes" sampleRate="PT3M" />
+          <PerformanceCounterConfiguration counterSpecifier="\Process(WaWorkerHost)\% Processor Time" sampleRate="PT3M" />
+          <PerformanceCounterConfiguration counterSpecifier="\Process(WaWorkerHost)\Private Bytes" sampleRate="PT3M" />
+          <PerformanceCounterConfiguration counterSpecifier="\Process(WaWorkerHost)\Thread Count" sampleRate="PT3M" />
+          <PerformanceCounterConfiguration counterSpecifier="\.NET CLR Memory(_Global_)\% Time in GC" sampleRate="PT3M" />
+        </PerformanceCounters>
+        <WindowsEventLog scheduledTransferPeriod="PT1M">
+          <DataSource name="Application!*" />
+        </WindowsEventLog>
+        <EtwProviders>
+          <EtwEventSourceProviderConfiguration scheduledTransferPeriod="PT5M" provider="DotNetty-Channel">
+            <DefaultEvents />
+          </EtwEventSourceProviderConfiguration>
+          <EtwEventSourceProviderConfiguration scheduledTransferPeriod="PT5M" provider="IoT-Gateway-Bridge">
+            <DefaultEvents />
+          </EtwEventSourceProviderConfiguration>
+          <EtwEventSourceProviderConfiguration scheduledTransferPeriod="PT5M" provider="IoT-Gateway-Bootstrapper">
+            <DefaultEvents />
+          </EtwEventSourceProviderConfiguration>
+        </EtwProviders>
+        <CrashDumps>
+          <CrashDumpConfiguration processName="WaWorkerHost.exe" />
+        </CrashDumps>
+        <Logs scheduledTransferPeriod="PT1M" scheduledTransferLogLevelFilter="Error" />
+      </DiagnosticMonitorConfiguration>
+    </WadCfg>
+    <StorageAccount />
+  </PublicConfig>
+  <PrivateConfig xmlns="http://schemas.microsoft.com/ServiceHosting/2010/10/DiagnosticsConfiguration">
+    <StorageAccount name="" endpoint="" />
+  </PrivateConfig>
+  <IsEnabled>true</IsEnabled>
+</DiagnosticsConfiguration>

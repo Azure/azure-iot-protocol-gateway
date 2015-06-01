@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ServiceDefinition name="Contoso.ProtocolGateway" xmlns="http://schemas.microsoft.com/ServiceHosting/2008/10/ServiceDefinition" schemaVersion="2015-04.2.6">
+  <WorkerRole name="Gateway.Samples.Cloud.Host" vmsize="Medium">
+    <ConfigurationSettings>
+      <!-- bridge settings -->
+      <Setting name="IoTHub.ConnectionString" />
+      <Setting name="MaxOutstandingOutboundMessages" />
+      <Setting name="DeviceReceiveAckTimeout" />
+      <Setting name="MaxRetransmissionCount" />
+      <!-- mqtt driver settings -->
+      <Setting name="DefaultPublishToClientTopicName" />
+      <Setting name="ConnectArrivalTimeout" />
+      <Setting name="MaxKeepAliveTimeout" />
+      <Setting name="DefaultPublishToClientQoS" />
+      <Setting name="IoTHub.RetainProperty" />
+      <Setting name="IoTHub.TopicNameProperty" />
+      <Setting name="IoTHub.DupProperty" />
+      <Setting name="IoTHub.QoSProperty" />
+      <!-- cloud based MQTT session state manager settings -->
+      <Setting name="SessionStateManager.StorageConnectionString" />
+      <Setting name="SessionStateManager.StorageContainerName" />
+      <!-- bootstrapper settings -->
+      <Setting name="MaxInboundMessageSize" />
+      <Setting name="Microsoft.WindowsAzure.Plugins.Diagnostics.ConnectionString" />
+      <Setting name="TlsCertificateThumbprint" />
+    </ConfigurationSettings>
+    <Certificates>
+      <Certificate name="TlsCertificate" storeLocation="LocalMachine" storeName="My" />
+    </Certificates>
+    <Imports>
+    </Imports>
+    <Endpoints>
+      <InputEndpoint name="MQTT" protocol="tcp" port="1883" localPort="1883" />
+      <InputEndpoint name="MQTTS" protocol="tcp" port="8883" localPort="8883" />
+    </Endpoints>
+  </WorkerRole>
+</ServiceDefinition>

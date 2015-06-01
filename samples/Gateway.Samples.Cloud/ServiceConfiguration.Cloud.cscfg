@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ServiceConfiguration serviceName="Contoso.ProtocolGateway" xmlns="http://schemas.microsoft.com/ServiceHosting/2008/10/ServiceConfiguration" osFamily="4" osVersion="*" schemaVersion="2015-04.2.6">
+  <Role name="Gateway.Samples.Cloud.Host">
+    <Instances count="2" />
+    <ConfigurationSettings>
+      <!-- bridge settings -->
+      <Setting name="IoTHub.ConnectionString" value="TODO: IoT Hub connection string to connect to" />
+      <Setting name="MaxOutstandingOutboundMessages" value="10" />
+      <Setting name="DeviceReceiveAckTimeout" value="00:01:00" />
+      <Setting name="MaxRetransmissionCount" value="2" />
+      <!-- mqtt driver settings -->
+      <Setting name="DefaultPublishToClientTopicName" value="messages/devicebound" />
+      <Setting name="ConnectArrivalTimeout" value="00:01:00" />
+      <Setting name="MaxKeepAliveTimeout" value="00:10:00" />
+      <Setting name="DefaultPublishToClientQoS" value="1" />
+      <Setting name="IoTHub.RetainProperty" value="mqtt-retain" />
+      <Setting name="IoTHub.TopicNameProperty" value="mqtt-topic-name" />
+      <Setting name="IoTHub.DupProperty" value="mqtt-dup" />
+      <Setting name="IoTHub.QoSProperty" value="mqtt-qos" />
+      <!-- cloud based MQTT session state manager settings -->
+      <Setting name="SessionStateManager.StorageConnectionString" value="TODO: Azure Storage connection string to store MQTT sessions data in" />
+      <Setting name="SessionStateManager.StorageContainerName" value="mqtt-sessions" />
+      <!-- bootstrapper settings -->
+      <Setting name="MaxInboundMessageSize" value="262144" />
+      <!-- Azure settings -->
+      <Setting name="Microsoft.WindowsAzure.Plugins.Diagnostics.ConnectionString" value="" />
+      <Setting name="TlsCertificateThumbprint" value="TODO: TlsCertificate thumbprint" />
+    </ConfigurationSettings>
+    <Certificates>
+      <Certificate name="TlsCertificate" thumbprint="TODO: TlsCertificate thumbprint" thumbprintAlgorithm="sha1" />
+    </Certificates>
+  </Role>
+</ServiceConfiguration>
