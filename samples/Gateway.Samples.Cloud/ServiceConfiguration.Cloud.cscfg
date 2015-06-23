@@ -4,7 +4,7 @@
     <Instances count="2" />
     <ConfigurationSettings>
       <!-- bridge settings -->
-      <Setting name="IoTHub.ConnectionString" value="TODO: IoT Hub connection string to connect to" />
+      <Setting name="IoTHub.ConnectionString" value="[parameters('iotHubConnectionString')]" />
       <Setting name="MaxOutstandingOutboundMessages" value="10" />
       <Setting name="DeviceReceiveAckTimeout" value="00:01:00" />
       <Setting name="MaxRetransmissionCount" value="2" />
@@ -18,16 +18,16 @@
       <Setting name="IoTHub.DupProperty" value="mqtt-dup" />
       <Setting name="IoTHub.QoSProperty" value="mqtt-qos" />
       <!-- cloud based MQTT session state manager settings -->
-      <Setting name="SessionStateManager.StorageConnectionString" value="TODO: Azure Storage connection string to store MQTT sessions data in" />
+      <Setting name="SessionStateManager.StorageConnectionString" value="DefaultEndpointsProtocol=https;AccountName=[parameters('storageAccountName')];AccountKey=[parameters('storageAccountKey')]" />
       <Setting name="SessionStateManager.StorageContainerName" value="mqtt-sessions" />
       <!-- bootstrapper settings -->
       <Setting name="MaxInboundMessageSize" value="262144" />
       <!-- Azure settings -->
-      <Setting name="Microsoft.WindowsAzure.Plugins.Diagnostics.ConnectionString" value="" />
-      <Setting name="TlsCertificateThumbprint" value="TODO: TlsCertificate thumbprint" />
+      <Setting name="Microsoft.WindowsAzure.Plugins.Diagnostics.ConnectionString" value="DefaultEndpointsProtocol=https;AccountName=[parameters('storageAccountName')];AccountKey=[parameters('storageAccountKey')]" />
+      <Setting name="TlsCertificateThumbprint" value="[parameters('tlsCertficateThumbprint')]" />
     </ConfigurationSettings>
     <Certificates>
-      <Certificate name="TlsCertificate" thumbprint="TODO: TlsCertificate thumbprint" thumbprintAlgorithm="sha1" />
+      <Certificate name="TlsCertificate" thumbprint="0000000000000000000000000000000000000000" thumbprintAlgorithm="sha1" />
     </Certificates>
   </Role>
 </ServiceConfiguration>

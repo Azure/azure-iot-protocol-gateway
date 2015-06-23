@@ -61,6 +61,7 @@
   <ItemGroup>
     <Compile Include="Bootstrapper.cs" />
     <Compile Include="BootstrapperEventSource.cs" />
+    <Compile Include="MqttPacketPayloadCompressionHandler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

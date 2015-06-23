@@ -21,6 +21,7 @@ namespace Microsoft.Azure.Devices.Gateway.Core.Mqtt
         const string TopicNamePropertySetting = "IoTHub.TopicNameProperty";
         const string DupPropertySetting = "IoTHub.DupProperty";
         const string QoSPropertySetting = "IoTHub.QoSProperty";
+        const string WillTopicNameSetting = "IoTHub.WillTopicName";
         const string DeviceReceiveAckTimeoutSetting = "DeviceReceiveAckTimeout";
         const string MaxRetransmissionCountSetting = "MaxRetransmissionCount";
 
@@ -28,6 +29,7 @@ namespace Microsoft.Azure.Devices.Gateway.Core.Mqtt
         const string TopicNamePropertyDefaultValue = "mqtt-topic-name";
         const string DupPropertyDefaultValue = "mqtt-dup";
         const string QoSPropertyDefaultValue = "mqtt-qos";
+        const string WillTopicNameDefaultValue = "messages/events";
         const int MaxOutstandingOutboundMessagesDefaultValue = 1;
         const int MaxRetransmissionCountDefaultValue = 0;
 
@@ -35,6 +37,7 @@ namespace Microsoft.Azure.Devices.Gateway.Core.Mqtt
         readonly string topicNameProperty;
         readonly string dupProperty;
         readonly string qosProperty;
+        readonly string willTopicName;
         readonly string defaultPublishToClientTopicName;
         readonly TimeSpan? deviceReceiveAckTimeout;
 
@@ -85,6 +88,11 @@ namespace Microsoft.Azure.Devices.Gateway.Core.Mqtt
                 this.qosProperty = QoSPropertyDefaultValue;
             }
 
+            if (!settingsProvider.TryGetSetting(WillTopicNameSetting, out this.willTopicName))
+            {
+                this.willTopicName = WillTopicNameDefaultValue;
+            }
+
             this.deviceReceiveAckTimeout = settingsProvider.TryGetTimeSpanSetting(DeviceReceiveAckTimeoutSetting, out timeout) && timeout > TimeSpan.Zero
                 ? timeout
                 : (TimeSpan?)null;
@@ -130,6 +138,11 @@ namespace Microsoft.Azure.Devices.Gateway.Core.Mqtt
         public string QoSProperty
         {
             get { return this.qosProperty; }
+        }
+
+        public string WillTopicName
+        {
+            get { return this.willTopicName; }
         }
 
         /// <summary>
