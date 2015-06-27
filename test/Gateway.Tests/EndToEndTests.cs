@@ -6,6 +6,7 @@ namespace Microsoft.Azure.Devices.Gateway.Tests
     using System;
     using System.Collections.Generic;
     using System.Configuration;
+    using System.Diagnostics;
     using System.Linq;
     using System.Net;
     using System.Security.Cryptography.X509Certificates;
@@ -14,21 +15,26 @@ namespace Microsoft.Azure.Devices.Gateway.Tests
     using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Mqtt;
-    using DotNetty.Common.Concurrency;
     using DotNetty.Handlers.Tls;
-    using DotNetty.Transport;
+    using DotNetty.Transport.Bootstrapping;
+    using DotNetty.Transport.Channels;
+    using DotNetty.Transport.Channels.Sockets;
     using Microsoft.Azure.Devices.Gateway.Cloud;
     using Microsoft.Azure.Devices.Gateway.Core;
     using Microsoft.Azure.Devices.Gateway.Core.Mqtt;
     using Microsoft.ServiceBus.Messaging;
     using Xunit;
+    using Xunit.Abstractions;
 
     public class EndToEndTests : IDisposable
     {
+        readonly ITestOutputHelper output;
         readonly ISettingsProvider settingsProvider;
+        Func<Task> cleanupFunc;
 
-        public EndToEndTests()
+        public EndToEndTests(ITestOutputHelper output)
         {
+            this.output = output;
             this.settingsProvider = new DefaultSettingsProvider();
 
             this.ProtocolGatewayPort = 8883; // todo: dynamic port choice to parallelize test runs (first free port)
@@ -47,15 +53,36 @@ namespace Microsoft.Azure.Devices.Gateway.Tests
             {
                 return;
             }
-            
-            int threadCount = Environment.ProcessorCount;
-            var executorGroup = new FixedThreadSetExecutorGroup(name => new MpscQueueThreadExecutor(name, TimeSpan.FromSeconds(5)), threadCount, "sample");
-            var bufAllocator = new ThreadLocalFixedPooledHeapByteBufferAllocator(16 * 1024, 300 * 1024 * 1024 / threadCount); // reserve 100 MB for 64 KB buffers
-            var sessionStateManager = await BlobSessionStateManager.CreateAsync(this.settingsProvider.GetSetting("SessionStateManager.StorageConnectionString"), this.settingsProvider.GetSetting("SessionStateManager.StorageContainerName"));
-            ServerBootstrap server = this.SetupServer(executorGroup, bufAllocator, sessionStateManager, threadCount, true);
 
-            this.Server = server;
-            server.Start(new IPEndPoint(IPAddress.Any, this.ProtocolGatewayPort), 100);
+            int threadCount = Environment.ProcessorCount;
+            var executorGroup = new MultithreadEventLoopGroup(threadCount);
+            var bufAllocator = new PooledByteBufferAllocator(16 * 1024, 300 * 1024 * 1024 / threadCount); // reserve 100 MB for 64 KB buffers
+            BlobSessionStateManager sessionStateManager = await BlobSessionStateManager.CreateAsync(this.settingsProvider.GetSetting("SessionStateManager.StorageConnectionString"), this.settingsProvider.GetSetting("SessionStateManager.StorageContainerName"));
+            var certificate = new X509Certificate2("tlscert.pfx", "password");
+            var settings = new Settings(this.settingsProvider);
+            var authProvider = new StubAuthenticationProvider();
+
+            ServerBootstrap server = new ServerBootstrap()
+                .Group(executorGroup)
+                .Channel<TcpServerSocketChannel>()
+                .ChildOption(ChannelOption.Allocator, bufAllocator)
+                .ChildOption(ChannelOption.AutoRead, false)
+                .ChildHandler(new ActionChannelInitializer<IChannel>(ch =>
+                {
+                    ch.Pipeline.AddLast(new TlsHandler(certificate));
+                    ch.Pipeline.AddLast(
+                        ServerEncoder.Instance,
+                        new ServerDecoder(256 * 1024),
+                        new BridgeDriver(settings, sessionStateManager, authProvider));
+                }));
+
+            IChannel serverChannel = await server.BindAsync(IPAddress.Any, this.ProtocolGatewayPort);
+
+            this.cleanupFunc = async () =>
+            {
+                await serverChannel.CloseAsync();
+                await executorGroup.ShutdownGracefullyAsync();
+            };
             this.ServerAddress = IPAddress.Loopback;
         }
 
@@ -67,42 +94,13 @@ namespace Microsoft.Azure.Devices.Gateway.Tests
 
         public void Dispose()
         {
-            if (this.Server != null)
+            if (this.cleanupFunc != null)
             {
-                this.Server.Dispose();
-                this.Server = null;
+                if (!this.cleanupFunc().Wait(TimeSpan.FromSeconds(10)))
+                {
+                    this.output.WriteLine("Server cleanup did not complete in time.");
+                }
             }
-        }
-
-        ServerBootstrap SetupServer(IExecutorGroup executorGroup, IByteBufferAllocator bufferAllocator, ISessionStateManager mqttSessionStateManager, int threadCount, bool secure)
-        {
-            var certificate = new X509Certificate2("tlscert.pfx", "nowin");
-            var settings = new Settings(this.settingsProvider);
-            var authProvider = new StubAuthenticationProvider();
-
-            return new ServerBootstrap()
-                .ExecutorGroup(executorGroup)
-                .Allocator(bufferAllocator)
-                .DataChannelInitialization(channel =>
-                {
-                    if (secure)
-                    {
-                        channel.Pipeline.AddLast(new TlsHandler(certificate));
-                    }
-                    channel.Pipeline.AddLast(
-                        ServerEncoder.Instance,
-                        new ServerDecoder(256 * 1024),
-                        new BridgeDriver(settings, mqttSessionStateManager, authProvider));
-                })
-                .DataChannelConfiguration(config =>
-                {
-                    config.AutoRead = false; // todo: support true
-                    config.WriteBufferHighWaterMark = 64 * 1024;
-                    config.ReceiveBufferSize = 16 * 1024;
-                    config.SendBufferSize = 16 * 1024;
-                    config.ReceiveEventPoolSize = 200 * 1000 / threadCount; // we do not expect to have more than 200K connections (though it will still scale beyond that if necessary
-                    config.SendEventPoolSize = 200 * 1000 / threadCount;
-                });
         }
 
         [Fact(Skip = "just a handy method to calc remaining length for MQTT packet")]
@@ -135,7 +133,7 @@ namespace Microsoft.Azure.Devices.Gateway.Tests
         public async Task BasicFunctionalityTest()
         {
             await this.EnsureServerInitializedAsync();
-            
+
             const string TelemetryQoS0Content = "{\"test\": \"telemetry-QoS0\"}";
             const string TelemetryQoS1Content = "{\"test\": \"telemetry\"}";
             const string NotificationQoS0Content = "{\"test\": \"fire and forget\"}";
@@ -173,6 +171,7 @@ namespace Microsoft.Azure.Devices.Gateway.Tests
 
             ServiceClient serviceClient = ServiceClient.CreateFromConnectionString(ConfigurationManager.AppSettings["IoTHub.ConnectionString"]);
 
+            var sw = Stopwatch.StartNew();
             var scenarioOptions = new TcpScenarioOptions
             {
                 Address = this.ServerAddress,
@@ -211,6 +210,8 @@ namespace Microsoft.Azure.Devices.Gateway.Tests
             await serviceClient.SendAsync(deviceId, qos1Notification);
 
             await deviceScenarioTask;
+
+            this.output.WriteLine(string.Format("Core test completed in {0}", sw.Elapsed));
 
             // making sure that device queue is empty.
             await Task.Delay(TimeSpan.FromSeconds(3));

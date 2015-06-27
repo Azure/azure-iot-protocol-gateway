@@ -1,4 +1,4 @@
-Azure IoT Gateway
+Azure IoT Protocol Gateway
 Copyright (c) Microsoft Corporation
 All rights reserved. 
 

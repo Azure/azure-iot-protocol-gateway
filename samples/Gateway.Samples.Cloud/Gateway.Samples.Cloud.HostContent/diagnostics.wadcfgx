@@ -17,7 +17,13 @@
           <DataSource name="Application!*" />
         </WindowsEventLog>
         <EtwProviders>
+          <EtwEventSourceProviderConfiguration scheduledTransferPeriod="PT5M" provider="DotNetty-Executor">
+            <DefaultEvents />
+          </EtwEventSourceProviderConfiguration>
           <EtwEventSourceProviderConfiguration scheduledTransferPeriod="PT5M" provider="DotNetty-Channel">
+            <DefaultEvents />
+          </EtwEventSourceProviderConfiguration>
+          <EtwEventSourceProviderConfiguration scheduledTransferPeriod="PT5M" provider="DotNetty-Bootstrap">
             <DefaultEvents />
           </EtwEventSourceProviderConfiguration>
           <EtwEventSourceProviderConfiguration scheduledTransferPeriod="PT5M" provider="IoT-Gateway-Bridge">

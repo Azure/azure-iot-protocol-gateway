@@ -13,8 +13,9 @@ namespace Gateway.Samples.Common
     using DotNetty.Codecs.Mqtt;
     using DotNetty.Common.Concurrency;
     using DotNetty.Handlers.Tls;
-    using DotNetty.Transport;
-    using Microsoft.Azure.Devices.Gateway.Cloud;
+    using DotNetty.Transport.Bootstrapping;
+    using DotNetty.Transport.Channels;
+    using DotNetty.Transport.Channels.Sockets;
     using Microsoft.Azure.Devices.Gateway.Core;
     using Microsoft.Azure.Devices.Gateway.Core.Mqtt;
 
@@ -24,23 +25,23 @@ namespace Gateway.Samples.Common
         const int MqttsPort = 8883;
         const int ListenBacklogSize = 100; // 100 connections allowed pending accept
 
-        readonly TaskCompletionSource<int> completionTcs;
+        readonly TaskCompletionSource closeCompletionSource;
         readonly ISettingsProvider settingsProvider;
         readonly Settings settings;
         readonly ISessionStateManager sessionStateManager;
         readonly IAuthenticationProvider authProvider;
         X509Certificate2 tlsCertificate;
-        IExecutorGroup executorGroup;
+        IEventLoopGroup eventLoopGroup;
         IByteBufferAllocator bufferAllocator;
-        ServerBootstrap server;
-        ServerBootstrap secureServer;
+        IChannel serverChannel;
+        IChannel secureServerChannel;
 
-        public Bootstrapper(ISettingsProvider settingsProvider, BlobSessionStateManager sessionStateManager)
+        public Bootstrapper(ISettingsProvider settingsProvider, ISessionStateManager sessionStateManager)
         {
             Contract.Requires(settingsProvider != null);
             Contract.Requires(sessionStateManager != null);
 
-            this.completionTcs = new TaskCompletionSource<int>();
+            this.closeCompletionSource = new TaskCompletionSource();
 
             this.settingsProvider = settingsProvider;
             this.settings = new Settings(this.settingsProvider);
@@ -50,10 +51,10 @@ namespace Gateway.Samples.Common
 
         public Task CloseCompletion
         {
-            get { return this.completionTcs.Task; }
+            get { return this.closeCompletionSource.Task; }
         }
 
-        public Task RunAsync(X509Certificate2 certificate, int threadCount, CancellationToken cancellationToken)
+        public async Task RunAsync(X509Certificate2 certificate, int threadCount, CancellationToken cancellationToken)
         {
             try
             {
@@ -62,11 +63,11 @@ namespace Gateway.Samples.Common
                 BootstrapperEventSource.Log.Info("Starting", null);
 
                 this.tlsCertificate = certificate;
-                this.executorGroup = new FixedThreadSetExecutorGroup(name => new MpscQueueThreadExecutor(name, TimeSpan.FromSeconds(5)), threadCount, "dotnetty-exec");
-                this.bufferAllocator = new ThreadLocalFixedPooledHeapByteBufferAllocator(16 * 1024, 300 * 1024 * 1024 / threadCount); // reserve 300 MB of 16 KB buffers
+                this.eventLoopGroup = new MultithreadEventLoopGroup(threadCount);
+                this.bufferAllocator = new PooledByteBufferAllocator(16 * 1024, 300 * 1024 * 1024 / threadCount); // reserve 300 MB of 16 KB buffers
 
-                this.server = this.SetupServer(threadCount, false);
-                this.server.Start(new IPEndPoint(IPAddress.Any, MqttPort), ListenBacklogSize);
+                ServerBootstrap bootstrap = this.SetupBootstrap();
+                this.serverChannel = await bootstrap.BindAsync(IPAddress.Any, MqttPort);
                 if (this.tlsCertificate == null)
                 {
                     BootstrapperEventSource.Log.Info("No certificate has been provided. Skipping TLS endpoint initialization.", null);
@@ -74,8 +75,7 @@ namespace Gateway.Samples.Common
                 else
                 {
                     BootstrapperEventSource.Log.Info(string.Format("Initializing TLS endpoint with certificate {0}.", this.tlsCertificate.Thumbprint), null);
-                    this.secureServer = this.SetupServer(threadCount, true);
-                    this.secureServer.Start(new IPEndPoint(IPAddress.Any, MqttsPort), ListenBacklogSize);
+                    this.secureServerChannel = await bootstrap.BindAsync(IPAddress.Any, MqttsPort);
                 }
 
                 cancellationToken.Register(this.CloseAsync);
@@ -87,7 +87,6 @@ namespace Gateway.Samples.Common
                 BootstrapperEventSource.Log.Error("Failed to start", ex);
                 this.CloseAsync();
             }
-            return this.CloseCompletion;
         }
 
         async void CloseAsync()
@@ -96,16 +95,15 @@ namespace Gateway.Samples.Common
             {
                 BootstrapperEventSource.Log.Info("Stopping", null);
 
-                // todo: change once shutdown is supported in IEventExecutorGroup and server channel support is in
-                for (IExecutor currentExecutor = this.executorGroup.GetNext(); currentExecutor.Running; currentExecutor = this.executorGroup.GetNext())
+                if (this.serverChannel != null)
                 {
-                    currentExecutor.Running = false;
+                    await this.serverChannel.CloseAsync();
                 }
-
-                this.server.Dispose();
-                this.secureServer.Dispose();
-
-                await Task.WhenAll(this.server.Completion, this.secureServer.Completion);
+                if (this.secureServerChannel != null)
+                {
+                    await this.secureServerChannel.CloseAsync();
+                }
+                await this.eventLoopGroup.ShutdownGracefullyAsync();
 
                 BootstrapperEventSource.Log.Info("Stopped", null);
             }
@@ -115,20 +113,23 @@ namespace Gateway.Samples.Common
             }
             finally
             {
-                this.completionTcs.TrySetResult(0);
+                this.closeCompletionSource.TryComplete();
             }
         }
 
-        ServerBootstrap SetupServer(int threadCount, bool secure)
+        ServerBootstrap SetupBootstrap()
         {
             int maxInboundMessageSize = this.settingsProvider.GetIntegerSetting("MaxInboundMessageSize");
 
             return new ServerBootstrap()
-                .ExecutorGroup(this.executorGroup)
-                .Allocator(this.bufferAllocator)
-                .DataChannelInitialization(channel =>
+                .Group(this.eventLoopGroup)
+                .Option(ChannelOption.SoBacklog, ListenBacklogSize)
+                .ChildOption(ChannelOption.Allocator, this.bufferAllocator)
+                .ChildOption(ChannelOption.AutoRead, false)
+                .Channel<TcpServerSocketChannel>()
+                .ChildHandler(new ActionChannelInitializer<ISocketChannel>(channel =>
                 {
-                    if (secure)
+                    if (((IPEndPoint)channel.RemoteAddress).Port == MqttsPort)
                     {
                         channel.Pipeline.AddLast(new TlsHandler(this.tlsCertificate));
                     }
@@ -136,16 +137,7 @@ namespace Gateway.Samples.Common
                         ServerEncoder.Instance,
                         new ServerDecoder(maxInboundMessageSize),
                         new BridgeDriver(this.settings, this.sessionStateManager, this.authProvider));
-                })
-                .DataChannelConfiguration(config =>
-                {
-                    config.AutoRead = false;
-                    config.WriteBufferHighWaterMark = 64 * 1024;
-                    config.ReceiveBufferSize = 16 * 1024;
-                    config.SendBufferSize = 16 * 1024;
-                    config.ReceiveEventPoolSize = 200 * 1000 / threadCount; // do not expect to have more than 200K connections (though it will still scale beyond that if necessary
-                    config.SendEventPoolSize = 200 * 1000 / threadCount;
-                });
+                }));
         }
     }
 }

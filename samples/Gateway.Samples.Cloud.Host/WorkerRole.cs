@@ -76,6 +76,7 @@ namespace Gateway.Samples.Cloud.Host
                 settingsProvider,
                 blobSessionStateManager);
             await bootstrapper.RunAsync(tlsCertificate, threadCount, cancellationToken);
+            await bootstrapper.CloseCompletion;
         }
 
         public static X509Certificate2 GetTlsCertificate(string thumbprint, StoreName storeName, StoreLocation storeLocation)

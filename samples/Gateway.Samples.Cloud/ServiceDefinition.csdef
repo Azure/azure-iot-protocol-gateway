@@ -33,5 +33,13 @@
       <InputEndpoint name="MQTT" protocol="tcp" port="1883" localPort="1883" />
       <InputEndpoint name="MQTTS" protocol="tcp" port="8883" localPort="8883" />
     </Endpoints>
+    <Startup>
+      <Task commandLine="ServerGC.cmd" executionContext="elevated" taskType="simple">
+        <Environment>
+          <Variable name="UseServerGC" value="True" />
+          <Variable name="UseBackgroundGC" value="True" />
+        </Environment>
+      </Task>
+    </Startup>
   </WorkerRole>
 </ServiceDefinition>

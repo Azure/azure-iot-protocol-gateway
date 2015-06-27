@@ -73,7 +73,7 @@ namespace Microsoft.Azure.Devices.Gateway.Core.Mqtt
             TimeSpan? timeout = this.settings.ConnectArrivalTimeout;
             if (timeout.HasValue)
             {
-                context.Channel.Executor.Schedule(CheckConnectTimeoutCallback, context, timeout.Value);
+                context.Channel.EventLoop.Schedule(CheckConnectTimeoutCallback, context, timeout.Value);
             }
             base.ChannelActive(context);
 
@@ -134,7 +134,7 @@ namespace Microsoft.Azure.Devices.Gateway.Core.Mqtt
                     this.OnSubscriptionChange(context, packet);
                     break;
                 case PacketType.PINGREQ:
-                    context.WriteAsync(PingRespPacket.Instance); // no further action is needed - keep-alive "timer" was reset by now
+                    context.WriteAndFlushAsync(PingRespPacket.Instance); // no further action is needed - keep-alive "timer" was reset by now
                     break;
                 case PacketType.DISCONNECT:
                     BridgeEventSource.Log.Verbose("Disconnecting gracefully.", this.clientId);
@@ -194,10 +194,13 @@ namespace Microsoft.Azure.Devices.Gateway.Core.Mqtt
 
                     // release ACKs
 
+                    var tasks = new List<Task>(acks.Count);
                     foreach (Packet ack in acks)
                     {
-                        await context.WriteAsync(ack); // todo: batch send - through FlushAsync
+                        tasks.Add(context.WriteAsync(ack));
                     }
+                    context.Flush();
+                    await Task.WhenAll(tasks);
                 }
                 while (this.subscriptionChangeQueue.Count > 0);
 
@@ -291,7 +294,7 @@ namespace Microsoft.Azure.Devices.Gateway.Core.Mqtt
                             // no response necessary
                             break;
                         case QualityOfService.AtLeastOnce:
-                            await context.WriteAsync(new PubAckPacket // todo: await out of sequence?
+                            await context.WriteAndFlushAsync(new PubAckPacket // todo: await out of sequence?
                             {
                                 PacketId = packet.PacketId
                             });
@@ -429,7 +432,7 @@ namespace Microsoft.Azure.Devices.Gateway.Core.Mqtt
             try
             {
                 await this.iotHubClient.CompleteAsync(message.LockToken); // complete message with IoT Hub first to make sure we don't deliver it more than once
-                await context.WriteAsync(packet);
+                await context.WriteAndFlushAsync(packet);
             }
             catch (Exception ex)
             {
@@ -459,7 +462,7 @@ namespace Microsoft.Azure.Devices.Gateway.Core.Mqtt
 
                 try
                 {
-                    await context.WriteAsync(packet);
+                    await context.WriteAndFlushAsync(packet);
                 }
                 catch (Exception ex)
                 {
@@ -478,7 +481,7 @@ namespace Microsoft.Azure.Devices.Gateway.Core.Mqtt
             if (this.IsInState(StateFlags.RetransmissionCheckScheduled))
             {
                 this.stateFlags |= StateFlags.RetransmissionCheckScheduled;
-                context.Channel.Executor.Schedule(CheckRetransmissionNeededCallback, context, delay);
+                context.Channel.EventLoop.Schedule(CheckRetransmissionNeededCallback, context, delay);
             }
         }
 
@@ -538,7 +541,7 @@ namespace Microsoft.Azure.Devices.Gateway.Core.Mqtt
 
                 PublishPacket packet = Util.ComposePublishPacket(context, messageInfo.QualityOfService, message, Util.DeriveTopicName(message, this.settings));
                 messageInfo.Reset(message.LockToken);
-                await context.WriteAsync(packet);
+                await context.WriteAndFlushAsync(packet);
 
                 if (this.settings.DeviceReceiveAckCanTimeout)
                 {
@@ -621,7 +624,7 @@ namespace Microsoft.Azure.Devices.Gateway.Core.Mqtt
                 if (!authResult.IsSuccessful)
                 {
                     connAckSent = true;
-                    await context.WriteAsync(new ConnAckPacket
+                    await context.WriteAndFlushAsync(new ConnAckPacket
                     {
                         ReturnCode = ConnectReturnCode.RefusedNotAuthorized
                     });
@@ -653,7 +656,7 @@ namespace Microsoft.Azure.Devices.Gateway.Core.Mqtt
                 this.ReceiveOutboundAsync(context);
 
                 connAckSent = true;
-                await context.WriteAsync(new ConnAckPacket
+                await context.WriteAndFlushAsync(new ConnAckPacket
                 {
                     SessionPresent = sessionPresent,
                     ReturnCode = ConnectReturnCode.Accepted
@@ -672,7 +675,7 @@ namespace Microsoft.Azure.Devices.Gateway.Core.Mqtt
                 {
                     try
                     {
-                        await context.WriteAsync(new ConnAckPacket
+                        await context.WriteAndFlushAsync(new ConnAckPacket
                         {
                             ReturnCode = ConnectReturnCode.RefusedServerUnavailable
                         });
@@ -775,7 +778,7 @@ namespace Microsoft.Azure.Devices.Gateway.Core.Mqtt
                 return;
             }
 
-            context.Channel.Executor.Schedule(CheckKeepAliveCallback, context, self.keepAliveTimeout - elapsedSinceLastActive); // todo: allocation (QueueNode): inherit "callback" from recyclable queue node
+            context.Channel.EventLoop.Schedule(CheckKeepAliveCallback, context, self.keepAliveTimeout - elapsedSinceLastActive); // todo: allocation (QueueNode): inherit "callback" from recyclable queue node
         }
 
         static void CloseOnError(IChannelHandlerContext context, string origin, Exception exception)
@@ -790,7 +793,7 @@ namespace Microsoft.Azure.Devices.Gateway.Core.Mqtt
             var self = (BridgeDriver)context.Handler;
             if (!self.IsInState(StateFlags.Closed))
             {
-                BridgeEventSource.Log.Warning(string.Format("Closing connection ({0}, {1}): {2}", context.Channel.RemoteEndpoint, self.clientId, reason));
+                BridgeEventSource.Log.Warning(string.Format("Closing connection ({0}, {1}): {2}", context.Channel.RemoteAddress, self.clientId, reason));
                 self.CloseAsync(context, false);
             }
 

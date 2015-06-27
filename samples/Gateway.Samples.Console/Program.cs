@@ -7,6 +7,7 @@ namespace Gateway.Samples.Console
     using System.Diagnostics.Tracing;
     using System.Security.Cryptography.X509Certificates;
     using System.Threading;
+    using System.Threading.Tasks;
     using DotNetty.Transport.Channels;
     using Gateway.Samples.Common;
     using Microsoft.Azure.Devices.Gateway.Cloud;
@@ -46,7 +47,7 @@ namespace Gateway.Samples.Console
                     settingsProvider.GetSetting("SessionStateManager.StorageContainerName")).Result;
 
                 var bootstrapper = new Bootstrapper(settingsProvider, sessionStateManager);
-                bootstrapper.RunAsync(certificate, threadCount, cts.Token);
+                Task.Run(() => bootstrapper.RunAsync(certificate, threadCount, cts.Token), cts.Token);
 
                 while (true)
                 {
