@@ -36,27 +36,27 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="DotNetty.Buffers, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\DotNetty.0.1.0-alpha7\lib\net4.5\DotNetty.Buffers.dll</HintPath>
+      <HintPath>..\..\packages\DotNetty.0.1.1-alpha5\lib\net4.5\DotNetty.Buffers.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="DotNetty.Codecs, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\DotNetty.0.1.0-alpha7\lib\net4.5\DotNetty.Codecs.dll</HintPath>
+      <HintPath>..\..\packages\DotNetty.0.1.1-alpha5\lib\net4.5\DotNetty.Codecs.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="DotNetty.Codecs.Mqtt, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\DotNetty.0.1.0-alpha7\lib\net4.5\DotNetty.Codecs.Mqtt.dll</HintPath>
+      <HintPath>..\..\packages\DotNetty.0.1.1-alpha5\lib\net4.5\DotNetty.Codecs.Mqtt.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="DotNetty.Common, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\DotNetty.0.1.0-alpha7\lib\net4.5\DotNetty.Common.dll</HintPath>
+      <HintPath>..\..\packages\DotNetty.0.1.1-alpha5\lib\net4.5\DotNetty.Common.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="DotNetty.Handlers, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\DotNetty.0.1.0-alpha7\lib\net4.5\DotNetty.Handlers.dll</HintPath>
+      <HintPath>..\..\packages\DotNetty.0.1.1-alpha5\lib\net4.5\DotNetty.Handlers.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="DotNetty.Transport, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\DotNetty.0.1.0-alpha7\lib\net4.5\DotNetty.Transport.dll</HintPath>
+      <HintPath>..\..\packages\DotNetty.0.1.1-alpha5\lib\net4.5\DotNetty.Transport.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Practices.EnterpriseLibrary.SemanticLogging, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
@@ -64,7 +64,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Newtonsoft.Json.6.0.8\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <HintPath>..\..\packages\Newtonsoft.Json.6.0.4\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -79,7 +79,9 @@
       <Link>gateway.contoso.com.pfx</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="App.config" />
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="appSettings.config.user">
       <SubType>Designer</SubType>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -99,6 +101,12 @@
       <Project>{5bc6e03a-7516-4aab-8191-1e187b8ee995}</Project>
       <Name>Gateway.Samples.Common</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="mqttTopicRouting.config.user">
+      <SubType>Designer</SubType>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -7,22 +7,26 @@ namespace Microsoft.Azure.Devices.Gateway.Tests
     using System.Collections.Generic;
     using System.Configuration;
     using System.Diagnostics;
+    using System.Diagnostics.Tracing;
     using System.Linq;
     using System.Net;
     using System.Security.Cryptography.X509Certificates;
     using System.Text;
-    using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Mqtt;
-    using DotNetty.Handlers.Tls;
+    using DotNetty.Codecs.Mqtt.Packets;
+    using DotNetty.Common.Concurrency;
     using DotNetty.Transport.Bootstrapping;
     using DotNetty.Transport.Channels;
+    using Microsoft.Azure.Devices.Client;
     using DotNetty.Transport.Channels.Sockets;
     using Microsoft.Azure.Devices.Gateway.Cloud;
     using Microsoft.Azure.Devices.Gateway.Core;
     using Microsoft.Azure.Devices.Gateway.Core.Mqtt;
+    using Microsoft.Practices.EnterpriseLibrary.SemanticLogging;
     using Microsoft.ServiceBus.Messaging;
+    using Moq;
     using Xunit;
     using Xunit.Abstractions;
 
@@ -31,11 +35,24 @@ namespace Microsoft.Azure.Devices.Gateway.Tests
         readonly ITestOutputHelper output;
         readonly ISettingsProvider settingsProvider;
         Func<Task> cleanupFunc;
+        readonly ObservableEventListener eventListener;
+        readonly string deviceId;
+        readonly string deviceKey;
 
         public EndToEndTests(ITestOutputHelper output)
         {
             this.output = output;
+            this.eventListener = new ObservableEventListener();
+            this.eventListener.LogToTestOutput(output);
+            this.eventListener.EnableEvents(BridgeEventSource.Log, EventLevel.Verbose);
+            this.eventListener.EnableEvents(ChannelEventSource.Log, EventLevel.Verbose);
+            this.eventListener.EnableEvents(BootstrapEventSource.Log, EventLevel.Verbose);
+            this.eventListener.EnableEvents(ExecutorEventSource.Log, EventLevel.Verbose);
+            this.eventListener.EnableEvents(MqttEventSource.Log, EventLevel.Verbose);
+
             this.settingsProvider = new DefaultSettingsProvider();
+            this.deviceId = ConfigurationManager.AppSettings["End2End.DeviceName"];
+            this.deviceKey = ConfigurationManager.AppSettings["End2End.DeviceKey"];
 
             this.ProtocolGatewayPort = 8883; // todo: dynamic port choice to parallelize test runs (first free port)
 
@@ -56,11 +73,16 @@ namespace Microsoft.Azure.Devices.Gateway.Tests
 
             int threadCount = Environment.ProcessorCount;
             var executorGroup = new MultithreadEventLoopGroup(threadCount);
-            var bufAllocator = new PooledByteBufferAllocator(16 * 1024, 300 * 1024 * 1024 / threadCount); // reserve 100 MB for 64 KB buffers
+            var bufAllocator = new PooledByteBufferAllocator(16 * 1024, 10 * 1024 * 1024 / threadCount); // reserve 10 MB for 64 KB buffers
             BlobSessionStateManager sessionStateManager = await BlobSessionStateManager.CreateAsync(this.settingsProvider.GetSetting("SessionStateManager.StorageConnectionString"), this.settingsProvider.GetSetting("SessionStateManager.StorageContainerName"));
             var certificate = new X509Certificate2("tlscert.pfx", "password");
             var settings = new Settings(this.settingsProvider);
-            var authProvider = new StubAuthenticationProvider();
+            //var authProvider = new PassThroughAuthenticationProvider();
+            var authProviderMock = new Mock<IAuthenticationProvider>();
+            authProviderMock.Setup(x => x.AuthenticateAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<EndPoint>()))
+                .Returns((string clientId, string userName, string password, EndPoint remoteAddress) => Task.FromResult(AuthenticationResult.SuccessWithDefaultCredentials(clientId)));
+            IAuthenticationProvider authProvider = authProviderMock.Object;
+            var topicNameRouter = new TopicNameRouter();
 
             ServerBootstrap server = new ServerBootstrap()
                 .Group(executorGroup)
@@ -69,21 +91,35 @@ namespace Microsoft.Azure.Devices.Gateway.Tests
                 .ChildOption(ChannelOption.AutoRead, false)
                 .ChildHandler(new ActionChannelInitializer<IChannel>(ch =>
                 {
-                    ch.Pipeline.AddLast(new TlsHandler(certificate));
+                    //ch.Pipeline.AddLast(new TlsHandler(certificate));
                     ch.Pipeline.AddLast(
-                        ServerEncoder.Instance,
-                        new ServerDecoder(256 * 1024),
-                        new BridgeDriver(settings, sessionStateManager, authProvider));
+                        MqttEncoder.Instance,
+                        new MqttDecoder(true, 256 * 1024),
+                        new BridgeDriver(settings, sessionStateManager, authProvider, topicNameRouter));
                 }));
 
             IChannel serverChannel = await server.BindAsync(IPAddress.Any, this.ProtocolGatewayPort);
 
-            this.cleanupFunc = async () =>
+            this.ScheduleCleanup(async () =>
             {
                 await serverChannel.CloseAsync();
                 await executorGroup.ShutdownGracefullyAsync();
-            };
+            });
             this.ServerAddress = IPAddress.Loopback;
+        }
+
+        void ScheduleCleanup(Func<Task> cleanupFunc)
+        {
+            Func<Task> currentCleanupFunc = this.cleanupFunc;
+            this.cleanupFunc = async () =>
+            {
+                if (currentCleanupFunc != null)
+                {
+                    await currentCleanupFunc();
+                }
+
+                await cleanupFunc();
+            };
         }
 
         public IPAddress ServerAddress { get; set; }
@@ -101,24 +137,25 @@ namespace Microsoft.Azure.Devices.Gateway.Tests
                     this.output.WriteLine("Server cleanup did not complete in time.");
                 }
             }
+            this.eventListener.Dispose();
         }
 
         [Fact(Skip = "just a handy method to calc remaining length for MQTT packet")]
         public void CalcMqttRemainingLength()
         {
-            int X = 10;
+            int value = 10;
             do
             {
-                int encodedByte = X % 128;
-                X = X / 128;
+                int encodedByte = value % 128;
+                value = value / 128;
                 // if there are more data to encode, set the top bit of this byte 286
-                if (X > 0)
+                if (value > 0)
                 {
                     encodedByte = encodedByte | 128;
                 }
                 Console.WriteLine(encodedByte.ToString("X"));
             }
-            while (X > 0);
+            while (value > 0);
         }
 
         /// <summary>
@@ -138,28 +175,13 @@ namespace Microsoft.Azure.Devices.Gateway.Tests
             const string TelemetryQoS1Content = "{\"test\": \"telemetry\"}";
             const string NotificationQoS0Content = "{\"test\": \"fire and forget\"}";
             const string NotificationQoS1Content = "{\"test\": \"notify (at least once)\"}";
-            var clientMessages = new[]
-            {
-                new TcpScenarioMessage(1, "connect", true, 0, content: "10 10 00 04 4D 51 54 54 04 00 00 78 00 04 63 61 72 31"),
-                new TcpScenarioMessage(2, "connack", false, 0, omit: new[] { new[] { 3, 0 } }, content: "20 02 00 00"),
-                new TcpScenarioMessage(3, "subscribe", true, 0, content: "82 1B 00 01 00 16 6D 65 73 73 61 67 65 73 2F 64 65 76 69 63 65 62 6F 75 6E 64 2F 23 01"),
-                new TcpScenarioMessage(4, "suback", false, 0, content: "90 03 00 01 01"),
-                new TcpScenarioMessage(5, "publish QoS 0", true, 0, content: "30 2B 00 0F 6D 65 73 73 61 67 65 73 2F 65 76 65 6E 74 73 7B 22 74 65 73 74 22 3A 20 22 74 65 6C 65 6D 65 74 72 79 2D 51 6F 53 30 22 7D"),
-                new TcpScenarioMessage(6, "publish QoS 1", true, 0, content: "32 28 00 0F 6D 65 73 73 61 67 65 73 2F 65 76 65 6E 74 73 00 02 7B 22 74 65 73 74 22 3A 20 22 74 65 6C 65 6D 65 74 72 79 22 7D"),
-                new TcpScenarioMessage(7, "puback", false, 0, content: "40 02 00 02"),
-                new TcpScenarioMessage(8, "publish QoS 0", false, 0, content: "30 36 00 19 6D 65 73 73 61 67 65 73 2F 64 65 76 69 63 65 62 6F 75 6E 64 2F 74 69 70 73 7B 22 74 65 73 74 22 3A 20 22 66 69 72 65 20 61 6E 64 20 66 6F 72 67 65 74 22 7D"),
-                new TcpScenarioMessage(8, "publish QoS 1", false, 0, content: "32 4A 00 24 6D 65 73 73 61 67 65 73 2F 64 65 76 69 63 65 62 6F 75 6E 64 2F 66 69 72 6D 77 61 72 65 2D 75 70 64 61 74 65 00 01 7B 22 74 65 73 74 22 3A 20 22 6E 6F 74 69 66 79 20 28 61 74 20 6C 65 61 73 74 20 6F 6E 63 65 29 22 7D"),
-                new TcpScenarioMessage(9, "puback", true, 0, content: "40 02 00 01"),
-                new TcpScenarioMessage(10, "disconnect", true, 0, content: "E0 00")
-            };
 
             int protocolGatewayPort = this.ProtocolGatewayPort;
 
-            string deviceId = ConfigurationManager.AppSettings["End2End.DeviceName"];
-            DeviceClient deviceClient = DeviceClient.CreateFromConnectionString(ConfigurationManager.AppSettings["IoTHub.ConnectionString"], deviceId);
+            DeviceClient deviceClient = DeviceClient.CreateFromConnectionString(ConfigurationManager.AppSettings["IoTHub.ConnectionString"], this.deviceId);
 
             Message staleMessage;
-            while ((staleMessage = await deviceClient.ReceiveAsync(TimeSpan.FromSeconds(1))) != null)
+            while ((staleMessage = await deviceClient.ReceiveAsync(TimeSpan.Zero)) != null)
             {
                 await deviceClient.CompleteAsync(staleMessage);
             }
@@ -171,51 +193,147 @@ namespace Microsoft.Azure.Devices.Gateway.Tests
 
             ServiceClient serviceClient = ServiceClient.CreateFromConnectionString(ConfigurationManager.AppSettings["IoTHub.ConnectionString"]);
 
-            var sw = Stopwatch.StartNew();
-            var scenarioOptions = new TcpScenarioOptions
+            Stopwatch sw = Stopwatch.StartNew();
+
+            var testPromise = new TaskCompletionSource();
+
+            var group = new MultithreadEventLoopGroup();
+            Bootstrap bootstrap = new Bootstrap()
+                .Group(group)
+                .Channel<TcpSocketChannel>()
+                .Option(ChannelOption.TcpNodelay, true)
+                .Handler(new ActionChannelInitializer<ISocketChannel>(ch => ch.Pipeline.AddLast(
+                    MqttEncoder.Instance,
+                    new MqttDecoder(false, 256 * 1024),
+                    new TestScenarioRunner(cmf => GetClientScenario(cmf, this.deviceId, this.deviceKey), testPromise))));
+            IChannel clientChannel = await bootstrap.ConnectAsync(this.ServerAddress, protocolGatewayPort);
+            this.ScheduleCleanup(async () =>
             {
-                Address = this.ServerAddress,
-                Port = protocolGatewayPort,
-                Tls = true
-            };
-            Task deviceScenarioTask = new TcpScenarioRunner().RunAsync(scenarioOptions, clientMessages, CancellationToken.None);
+                await clientChannel.CloseAsync();
+                await group.ShutdownGracefullyAsync();
+            });
 
-            bool qos0Received = false;
-            bool qos1Received = false;
-
+            var ehMessages = new Tuple<EventData, string>[2];
             List<Task<EventData>> receiveTasks = receivers.Select(r => r.ReceiveAsync(TimeSpan.FromMinutes(20))).ToList();
-            Task<EventData> receivedTask = await Task.WhenAny(receiveTasks);
-            byte[] bytes = receivedTask.Result.GetBytes();
-            string contentString = Encoding.UTF8.GetString(bytes);
-            qos0Received |= TelemetryQoS0Content.Equals(contentString, StringComparison.Ordinal);
-            qos1Received |= TelemetryQoS1Content.Equals(contentString, StringComparison.Ordinal);
+            int messagesPending = 2;
+            while (true)
+            {
+                Task<EventData> receivedTask = await Task.WhenAny(receiveTasks);
+                EventData eventData = receivedTask.Result;
+                if (eventData != null)
+                {
+                    ehMessages[messagesPending - 1] = Tuple.Create(eventData, Encoding.UTF8.GetString(eventData.GetBytes()));
 
-            int receivedIndex = receiveTasks.IndexOf(receivedTask);
-            receiveTasks[receivedIndex] = receivers[receivedIndex].ReceiveAsync(TimeSpan.FromMinutes(20));
-            receivedTask = await Task.WhenAny(receiveTasks);
-            bytes = receivedTask.Result.GetBytes();
-            contentString = Encoding.UTF8.GetString(bytes);
-            qos0Received |= TelemetryQoS0Content.Equals(contentString, StringComparison.Ordinal);
-            qos1Received |= TelemetryQoS1Content.Equals(contentString, StringComparison.Ordinal);
+                    if (--messagesPending == 0)
+                    {
+                        break;
+                    }
+                }
 
-            Assert.True(qos0Received, "QoS 0 message was not received or content did not match.");
-            Assert.True(qos1Received, "QoS 1 message was not received or content did not match.");
+                int receivedIndex = receiveTasks.IndexOf(receivedTask);
+                receiveTasks[receivedIndex] = receivers[receivedIndex].ReceiveAsync(TimeSpan.FromMinutes(20));
+            }
 
-            var qos0Notification = new Message(Encoding.UTF8.GetBytes(NotificationQoS0Content));
+            Tuple<EventData, string> qos0Event = Assert.Single(ehMessages.Where(x => TelemetryQoS0Content.Equals(x.Item2, StringComparison.Ordinal)));
+            Assert.Equal((string)qos0Event.Item1.Properties["level"], "verbose");
+            Assert.Equal((string)qos0Event.Item1.Properties["subject"], "n/a");
+
+            Tuple<EventData, string> qos1Event = Assert.Single(ehMessages.Where(x => TelemetryQoS1Content.Equals(x.Item2, StringComparison.Ordinal)));
+
+            var qos0Notification = new Microsoft.Azure.Devices.Message(Encoding.UTF8.GetBytes(NotificationQoS0Content));
             qos0Notification.Properties[ConfigurationManager.AppSettings["IoTHub.QoSProperty"]] = "0";
-            qos0Notification.Properties[ConfigurationManager.AppSettings["IoTHub.TopicNameProperty"]] = "messages/devicebound/tips";
-            await serviceClient.SendAsync(deviceId, qos0Notification);
-            var qos1Notification = new Message(Encoding.UTF8.GetBytes(NotificationQoS1Content));
-            qos1Notification.Properties[ConfigurationManager.AppSettings["IoTHub.TopicNameProperty"]] = "messages/devicebound/firmware-update";
-            await serviceClient.SendAsync(deviceId, qos1Notification);
+            qos0Notification.Properties["subTopic"] = "tips";
+            await serviceClient.SendAsync(this.deviceId, qos0Notification);
+            var qos1Notification = new Microsoft.Azure.Devices.Message(Encoding.UTF8.GetBytes(NotificationQoS1Content));
+            qos1Notification.Properties["subTopic"] = "firmware-update";
+            await serviceClient.SendAsync(this.deviceId, qos1Notification);
 
-            await deviceScenarioTask;
+            await Task.WhenAny(testPromise.Task, Task.Delay(TimeSpan.FromMinutes(200)));
+
+            Assert.True(testPromise.Task.IsCompleted, "Test has timed out.");
 
             this.output.WriteLine(string.Format("Core test completed in {0}", sw.Elapsed));
 
             // making sure that device queue is empty.
             await Task.Delay(TimeSpan.FromSeconds(3));
-            Assert.Null(await deviceClient.ReceiveAsync(TimeSpan.FromSeconds(1)));
+            Message message = await deviceClient.ReceiveAsync(TimeSpan.FromSeconds(1));
+            Assert.True(message == null, string.Format("Message is not null: {0}", message));
+        }
+
+        static IEnumerable<TestScenarioStep> GetClientScenario(Func<object> currentMessageFunc, string clientId, string password)
+        {
+            yield return TestScenarioStep.Message(new ConnectPacket
+            {
+                ClientId = clientId,
+                Username = clientId,
+                Password = password,
+                KeepAliveInSeconds = 120,
+                WillTopicName = "last/word",
+                WillMessage = Unpooled.WrappedBuffer(Encoding.UTF8.GetBytes("oops"))
+            });
+
+            var connAckPacket = Assert.IsType<ConnAckPacket>(currentMessageFunc());
+            Assert.Equal(ConnectReturnCode.Accepted, connAckPacket.ReturnCode);
+
+            int subscribePacketId = GetRandomPacketId();
+            yield return TestScenarioStep.Message(new SubscribePacket
+            {
+                PacketId = subscribePacketId,
+                Requests = new[]
+                {
+                    new SubscriptionRequest(string.Format("devices/{0}/messages/devicebound/#", clientId), QualityOfService.ExactlyOnce)
+                }
+            });
+
+            var subAckPacket = Assert.IsType<SubAckPacket>(currentMessageFunc());
+            Assert.Equal(subscribePacketId, subAckPacket.PacketId);
+            Assert.Equal(1, subAckPacket.ReturnCodes.Count);
+            Assert.Equal(QualityOfService.AtLeastOnce, subAckPacket.ReturnCodes[0]);
+
+            int publishQoS1PacketId = GetRandomPacketId();
+            yield return TestScenarioStep.Messages(
+                new PublishPacket(QualityOfService.AtMostOnce, false, false)
+                {
+                    TopicName = string.Format("devices/{0}/messages/log/verbose/", clientId),
+                    Payload = Unpooled.WrappedBuffer(Encoding.UTF8.GetBytes("{\"test\": \"telemetry-QoS0\"}"))
+                },
+                new PublishPacket(QualityOfService.AtLeastOnce, false, false)
+                {
+                    PacketId = publishQoS1PacketId,
+                    TopicName = string.Format("devices/{0}/messages/events", clientId),
+                    Payload = Unpooled.WrappedBuffer(Encoding.UTF8.GetBytes("{\"test\": \"telemetry\"}"))
+                });
+            //new PublishPacket(QualityOfService.AtLeastOnce, false, false) { TopicName = "feedback/qos/One", Payload = Unpooled.WrappedBuffer(Encoding.UTF8.GetBytes("QoS 1 test. Different data length.")) });
+
+            var packets = new Packet[3];
+            for (int i = packets.Length - 1; i >= 0; i--)
+            {
+                packets[i] = Assert.IsAssignableFrom<Packet>(currentMessageFunc());
+                if (i > 0)
+                {
+                    yield return TestScenarioStep.MoreFeedbackExpected();
+                }
+            }
+
+            PubAckPacket pubAckPacket = Assert.Single(packets.OfType<PubAckPacket>());
+            Assert.Equal(publishQoS1PacketId, pubAckPacket.PacketId);
+
+            PublishPacket publishQoS0Packet = Assert.Single(packets.OfType<PublishPacket>().Where(x => x.QualityOfService == QualityOfService.AtMostOnce));
+            Assert.Equal(string.Format("devices/{0}/messages/devicebound/tips", clientId), publishQoS0Packet.TopicName);
+            Assert.Equal("{\"test\": \"fire and forget\"}", Encoding.UTF8.GetString(publishQoS0Packet.Payload.ToArray()));
+
+            PublishPacket publishQoS1Packet = Assert.Single(packets.OfType<PublishPacket>().Where(x => x.QualityOfService == QualityOfService.AtLeastOnce));
+            Assert.Equal(string.Format("devices/{0}/messages/devicebound/firmware-update", clientId), publishQoS1Packet.TopicName);
+            Assert.Equal("{\"test\": \"notify (at least once)\"}", Encoding.UTF8.GetString(publishQoS1Packet.Payload.ToArray()));
+
+            yield return TestScenarioStep.Messages(
+                PubAckPacket.InResponseTo(publishQoS1Packet),
+                DisconnectPacket.Instance);
+        }
+
+        static int GetRandomPacketId()
+        {
+            return Guid.NewGuid().GetHashCode() & ushort.MaxValue;
         }
     }
 }

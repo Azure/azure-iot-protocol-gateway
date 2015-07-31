@@ -40,7 +40,7 @@ namespace Gateway.Samples.Common
             get { return this.IsEnabled(EventLevel.Error, EventKeywords.None); }
         }
 
-        [Event(VerboseEventId)]
+        [Event(VerboseEventId, Level = EventLevel.Verbose)]
         public void Verbose(string message, string info)
         {
             if (this.IsVerboseEnabled)
@@ -49,7 +49,7 @@ namespace Gateway.Samples.Common
             }
         }
 
-        [Event(InfoEventId)]
+        [Event(InfoEventId, Level = EventLevel.Informational)]
         public void Info(string message, string info)
         {
             if (this.IsInfoEnabled)
@@ -73,7 +73,7 @@ namespace Gateway.Samples.Common
             }
         }
 
-        [Event(WarningEventId)]
+        [Event(WarningEventId, Level = EventLevel.Warning)]
         public void Warning(string message, string exception)
         {
             if (this.IsWarningEnabled)
@@ -91,7 +91,7 @@ namespace Gateway.Samples.Common
             }
         }
 
-        [Event(ErrorEventId)]
+        [Event(ErrorEventId, Level = EventLevel.Error)]
         public void Error(string message, string exception)
         {
             if (this.IsErrorEnabled)

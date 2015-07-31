@@ -11,8 +11,7 @@ namespace Microsoft.Azure.Devices.Gateway.Core.Mqtt
     {
         const string IotHubConnectionStringSetting = "IoTHub.ConnectionString"; // connection string to IoT Hub. Credentials can be overriden by device specific credentials coming from auth provider
         const string ConnectArrivalTimeoutSetting = "ConnectArrivalTimeout"; // timeout to close the network connection in absence of CONNECT packet
-        const string NoTelemetryAlertTimeoutSetting = "NoTelemetryAlertTimeout"; // timeout to trace warning for Zombie client (pings happen, no meaningful activity)
-        //const string MaxOutstandingInboundMessagesSetting = "MaxOutstandingInboundMessages"; // number of messages after which driver stops reading from network. Reading from network will resume once one of the accepted messages is completely processed.
+        const string MaxOutstandingInboundMessagesSetting = "MaxOutstandingInboundMessages"; // number of messages after which driver stops reading from network. Reading from network will resume once one of the accepted messages is completely processed.
         const string MaxOutstandingOutboundMessagesSetting = "MaxOutstandingOutboundMessages"; // number of messages in flight after which driver stops receiving messages from IoT Hub queue. Receiving will resume once one of the messages is completely processed.
         const string MaxKeepAliveTimeoutSetting = "MaxKeepAliveTimeout";
         const string DefaultPublishToClientQoSSetting = "DefaultPublishToClientQoS";
@@ -31,6 +30,7 @@ namespace Microsoft.Azure.Devices.Gateway.Core.Mqtt
         const string QoSPropertyDefaultValue = "mqtt-qos";
         const string WillTopicNameDefaultValue = "messages/events";
         const int MaxOutstandingOutboundMessagesDefaultValue = 1;
+        const int MaxOutstandingInboundMessagesDefaultValue = 16;
         const int MaxRetransmissionCountDefaultValue = 0;
 
         readonly string retainProperty;
@@ -43,6 +43,13 @@ namespace Microsoft.Azure.Devices.Gateway.Core.Mqtt
 
         public Settings(ISettingsProvider settingsProvider)
         {
+            int inboundMessages;
+            if (!settingsProvider.TryGetIntegerSetting(MaxOutstandingInboundMessagesSetting, out inboundMessages) || inboundMessages <= 0)
+            {
+                inboundMessages = MaxOutstandingInboundMessagesDefaultValue;
+            }
+            this.MaxOutstandingInboundMessages = Math.Min(inboundMessages, ushort.MaxValue);
+
             int outboundMessages;
             if (!settingsProvider.TryGetIntegerSetting(MaxOutstandingOutboundMessagesSetting, out outboundMessages) || outboundMessages <= 0)
             {
@@ -107,6 +114,8 @@ namespace Microsoft.Azure.Devices.Gateway.Core.Mqtt
 
         public int MaxOutstandingOutboundMessages { get; private set; }
 
+        public int MaxOutstandingInboundMessages { get; private set; }
+
         public TimeSpan? ConnectArrivalTimeout { get; private set; }
 
         public QualityOfService DefaultPublishToClientQoS { get; private set; }
@@ -150,7 +159,7 @@ namespace Microsoft.Azure.Devices.Gateway.Core.Mqtt
         /// </summary>
         public TimeSpan DeviceReceiveAckTimeout
         {
-            get { return this.deviceReceiveAckTimeout.Value; }
+            get { return this.deviceReceiveAckTimeout ?? TimeSpan.MinValue; }
         }
 
         public bool DeviceReceiveAckCanTimeout

@@ -7,14 +7,17 @@ namespace Microsoft.Azure.Devices.Gateway.Tests
     using System.Collections.Generic;
     using System.Globalization;
     using System.Linq;
+    using DotNetty.Buffers;
 
     public class TcpScenarioMessage
     {
-        public TcpScenarioMessage(int order, string name, bool isOut, int delay, int[][] omit = null, string content = null)
+        public TcpScenarioMessage(int order, string name, bool isOut, int delay, int[][] omit = null, string content = null,
+            Action<IByteBuffer, TcpScenarioMessage[]> contextUpdateAction = null)
         {
             this.Order = order;
             this.Name = name;
             this.Out = isOut;
+            this.ContextUpdateAction = contextUpdateAction;
             this.Delay = TimeSpan.FromMilliseconds(delay);
             this.Content = content == null ? new byte[0] : content.Split(' ').Select(x => (byte)int.Parse(x, NumberStyles.HexNumber)).ToArray();
             this.VerificationMaskMap = omit == null
@@ -30,7 +33,7 @@ namespace Microsoft.Azure.Devices.Gateway.Tests
                         mask = 1 << bitref[1]
                     })
                     .GroupBy(x => x.byteIndex, x => x.mask)
-                    .ToDictionary(x => x.Key - 1, x => x.Aggregate(0xFF, (s, v) => s & ~v));
+                    .ToDictionary(x => x.Key, x => x.Aggregate(0xFF, (s, v) => s & ~v));
         }
 
         public string Name { get; set; }
@@ -38,6 +41,8 @@ namespace Microsoft.Azure.Devices.Gateway.Tests
         public int Order { get; set; }
 
         public bool Out { get; set; }
+
+        public Action<IByteBuffer, TcpScenarioMessage[]> ContextUpdateAction { get; private set; }
 
         public TimeSpan Delay { get; set; }
 

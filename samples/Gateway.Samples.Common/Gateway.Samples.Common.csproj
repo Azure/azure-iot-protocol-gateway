@@ -32,27 +32,27 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="DotNetty.Buffers, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\DotNetty.0.1.0-alpha7\lib\net4.5\DotNetty.Buffers.dll</HintPath>
+      <HintPath>..\..\packages\DotNetty.0.1.1-alpha5\lib\net4.5\DotNetty.Buffers.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="DotNetty.Codecs, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\DotNetty.0.1.0-alpha7\lib\net4.5\DotNetty.Codecs.dll</HintPath>
+      <HintPath>..\..\packages\DotNetty.0.1.1-alpha5\lib\net4.5\DotNetty.Codecs.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="DotNetty.Codecs.Mqtt, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\DotNetty.0.1.0-alpha7\lib\net4.5\DotNetty.Codecs.Mqtt.dll</HintPath>
+      <HintPath>..\..\packages\DotNetty.0.1.1-alpha5\lib\net4.5\DotNetty.Codecs.Mqtt.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="DotNetty.Common, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\DotNetty.0.1.0-alpha7\lib\net4.5\DotNetty.Common.dll</HintPath>
+      <HintPath>..\..\packages\DotNetty.0.1.1-alpha5\lib\net4.5\DotNetty.Common.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="DotNetty.Handlers, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\DotNetty.0.1.0-alpha7\lib\net4.5\DotNetty.Handlers.dll</HintPath>
+      <HintPath>..\..\packages\DotNetty.0.1.1-alpha5\lib\net4.5\DotNetty.Handlers.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="DotNetty.Transport, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\DotNetty.0.1.0-alpha7\lib\net4.5\DotNetty.Transport.dll</HintPath>
+      <HintPath>..\..\packages\DotNetty.0.1.1-alpha5\lib\net4.5\DotNetty.Transport.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />

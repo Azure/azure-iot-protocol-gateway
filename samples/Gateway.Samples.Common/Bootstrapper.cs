@@ -21,7 +21,6 @@ namespace Gateway.Samples.Common
 
     public class Bootstrapper
     {
-        const int MqttPort = 1883;
         const int MqttsPort = 8883;
         const int ListenBacklogSize = 100; // 100 connections allowed pending accept
 
@@ -30,11 +29,11 @@ namespace Gateway.Samples.Common
         readonly Settings settings;
         readonly ISessionStateManager sessionStateManager;
         readonly IAuthenticationProvider authProvider;
+        readonly ITopicNameRouter topicNameRouter;
         X509Certificate2 tlsCertificate;
         IEventLoopGroup eventLoopGroup;
         IByteBufferAllocator bufferAllocator;
         IChannel serverChannel;
-        IChannel secureServerChannel;
 
         public Bootstrapper(ISettingsProvider settingsProvider, ISessionStateManager sessionStateManager)
         {
@@ -46,7 +45,8 @@ namespace Gateway.Samples.Common
             this.settingsProvider = settingsProvider;
             this.settings = new Settings(this.settingsProvider);
             this.sessionStateManager = sessionStateManager;
-            this.authProvider = new StubAuthenticationProvider();
+            this.authProvider = new PassThroughAuthenticationProvider();
+            this.topicNameRouter = new TopicNameRouter();
         }
 
         public Task CloseCompletion
@@ -56,9 +56,11 @@ namespace Gateway.Samples.Common
 
         public async Task RunAsync(X509Certificate2 certificate, int threadCount, CancellationToken cancellationToken)
         {
+            Contract.Requires(certificate != null);
+            Contract.Requires(threadCount > 0);
+
             try
             {
-                Contract.Requires(threadCount > 0);
 
                 BootstrapperEventSource.Log.Info("Starting", null);
 
@@ -67,16 +69,8 @@ namespace Gateway.Samples.Common
                 this.bufferAllocator = new PooledByteBufferAllocator(16 * 1024, 300 * 1024 * 1024 / threadCount); // reserve 300 MB of 16 KB buffers
 
                 ServerBootstrap bootstrap = this.SetupBootstrap();
-                this.serverChannel = await bootstrap.BindAsync(IPAddress.Any, MqttPort);
-                if (this.tlsCertificate == null)
-                {
-                    BootstrapperEventSource.Log.Info("No certificate has been provided. Skipping TLS endpoint initialization.", null);
-                }
-                else
-                {
-                    BootstrapperEventSource.Log.Info(string.Format("Initializing TLS endpoint with certificate {0}.", this.tlsCertificate.Thumbprint), null);
-                    this.secureServerChannel = await bootstrap.BindAsync(IPAddress.Any, MqttsPort);
-                }
+                BootstrapperEventSource.Log.Info(string.Format("Initializing TLS endpoint on port {0} with certificate {1}.", MqttsPort, this.tlsCertificate.Thumbprint), null);
+                this.serverChannel = await bootstrap.BindAsync(IPAddress.Any, MqttsPort);
 
                 cancellationToken.Register(this.CloseAsync);
 
@@ -98,10 +92,6 @@ namespace Gateway.Samples.Common
                 if (this.serverChannel != null)
                 {
                     await this.serverChannel.CloseAsync();
-                }
-                if (this.secureServerChannel != null)
-                {
-                    await this.secureServerChannel.CloseAsync();
                 }
                 await this.eventLoopGroup.ShutdownGracefullyAsync();
 
@@ -129,14 +119,11 @@ namespace Gateway.Samples.Common
                 .Channel<TcpServerSocketChannel>()
                 .ChildHandler(new ActionChannelInitializer<ISocketChannel>(channel =>
                 {
-                    if (((IPEndPoint)channel.RemoteAddress).Port == MqttsPort)
-                    {
-                        channel.Pipeline.AddLast(new TlsHandler(this.tlsCertificate));
-                    }
+                    channel.Pipeline.AddLast(TlsHandler.Server(this.tlsCertificate));
                     channel.Pipeline.AddLast(
-                        ServerEncoder.Instance,
-                        new ServerDecoder(maxInboundMessageSize),
-                        new BridgeDriver(this.settings, this.sessionStateManager, this.authProvider));
+                        MqttEncoder.Instance,
+                        new MqttDecoder(true, maxInboundMessageSize),
+                        new BridgeDriver(this.settings, this.sessionStateManager, this.authProvider, this.topicNameRouter));
                 }));
         }
     }

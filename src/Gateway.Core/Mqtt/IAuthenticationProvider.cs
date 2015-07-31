@@ -3,10 +3,11 @@
 
 namespace Microsoft.Azure.Devices.Gateway.Core.Mqtt
 {
+    using System.Net;
     using System.Threading.Tasks;
 
     public interface IAuthenticationProvider
     {
-        Task<AuthenticationResult> AuthenticateAsync(string clientId, string username, string password);
+        Task<AuthenticationResult> AuthenticateAsync(string clientId, string username, string password, EndPoint clientAddress);
     }
 }

@@ -3,6 +3,8 @@
 
 namespace Microsoft.Azure.Devices.Gateway.Tests
 {
+    using System;
+    using System.Collections.Generic;
     using Microsoft.Azure.Devices.Gateway.Core.Mqtt;
     using Xunit;
 
@@ -37,6 +39,20 @@ namespace Microsoft.Azure.Devices.Gateway.Tests
         {
             bool result = Util.CheckTopicFilterMatch(topicName, topicFilter);
             Assert.Equal(expectedResult, result);
+        }
+
+        [Fact]
+        public void Experiment()
+        {
+            var template = new UriTemplate("devices/{deviceId}/messages/outbound/{*subTopic}");
+            var baseUri = new Uri("http://whatever");
+            Uri bound = template.BindByName(baseUri, new Dictionary<string, string>
+            {
+                { "deviceId", "VINno" },
+                { "SubTopic", "toptop/toptoptop" },
+            });
+            var t2 = new UriTemplate("devices/{deviceId}/messages/log/{level=info}/{subject=n%2Fa}", true);
+            UriTemplateMatch match = t2.Match(baseUri, new Uri("http://whatever/devices/VINno/messages/log", UriKind.Absolute));
         }
     }
 }

@@ -1,0 +1,10 @@
+<mqttTopicRouting>
+  <inboundRoute to="telemetry">
+    <template>devices/{deviceId}/messages/events</template>
+    <template>devices/{deviceId}/messages/events/{*subTopic}</template>
+    <template>devices/{deviceId}/messages/log/{level=info}/{subject=n%2Fa}</template>
+  </inboundRoute>
+  <outboundRoute from="notification">
+    <template>devices/{deviceId}/messages/devicebound/{*subTopic}</template>
+  </outboundRoute>
+</mqttTopicRouting>

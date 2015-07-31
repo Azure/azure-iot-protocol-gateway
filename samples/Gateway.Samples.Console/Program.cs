@@ -8,6 +8,9 @@ namespace Gateway.Samples.Console
     using System.Security.Cryptography.X509Certificates;
     using System.Threading;
     using System.Threading.Tasks;
+    using DotNetty.Codecs.Mqtt;
+    using DotNetty.Common.Concurrency;
+    using DotNetty.Transport.Bootstrapping;
     using DotNetty.Transport.Channels;
     using Gateway.Samples.Common;
     using Microsoft.Azure.Devices.Gateway.Cloud;
@@ -35,6 +38,9 @@ namespace Gateway.Samples.Console
             eventListener.EnableEvents(BootstrapperEventSource.Log, EventLevel.Verbose);
             eventListener.EnableEvents(BridgeEventSource.Log, EventLevel.Verbose);
             eventListener.EnableEvents(ChannelEventSource.Log, EventLevel.Verbose);
+            eventListener.EnableEvents(BootstrapEventSource.Log, EventLevel.Verbose);
+            eventListener.EnableEvents(ExecutorEventSource.Log, EventLevel.Verbose);
+            eventListener.EnableEvents(MqttEventSource.Log, EventLevel.Verbose);
 
             try
             {

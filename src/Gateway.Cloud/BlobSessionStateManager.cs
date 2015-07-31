@@ -161,14 +161,14 @@ namespace Microsoft.Azure.Devices.Gateway.Cloud
             public SessionState(bool transient)
             {
                 this.IsTransient = transient;
-                this.Subscriptions = new List<SubscriptionRequest>();
+                this.Subscriptions = new List<Subscription>();
             }
 
             [IgnoreDataMember]
             public bool IsTransient { get; private set; }
 
             [DataMember(Name = "subscriptions")] // todo: name casing seems to be ignored by the serializer
-            public List<SubscriptionRequest> Subscriptions { get; private set; } // todo: own subscription type for serialization
+            public List<Subscription> Subscriptions { get; private set; } // todo: own subscription type for serialization
 
             [IgnoreDataMember]
             public string ETag { get; set; }

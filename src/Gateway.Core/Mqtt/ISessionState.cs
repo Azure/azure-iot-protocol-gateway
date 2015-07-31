@@ -4,11 +4,10 @@
 namespace Microsoft.Azure.Devices.Gateway.Core.Mqtt
 {
     using System.Collections.Generic;
-    using DotNetty.Codecs.Mqtt.Packets;
 
     public interface ISessionState
     {
-        List<SubscriptionRequest> Subscriptions { get; }
+        List<Subscription> Subscriptions { get; }
 
         bool IsTransient { get; }
 

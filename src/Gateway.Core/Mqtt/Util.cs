@@ -4,9 +4,12 @@
 namespace Microsoft.Azure.Devices.Gateway.Core.Mqtt
 {
     using System;
+    using System.IO;
+    using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Mqtt.Packets;
     using DotNetty.Transport.Channels;
+    using Microsoft.Azure.Devices.Client;
 
     static class Util
     {
@@ -73,29 +76,14 @@ namespace Microsoft.Azure.Devices.Gateway.Core.Mqtt
             return topicFilterIndex == topicFilter.Length && topicNameIndex == topicName.Length;
         }
 
-        public static string DeriveTopicName(Message message, Settings config)
-        {
-            string topicName;
-            object topicNameValue;
-            if (!message.Properties.TryGetValue(config.TopicNameProperty, out topicNameValue))
-            {
-                topicName = config.DefaultPublishToClientTopicName;
-            }
-            else
-            {
-                topicName = (string)topicNameValue;
-            }
-            return topicName;
-        }
-
         public static QualityOfService DeriveQoS(Message message, Settings config)
         {
             QualityOfService qos;
-            object qosValue;
+            string qosValue;
             if (message.Properties.TryGetValue(config.QoSProperty, out qosValue))
             {
                 int qosAsInt;
-                if (int.TryParse((string)qosValue, out qosAsInt))
+                if (int.TryParse(qosValue, out qosAsInt))
                 {
                     qos = (QualityOfService)qosAsInt;
                     if (qos > QualityOfService.ExactlyOnce)
@@ -117,11 +105,10 @@ namespace Microsoft.Azure.Devices.Gateway.Core.Mqtt
             return qos;
         }
 
-        public static Message ConvertPacketToMessage(PublishPacket packet, Settings settings)
+        public static Message CompleteMessageFromPacket(Message message, PublishPacket packet, Settings settings)
         {
-            var message = new Message(packet.Payload.ToArray()); // todo: allocation + copy: recyclable Stream impl over ByteBuf to avoid copying
             message.MessageId = Guid.NewGuid().ToString("N");
-            if (packet.Retain)
+            if (packet.RetainRequested)
             {
                 message.Properties[settings.RetainProperty] = IotHubTrueString;
             }
@@ -130,20 +117,55 @@ namespace Microsoft.Azure.Devices.Gateway.Core.Mqtt
                 message.Properties[settings.DupProperty] = IotHubTrueString;
             }
 
-            // todo: validate topic name
-            message.Properties[settings.TopicNameProperty] = packet.TopicName;
             return message;
         }
 
-        public static PublishPacket ComposePublishPacket(IChannelHandlerContext context, QualityOfService qos, Message message, string topicName)
+        public static async Task<PublishPacket> ComposePublishPacketAsync(IChannelHandlerContext context, Message message,
+            QualityOfService qos, string topicName)
         {
-            bool duplicate = false; // todo: base on message.DeliveryCount
+            bool duplicate = message.DeliveryCount > 0;
 
             var packet = new PublishPacket(qos, duplicate, false);
             packet.TopicName = topicName;
-            byte[] messageBytes = message.GetBytes();
-            packet.Payload = new UnpooledHeapByteBuffer(context.Channel.Allocator, messageBytes, messageBytes.Length); // todo: proper async streaming of payload (current might block for big messages)
+            using (Stream payloadStream = message.GetBodyStream())
+            {
+                long streamLength = payloadStream.Length;
+                if (streamLength > int.MaxValue)
+                {
+                    throw new InvalidOperationException(string.Format("Message size ({0} bytes) is too big to process.", streamLength));
+                }
+
+                int length = (int)streamLength;
+                IByteBuffer buffer = context.Channel.Allocator.Buffer(length, length);
+                await buffer.WriteBytesAsync(payloadStream, length);
+                packet.Payload = buffer;
+            }
             return packet;
+        }
+
+        internal static string ComposeIoTHubConnectionString(Settings settings, AuthenticationScope authScope, string keyName, string keyValue)
+        {
+            var csb = new IotHubConnectionStringBuilder(settings.IotHubConnectionString);
+            switch (authScope)
+            {
+                case AuthenticationScope.None:
+                    // use credentials from connection string
+                    break;
+                case AuthenticationScope.Device:
+                    csb.CredentialScope = CredentialScope.Device;
+                    csb.SharedAccessKeyName = null;
+                    csb.SharedAccessKey = keyValue;
+                    break;
+                case AuthenticationScope.Hub:
+                    csb.CredentialScope = CredentialScope.IotHub;
+                    csb.SharedAccessKeyName = keyName;
+                    csb.SharedAccessKey = keyValue;
+                    break;
+                default:
+                    throw new InvalidOperationException("Unexpected AuthenticationScope value: " + authScope);
+            }
+
+            return csb.ToString();
         }
     }
 }

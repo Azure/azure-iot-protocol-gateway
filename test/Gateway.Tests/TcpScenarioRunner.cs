@@ -149,7 +149,7 @@ namespace Microsoft.Azure.Devices.Gateway.Tests
             }
         }
 
-        async Task ExecuteScenarioAsync(IEnumerable<TcpScenarioMessage> scenarioMessages, Stream stream, int clientId, CancellationToken cancellationToken)
+        async Task ExecuteScenarioAsync(TcpScenarioMessage[] scenarioMessages, Stream stream, int clientId, CancellationToken cancellationToken)
         {
             try
             {
@@ -182,13 +182,7 @@ namespace Microsoft.Azure.Devices.Gateway.Tests
                         {
                             int pendingLength = draftMessages.Min(x => x.Content.Length);
                             bytesToRead = pendingLength - bytesToRead;
-                            do
-                            {
-                                int read = await stream.ReadAsync(buffer.Array, buffer.WriterIndex + buffer.ArrayOffset, bytesToRead, cancellationToken);
-                                // todo: support timeout
-                                buffer.SetWriterIndex(buffer.WriterIndex + read);
-                            }
-                            while (buffer.WriterIndex - buffer.ReaderIndex < bytesToRead);
+                            await buffer.WriteBytesAsync(stream, bytesToRead, cancellationToken);
 
                             bool matched = false;
                             foreach (TcpScenarioMessage message in draftMessages.Where(x => x.Content.Length == pendingLength).ToArray())
@@ -198,6 +192,11 @@ namespace Microsoft.Azure.Devices.Gateway.Tests
                                 {
                                     matched = true;
                                     pendingMessages.Remove(message);
+                                    if (message.ContextUpdateAction != null)
+                                    {
+                                        buffer.SetReaderIndex(0);
+                                        message.ContextUpdateAction(buffer, scenarioMessages);
+                                    }
                                 }
                                 else
                                 {
