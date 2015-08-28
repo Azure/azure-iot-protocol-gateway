@@ -28,6 +28,6 @@ To deploy Protocol Gateway you would also need Azure PowerShell installed.
 
 ## How to use
 
-- Use provided samples as a starting point. Check [Samples Walkthrough](samples/walkthrough.md) for better description.
+- Use provided samples as a starting point. Check [Samples Walkthrough](samples/Walkthrough.md) for better description.
 - Customize the code to accommodate your scenario, e.g. add compression, encryption, custom authentication provider, change buffer allocation configuration or number of executor threads.
 - Cloud sample is bundled with deploy.ps1 script that can be used to deploy Protocol Gateway to Azure as Cloud Service.
