@@ -1,0 +1,89 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProtocolGateway.Samples.Console", "samples\ProtocolGateway.Samples.Console\ProtocolGateway.Samples.Console.csproj", "{40FFE4DB-08C4-46C0-87A1-579B87C367B6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProtocolGateway.Tests", "test\ProtocolGateway.Tests\ProtocolGateway.Tests.csproj", "{6A13DA33-5BCC-4479-9EBA-C96F62AAD974}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProtocolGateway.Core", "src\ProtocolGateway.Core\ProtocolGateway.Core.csproj", "{ED3D19E8-E6A4-41F2-A667-5E543C3BCEE2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{40E01D4A-EFB5-4BE5-A267-0C0DD70F0C75}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{704AB71A-852A-4B00-8016-9B415DFD9375}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{9F27B381-3559-42D0-9EDE-0637E02ADFC8}"
+	ProjectSection(SolutionItems) = preProject
+		samples\deploy.ps1 = samples\deploy.ps1
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProtocolGateway.Providers.CloudStorage", "src\ProtocolGateway.Providers.CloudStorage\ProtocolGateway.Providers.CloudStorage.csproj", "{AC34C945-61DE-4700-BD42-2B19A441B4C3}"
+EndProject
+Project("{CC5FD16D-436D-48AD-A40C-5A424C6E3E79}") = "ProtocolGateway.Samples.Cloud", "samples\ProtocolGateway.Samples.Cloud\ProtocolGateway.Samples.Cloud.ccproj", "{67816602-2130-47E2-82C7-ECC315797625}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProtocolGateway.Samples.Cloud.Host", "samples\ProtocolGateway.Samples.Cloud.Host\ProtocolGateway.Samples.Cloud.Host.csproj", "{9CD3E054-23AD-41A2-93B5-31A7A8CFB1CF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "shared", "shared", "{0CED177C-7897-45DF-8328-5F14ED8A0E5C}"
+	ProjectSection(SolutionItems) = preProject
+		samples\shared\protocol-gateway.contoso.com.pfx = samples\shared\protocol-gateway.contoso.com.pfx
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProtocolGateway.Samples.Common", "samples\ProtocolGateway.Samples.Common\ProtocolGateway.Samples.Common.csproj", "{5BC6E03A-7516-4AAB-8191-1E187B8EE995}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProtocolGateway.Tests.Load", "test\ProtocolGateway.Tests.Load\ProtocolGateway.Tests.Load.csproj", "{BE074EB4-C7AB-42D4-8841-29117CC44983}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{40FFE4DB-08C4-46C0-87A1-579B87C367B6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{40FFE4DB-08C4-46C0-87A1-579B87C367B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{40FFE4DB-08C4-46C0-87A1-579B87C367B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{40FFE4DB-08C4-46C0-87A1-579B87C367B6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6A13DA33-5BCC-4479-9EBA-C96F62AAD974}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6A13DA33-5BCC-4479-9EBA-C96F62AAD974}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6A13DA33-5BCC-4479-9EBA-C96F62AAD974}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6A13DA33-5BCC-4479-9EBA-C96F62AAD974}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ED3D19E8-E6A4-41F2-A667-5E543C3BCEE2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ED3D19E8-E6A4-41F2-A667-5E543C3BCEE2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ED3D19E8-E6A4-41F2-A667-5E543C3BCEE2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ED3D19E8-E6A4-41F2-A667-5E543C3BCEE2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AC34C945-61DE-4700-BD42-2B19A441B4C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AC34C945-61DE-4700-BD42-2B19A441B4C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AC34C945-61DE-4700-BD42-2B19A441B4C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AC34C945-61DE-4700-BD42-2B19A441B4C3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{67816602-2130-47E2-82C7-ECC315797625}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{67816602-2130-47E2-82C7-ECC315797625}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{67816602-2130-47E2-82C7-ECC315797625}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{67816602-2130-47E2-82C7-ECC315797625}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9CD3E054-23AD-41A2-93B5-31A7A8CFB1CF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9CD3E054-23AD-41A2-93B5-31A7A8CFB1CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9CD3E054-23AD-41A2-93B5-31A7A8CFB1CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9CD3E054-23AD-41A2-93B5-31A7A8CFB1CF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5BC6E03A-7516-4AAB-8191-1E187B8EE995}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5BC6E03A-7516-4AAB-8191-1E187B8EE995}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5BC6E03A-7516-4AAB-8191-1E187B8EE995}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5BC6E03A-7516-4AAB-8191-1E187B8EE995}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BE074EB4-C7AB-42D4-8841-29117CC44983}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BE074EB4-C7AB-42D4-8841-29117CC44983}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BE074EB4-C7AB-42D4-8841-29117CC44983}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BE074EB4-C7AB-42D4-8841-29117CC44983}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{40FFE4DB-08C4-46C0-87A1-579B87C367B6} = {9F27B381-3559-42D0-9EDE-0637E02ADFC8}
+		{6A13DA33-5BCC-4479-9EBA-C96F62AAD974} = {704AB71A-852A-4B00-8016-9B415DFD9375}
+		{ED3D19E8-E6A4-41F2-A667-5E543C3BCEE2} = {40E01D4A-EFB5-4BE5-A267-0C0DD70F0C75}
+		{AC34C945-61DE-4700-BD42-2B19A441B4C3} = {40E01D4A-EFB5-4BE5-A267-0C0DD70F0C75}
+		{67816602-2130-47E2-82C7-ECC315797625} = {9F27B381-3559-42D0-9EDE-0637E02ADFC8}
+		{9CD3E054-23AD-41A2-93B5-31A7A8CFB1CF} = {9F27B381-3559-42D0-9EDE-0637E02ADFC8}
+		{0CED177C-7897-45DF-8328-5F14ED8A0E5C} = {9F27B381-3559-42D0-9EDE-0637E02ADFC8}
+		{5BC6E03A-7516-4AAB-8191-1E187B8EE995} = {9F27B381-3559-42D0-9EDE-0637E02ADFC8}
+		{BE074EB4-C7AB-42D4-8841-29117CC44983} = {704AB71A-852A-4B00-8016-9B415DFD9375}
+	EndGlobalSection
+EndGlobal

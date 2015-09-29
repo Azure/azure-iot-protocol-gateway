@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ServiceConfiguration serviceName="Contoso.ProtocolGateway" xmlns="http://schemas.microsoft.com/ServiceHosting/2008/10/ServiceConfiguration" osFamily="4" osVersion="*" schemaVersion="2015-04.2.6">
+  <Role name="ProtocolGateway.Samples.Cloud.Host">
+    <Instances count="2" />
+    <ConfigurationSettings>
+      <Setting name="IoTHubConnectionString" value="[parameters('iotHubConnectionString')]" />
+      <Setting name="MaxPendingInboundMessages" value="10" />
+      <Setting name="MaxPendingOutboundMessages" value="10" />
+      <Setting name="DeviceReceiveAckTimeout" value="00:01:00" />
+      <Setting name="MaxOutboundRetransmissionCount" value="2" />
+      <Setting name="MaxInboundMessageSize" value="262144" />
+      <Setting name="ConnectArrivalTimeout" value="00:01:00" />
+      <Setting name="MaxKeepAliveTimeout" value="00:10:00" />
+      <Setting name="DefaultPublishToClientQoS" value="1" />
+      <Setting name="RetainPropertyName" value="mqtt-retain" />
+      <Setting name="DupPropertyName" value="mqtt-dup" />
+      <Setting name="QoSPropertyName" value="mqtt-qos" />
+      <Setting name="BlobSessionStatePersistenceProvider.StorageConnectionString" value="DefaultEndpointsProtocol=https;AccountName=[parameters('storageAccountName')];AccountKey=[parameters('storageAccountKey')]" />
+      <Setting name="BlobSessionStatePersistenceProvider.StorageContainerName" value="mqtt-sessions" />
+      <Setting name="TableQos2StatePersistenceProvider.StorageConnectionString" value="DefaultEndpointsProtocol=https;AccountName=[parameters('storageAccountName')];AccountKey=[parameters('storageAccountKey')]" />
+      <Setting name="TableQos2StatePersistenceProvider.StorageTableName" value="mqttqos2" />
+      <Setting name="TlsCertificateThumbprint" value="[parameters('tlsCertficateThumbprint')]" />
+      <Setting name="Microsoft.WindowsAzure.Plugins.Diagnostics.ConnectionString" value="DefaultEndpointsProtocol=https;AccountName=[parameters('storageAccountName')];AccountKey=[parameters('storageAccountKey')]" />
+    </ConfigurationSettings>
+    <Certificates>
+      <Certificate name="TlsCertificate" thumbprint="0000000000000000000000000000000000000000" thumbprintAlgorithm="sha1" />
+    </Certificates>
+  </Role>
+</ServiceConfiguration>

@@ -1,0 +1,24 @@
+<appSettings>
+  <!-- uncomment next line to connect to running protocol gateway deployment instead of starting in-process protocol gateway during test initialization -->
+  <!--<add key="End2End.ServerAddress" value="TODO: protocol gateway deployment IP-address" />-->
+  <!-- uncomment next line to use an existing device. WARNING: any existing messages in device queue will be completed -->
+  <!--<add key="End2End.DeviceName" value="TODO: test device name" />-->
+
+  <!-- Protocol Gateway settings -->
+  <add key="IoTHubConnectionString" value="TODO: IoT Hub connection string to connect to" />
+  <add key="MaxPendingInboundMessages" value="16" />
+  <add key="MaxPendingOutboundMessages" value="10" />
+  <add key="DeviceReceiveAckTimeout" value="00:01:00" />
+  <add key="MaxOutboundRetransmissionCount" value="2" />
+  <add key="MaxInboundMessageSize" value="262144" />
+  <add key="ConnectArrivalTimeout" value="00:01:00" />
+  <add key="MaxKeepAliveTimeout" value="00:10:00" />
+  <add key="DefaultPublishToClientQoS" value="1" />
+  <add key="RetainPropertyName" value="mqtt-retain" />
+  <add key="DupPropertyName" value="mqtt-dup" />
+  <add key="QoSPropertyName" value="mqtt-qos" />
+  <add key="BlobSessionStatePersistenceProvider.StorageConnectionString" value="UseDevelopmentStorage=true" />
+  <add key="BlobSessionStatePersistenceProvider.StorageContainerName" value="mqtt-sessions" />
+  <add key="TableQos2StatePersistenceProvider.StorageConnectionString" value="UseDevelopmentStorage=true" />
+  <add key="TableQos2StatePersistenceProvider.StorageTableName" value="mqttqos2" />
+</appSettings>

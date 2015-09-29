@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<DiagnosticsConfiguration xmlns="http://schemas.microsoft.com/ServiceHosting/2010/10/DiagnosticsConfiguration">
+  <PublicConfig xmlns="http://schemas.microsoft.com/ServiceHosting/2010/10/DiagnosticsConfiguration">
+    <WadCfg>
+      <DiagnosticMonitorConfiguration overallQuotaInMB="8192">
+        <DiagnosticInfrastructureLogs scheduledTransferLogLevelFilter="Error" />
+        <Directories scheduledTransferPeriod="PT5M" />
+        <PerformanceCounters scheduledTransferPeriod="PT5M">
+          <PerformanceCounterConfiguration counterSpecifier="\Processor(_Total)\% Processor Time" sampleRate="PT30S" />
+          <PerformanceCounterConfiguration counterSpecifier="\Memory\Available MBytes" sampleRate="PT30S" />
+          <PerformanceCounterConfiguration counterSpecifier="\Process(WaWorkerHost)\% Processor Time" sampleRate="PT30S" />
+          <PerformanceCounterConfiguration counterSpecifier="\Process(WaWorkerHost)\Private Bytes" sampleRate="PT30S" />
+          <PerformanceCounterConfiguration counterSpecifier="\Process(WaWorkerHost)\Thread Count" sampleRate="PT30S" />
+          <PerformanceCounterConfiguration counterSpecifier="\.NET CLR Memory(_Global_)\% Time in GC" sampleRate="PT30S" />
+          <PerformanceCounterConfiguration counterSpecifier="\Azure IoT protocol gateway\Connections Established Total" sampleRate="PT30S" />
+          <PerformanceCounterConfiguration counterSpecifier="\Azure IoT protocol gateway\Connections Current" sampleRate="PT30S" />
+          <PerformanceCounterConfiguration counterSpecifier="\Azure IoT protocol gateway\Connections Established/sec" sampleRate="PT30S" />
+          <PerformanceCounterConfiguration counterSpecifier="\Azure IoT protocol gateway\Failed Connections (due to Auth Issues)/sec" sampleRate="PT30S" />
+          <PerformanceCounterConfiguration counterSpecifier="\Azure IoT protocol gateway\Failed Connections (due to Operational Errors)/sec" sampleRate="PT30S" />
+          <PerformanceCounterConfiguration counterSpecifier="\Azure IoT protocol gateway\MQTT Packets Received/sec" sampleRate="PT30S" />
+          <PerformanceCounterConfiguration counterSpecifier="\Azure IoT protocol gateway\MQTT Packets Sent/sec" sampleRate="PT30S" />
+          <PerformanceCounterConfiguration counterSpecifier="\Azure IoT protocol gateway\MQTT PUBLISH packets Received/sec" sampleRate="PT30S" />
+          <PerformanceCounterConfiguration counterSpecifier="\Azure IoT protocol gateway\MQTT PUBLISH packets Sent/sec" sampleRate="PT30S" />
+          <PerformanceCounterConfiguration counterSpecifier="\Azure IoT protocol gateway\Messages Received/sec" sampleRate="PT30S" />
+          <PerformanceCounterConfiguration counterSpecifier="\Azure IoT protocol gateway\Messages Sent/sec" sampleRate="PT30S" />
+          <PerformanceCounterConfiguration counterSpecifier="\Azure IoT protocol gateway\Messages Rejected/sec" sampleRate="PT30S" />
+          <PerformanceCounterConfiguration counterSpecifier="\Azure IoT protocol gateway\Outbound Message Processing Time, msec" sampleRate="PT30S" />
+          <PerformanceCounterConfiguration counterSpecifier="\Azure IoT protocol gateway\Inbound Message Processing Time, msec" sampleRate="PT30S" />
+        </PerformanceCounters>
+        <WindowsEventLog scheduledTransferPeriod="PT5M">
+          <DataSource name="Application!*" />
+        </WindowsEventLog>
+        <CrashDumps>
+          <CrashDumpConfiguration processName="WaWorkerHost.exe" />
+        </CrashDumps>
+        <Logs scheduledTransferPeriod="PT5M" scheduledTransferLogLevelFilter="Error" />
+      </DiagnosticMonitorConfiguration>
+    </WadCfg>
+    <StorageAccount />
+  </PublicConfig>
+  <PrivateConfig xmlns="http://schemas.microsoft.com/ServiceHosting/2010/10/DiagnosticsConfiguration">
+    <StorageAccount name="" endpoint="" />
+  </PrivateConfig>
+  <IsEnabled>true</IsEnabled>
+</DiagnosticsConfiguration>
