@@ -164,6 +164,7 @@ The protocol gateway is composed from the following components:
     - **Session State Manager** provides persistence for MQTT session state between connections.
     - **Message Delivery State Manager** provides persistence for delivery state tracking of MQTT QoS 2 messages (from IoT Hub to devices only).
     - **Topic Name Router** implements translation between MQTT topic names and IoT Hub endpoints and message properties.
+    - **Request-Acknowledgement Pair Processor** encapsulates logic of ordered delivery of messages with acknowledgement. Optionally, it also supports timeout-based retransmission of unacknowledged messages.
 
 
 ## Scenarios
@@ -219,14 +220,39 @@ This section outlines the interactions between components of the protocol gatewa
 6. `MqttIotHubAdapter` adds the parsed variables as message properties and sends it to IoT Hub through `IDeviceClient`, which was acquired during connection establishement in step 12 above.
 7. If the QoS flag of the PUBLISH packet is set to 1 ("at least once"), `MqttIotHubAdapter` will send a PUBACK packet through the channel pipeline, which is similar to steps 13-16 above to process a CONNECT packet.
 
-### Protocol gateway receives message from IoT Hub (QoS 1) 
-Once `MqttIotHubAdapter` receives a messages from IoT Hub at any time after it has opened a receive link to IoT Hub:
+### Protocol gateway receives message from IoT Hub 
+Once `MqttIotHubAdapter` has opened a receive link to IoT hub, it can receive a message at any time. When a message is received:
 
 1. `MqttIotHubAdapter` calls the `ITopicNameRouter.TryMapRouteToTopicName` method. It prepares a topic name that will be used for the PUBLISH packet to the device.
 2. `MqttIotHubAdapter` then matches the topic name against the list of subscriptions for the device. If the topic name does not match any subscription filter from the list, `MqttIotHubAdapter` rejects the message.
 3. Based on the matched subscription and requested QoS on the message, `MqttIotHubAdapter` decides which QoS to use for the PUBLISH packet. 
-4. For QoS=0 or QoS=1 messages, `MqttIotHubAdapter` will send a PUBLISH packet through the pipeline (see steps 13-16 above for CONNECT processing). The message exchange for QoS=0 is completed with this step; processing For QoS=1 messages continues with the next step. Please note that the processing for QoS=2 messages is descibed as a separate scenario following this one.
-5. `MqttIotHubAdapter` enqueues an entry with the message information (packet identifier) in an ACK-pending queue. The ACK-pending queue is used for tracking messages in-flight that await a PUBACK response for the device.
-6. Eventually (assuming normal operation), PUBACK for the PUBLISH packet is received from the device and gets through the pipeline to `MqttIotHubAdapter`
-7. `MqttIotHubAdapter` peeks at the top message from the ACK-pending queue, and if it does not match the received PUBACK packet then `MqttIotHubAdapter` will stop processing (in this case skip following steps).
-8. `MqttIotHubAdapter` dequeues the message from the ACK-pending queue and completes the message on IoT Hub.
+4. If QoS=0,
+    - `MqttIotHubAdapter` sends a PUBLISH packet through the pipeline (see steps 13-16 above for CONNECT processing)
+    - At the same time `MqttIotHubAdater` deletes the message from IoT hub.
+5. If QoS=1,
+    - `MqttIotHubAdapter` posts a PUBLISH packet to `RequestAckPairProcessor` responsible for handling PUBLISH-PUBACK communication.
+    - `RequestAckPairProcessor` sends PUBLISH packet through the pipeline (see steps 13-16 above for CONNECT processing).
+    - At the same time `RequestAckPairProcessor` enqueues an entry with the message state in its internal ACK-pending queue. The ACK-pending queue is used for tracking messages in-flight that await on acknowledgement messages to arrive from the device.
+    - Eventually (assuming normal operation), the PUBACK packet corresponding to the PUBLISH packet is received from the device and goes through the pipeline to `MqttIotHubAdapter`.
+    - `MqttIotHubAdapter` dispatches the PUBACK packet to `RequestAckPairProcessor`.
+    - `RequestAckPairProcessor` peeks at the top message from its ACK-pending queue, and if it does not match the received PUBACK packet, the PUBACK packet gets discarded and processing stops (the following steps are skipped).
+    - `RequestAckPairProcessor` dequeues the message from the ACK-pending queue and calls `MqttIotHubAdapter` to complete acknowledgement.
+    - `MqttIotHubAdapter` deletes the message from IoT hub.
+5. If QoS=2,
+    - `MqttIotHubAdapter` posts a PUBLISH packet to `RequestAckPairProcessor` responsible for handling PUBLISH-PUBREC communication.
+    - `RequestAckPairProcessor` sends a PUBLISH packet through the pipeline (see steps 13-16 above for CONNECT processing).
+    - At the same time the `RequestAckPairProcessor` enqueues an entry with the message state in its internal ACK-pending queue.
+    - Eventually (assuming normal operation), the PUBREC packet corresponding to the PUBLISH packet is received from the device and gets through the pipeline to `MqttIotHubAdapter`.
+    - `MqttIotHubAdapter` dispatches the PUBREC packet to `RequestAckPairProcessor`.
+    - `RequestAckPairProcessor` peeks at the top message from its ACK-pending queue, and if it does not match the received PUBREC packet, the PUBREC packet gets discarded and processing stops (the following steps are skipped).
+    - `RequestAckPairProcessor` dequeues the message from the ACK-pending queue and calls `MqttIotHubAdapter` to complete acknowledgement.
+    - `MqttIotHubAdapter` calls `IQos2StatePersistenceProvider.SetMessageAsync` to persist the fact of acknowledged PUBLISH packet delivery.
+    - `MqttIotHubAdapter` posts a PUBREL packet to the `RequestAckPairProcessor` responsible for handling PUBREL-PUBCOMP communication.
+    - `RequestAckPairProcessor` sends the PUBREL packet through the pipeline (see steps 13-16 above for CONNECT processing).
+    - At the same time the `RequestAckPairProcessor` enqueues an entry with the message state in its internal ACK-pending queue.
+    - Eventually (assuming normal operation), the PUBCOMP packet corresponding to the PUBREL packet is received from the device and goes through the pipeline to `MqttIotHubAdapter`.
+    - `MqttIotHubAdapter` dispatches the PUBCOMP packet to `RequestAckPairProcessor`.
+    - `RequestAckPairProcessor` peeks at the top message from its ACK-pending queue, and if the message does not match the received PUBCOMP packet, the PUBCOMP packet gets discarded and processing stops (the following steps are skipped).
+    - `RequestAckPairProcessor` dequeues the message from the ACK-pending queue and calls `MqttIotHubAdapter` to complete acknowledgement.
+    - `MqttIotHubAdapter` deletes the message from IoT hub
+    - `MqttIotHubAdapter` calls `IQos2StatePersistenceProvider.DeleteMessageAsync` to remove the QoS 2 delivery record.
