@@ -8,7 +8,7 @@ namespace Gateway.Tests.Load
 
     class Options
     {
-        [OptionArray('r', "runners", HelpText = "runners configuration in a form of threes: name start-frequency count. Known scenarios are \"stable\", \"unstable\"")]
+        [OptionArray('r', "runners", HelpText = "runners configuration in a form of threes: name start-frequency count. Known scenarios are \"stable\", \"occasional\"")]
         public string[] Runners { get; set; }
         //[Option('m', "multiply", DefaultValue = 1, HelpText = "multiplication factor per scenario numbers.")]
         //public int Multiply { get; set; }
