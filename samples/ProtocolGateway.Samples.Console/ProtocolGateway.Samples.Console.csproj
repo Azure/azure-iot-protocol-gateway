@@ -68,12 +68,12 @@
       <HintPath>..\..\packages\Microsoft.Azure.Devices.Client.1.0.0-preview-002\lib\net45\Microsoft.Azure.Devices.Client.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Azure.Devices.ProtocolGateway.Core, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\packages\Microsoft.Azure.Devices.ProtocolGateway.1.0.0-preview-001\lib\net451\Microsoft.Azure.Devices.ProtocolGateway.Core.dll</HintPath>
+      <HintPath>..\..\packages\Microsoft.Azure.Devices.ProtocolGateway.1.0.0-preview-002\lib\net451\Microsoft.Azure.Devices.ProtocolGateway.Core.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\packages\Microsoft.Azure.Devices.ProtocolGateway.1.0.0-preview-001\lib\net451\Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage.dll</HintPath>
+      <HintPath>..\..\packages\Microsoft.Azure.Devices.ProtocolGateway.1.0.0-preview-002\lib\net451\Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Data.Edm, Version=5.6.2.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
