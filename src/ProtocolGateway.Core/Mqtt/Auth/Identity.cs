@@ -25,7 +25,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth
         public static Identity Parse(string username)
         {
             int delimiterPos = username.IndexOf("/", StringComparison.Ordinal);
-            string iotHubName = username.Substring(0, delimiterPos).Substring(0, username.IndexOf('.'));
+            if (delimiterPos < 0)
+            {
+                throw new FormatException(string.Format("Invalid username format: {0}", username));
+            }
+            string iotHubName = username.Substring(0, delimiterPos);
             string deviceId = username.Substring(delimiterPos + 1);
 
             return new Identity(iotHubName, deviceId);

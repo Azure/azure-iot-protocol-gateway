@@ -181,8 +181,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
 
             int protocolGatewayPort = this.ProtocolGatewayPort;
 
-            string iotHubConnString = ConfigurationManager.AppSettings["IoTHubConnectionString"];
-            string iotHubConnectionString = iotHubConnString;
+            string iotHubConnectionString = ConfigurationManager.AppSettings["IoTHubConnectionString"];
             IotHubConnectionStringBuilder hubConnectionStringBuilder = IotHubConnectionStringBuilder.Create(iotHubConnectionString);
             bool deviceNameProvided;
             this.deviceId = ConfigurationManager.AppSettings["End2End.DeviceName"];
@@ -218,7 +217,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
                 }
                     .ToSignature();
 
-            EventHubClient eventHubClient = EventHubClient.CreateFromConnectionString(iotHubConnString, "messages/events");
+            EventHubClient eventHubClient = EventHubClient.CreateFromConnectionString(iotHubConnectionString, "messages/events");
             EventHubConsumerGroup ehGroup = eventHubClient.GetDefaultConsumerGroup();
 
             string[] partitionIds = (await eventHubClient.GetRuntimeInformationAsync()).PartitionIds;
@@ -240,7 +239,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
                     TlsHandler.Client(targetHost, null, (sender, certificate, chain, errors) => true),
                     MqttEncoder.Instance,
                     new MqttDecoder(false, 256 * 1024),
-                    new TestScenarioRunner(cmf => GetClientScenario(cmf, this.deviceId, this.deviceSas), testPromise, CommunicationTimeout, CommunicationTimeout),
+                    new TestScenarioRunner(cmf => GetClientScenario(cmf, hubConnectionStringBuilder.HostName, this.deviceId, this.deviceSas), testPromise, CommunicationTimeout, CommunicationTimeout),
                     new XUnitLoggingHandler(this.output))));
             IChannel clientChannel = await bootstrap.ConnectAsync(this.ServerAddress, protocolGatewayPort);
             this.ScheduleCleanup(async () =>
@@ -325,13 +324,13 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
             return ehMessages;
         }
 
-        static IEnumerable<TestScenarioStep> GetClientScenario(Func<object> currentMessageFunc, string clientId, string password)
+        static IEnumerable<TestScenarioStep> GetClientScenario(Func<object> currentMessageFunc, string iotHubName, string clientId, string password)
         {
             yield return TestScenarioStep.Write(new ConnectPacket
             {
                 ClientId = clientId,
                 HasUsername = true,
-                Username = clientId,
+                Username = iotHubName + "/" + clientId,
                 HasPassword = true,
                 Password = password,
                 KeepAliveInSeconds = 120,

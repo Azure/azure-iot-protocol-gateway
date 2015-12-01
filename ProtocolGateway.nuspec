@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>Microsoft.Azure.Devices.ProtocolGateway</id>
-    <version>1.0.0-preview-002</version>
+    <version>1.0.0-preview-003</version>
     <title>Microsoft Azure IoT protocol gateway framework</title>
     <authors>Microsoft Azure</authors>
     <owners>Microsoft Azure</owners>

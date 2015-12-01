@@ -168,7 +168,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
         internal static IAuthenticationMethod DeriveAuthenticationMethod(IAuthenticationMethod currentAuthenticationMethod, AuthenticationResult authenticationResult)
         {
-            string deviceId = authenticationResult.Identity.ToString();
+            string deviceId = authenticationResult.Identity.DeviceId;
             switch (authenticationResult.Properties.Scope)
             {
                 case AuthenticationScope.None:
