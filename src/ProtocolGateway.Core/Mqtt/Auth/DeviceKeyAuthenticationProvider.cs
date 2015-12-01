@@ -14,7 +14,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth
             Identity identity = Identity.Parse(username);
             if (!clientId.Equals(identity.DeviceId, StringComparison.Ordinal))
             {
-                return Task.FromResult(AuthenticationResult.Failure());
+                return Task.FromResult((AuthenticationResult)null);
             }
             return Task.FromResult(AuthenticationResult.SuccessWithDeviceKey(identity, password));
         }

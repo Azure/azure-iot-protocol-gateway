@@ -404,7 +404,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     {
                         throw new InvalidOperationException(
                             string.Format("Device ID provided in topic name ({0}) does not match ID of the device publishing message ({1}). IoT Hub Name: {2}",
-                            messageDeviceId, this.identity.DeviceId, this.identity.IoTHubName));
+                            messageDeviceId, this.identity.DeviceId, this.identity.IoTHubHostName));
                     }
                     message.Properties.Remove(DeviceIdParam);
                 }
@@ -869,7 +869,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 this.stateFlags = StateFlags.ProcessingConnect;
                 AuthenticationResult authResult = await this.authProvider.AuthenticateAsync(packet.ClientId,
                     packet.Username, packet.Password, context.Channel.RemoteAddress);
-                if (!authResult.IsSuccessful)
+                if (authResult == null)
                 {
                     connAckSent = true;
                     await Util.WriteMessageAsync(context, new ConnAckPacket

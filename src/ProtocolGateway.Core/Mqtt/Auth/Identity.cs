@@ -7,19 +7,19 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth
 
     public sealed class Identity
     {
-        public string IoTHubName { get; private set; }
+        public string IoTHubHostName { get; private set; }
 
         public string DeviceId { get; private set; }
 
-        public Identity(string iotHubName, string deviceId)
+        public Identity(string iotHubHostName, string deviceId)
         {
-            this.IoTHubName = iotHubName;
+            this.IoTHubHostName = iotHubHostName;
             this.DeviceId = deviceId;
         }
 
         public override string ToString()
         {
-            return this.IoTHubName + "/" + this.DeviceId;
+            return this.IoTHubHostName + "/" + this.DeviceId;
         }
 
         public static Identity Parse(string username)
