@@ -15,46 +15,46 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth
             return FailedResult;
         }
 
-        public static AuthenticationResult SuccessWithSasToken(string deviceId, string token)
+        public static AuthenticationResult SuccessWithSasToken(Identity identity, string token)
         {
             return new AuthenticationResult
             {
                 IsSuccessful = true,
-                DeviceId = deviceId,
                 Scope = AuthenticationScope.SasToken,
-                Secret = token
+                Secret = token,
+                Identity = identity
             };
         }
 
-        public static AuthenticationResult SuccessWithHubKey(string deviceId, string keyName, string keyValue)
+        public static AuthenticationResult SuccessWithHubKey(Identity identity, string keyName, string keyValue)
         {
             return new AuthenticationResult
             {
                 IsSuccessful = true,
-                DeviceId = deviceId,
+                Identity = identity,
                 Scope = AuthenticationScope.HubKey,
                 PolicyName = keyName,
                 Secret = keyValue
             };
         }
 
-        public static AuthenticationResult SuccessWithDeviceKey(string deviceId, string keyValue)
+        public static AuthenticationResult SuccessWithDeviceKey(Identity identity, string keyValue)
         {
             return new AuthenticationResult
             {
                 IsSuccessful = true,
-                DeviceId = deviceId,
+                Identity = identity,
                 Scope = AuthenticationScope.DeviceKey,
                 Secret = keyValue
             };
         }
 
-        public static AuthenticationResult SuccessWithDefaultCredentials(string deviceId)
+        public static AuthenticationResult SuccessWithDefaultCredentials(Identity identity)
         {
             return new AuthenticationResult
             {
                 IsSuccessful = true,
-                DeviceId = deviceId,
+                Identity = identity,
                 Scope = AuthenticationScope.None
             };
         }
@@ -65,12 +65,12 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth
 
         public bool IsSuccessful { get; private set; }
 
-        public string DeviceId { get; private set; }
-
         public string PolicyName { get; private set; }
         
         public string Secret { get; private set; }
 
         public AuthenticationScope Scope { get; private set; }
+        
+        public Identity Identity { get; private set; }
     }
 }
