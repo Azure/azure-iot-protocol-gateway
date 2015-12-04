@@ -82,6 +82,7 @@
     <Compile Include="Instrumentation\MqttIotHubAdapterEventSource.cs" />
     <Compile Include="Extensions\TaskExtensions.cs" />
     <Compile Include="Mqtt\AckPendingMessageState.cs" />
+    <Compile Include="Mqtt\Auth\Identity.cs" />
     <Compile Include="Mqtt\PacketAsyncProcessorBase.cs" />
     <Compile Include="Mqtt\Auth\DeviceKeyAuthenticationProvider.cs" />
     <Compile Include="Mqtt\ChannelMessageProcessingException.cs" />

@@ -11,11 +11,12 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth
     {
         public Task<AuthenticationResult> AuthenticateAsync(string clientId, string username, string password, EndPoint clientAddress)
         {
-            if (!clientId.Equals(username, StringComparison.Ordinal))
+            Identity identity = Identity.Parse(username);
+            if (!clientId.Equals(identity.DeviceId, StringComparison.Ordinal))
             {
-                return Task.FromResult(AuthenticationResult.Failure());
+                return Task.FromResult((AuthenticationResult)null);
             }
-            return Task.FromResult(AuthenticationResult.SuccessWithSasToken(clientId, password));
+            return Task.FromResult(AuthenticationResult.SuccessWithSasToken(identity, password));
         }
     }
 }

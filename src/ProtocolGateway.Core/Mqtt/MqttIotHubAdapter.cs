@@ -47,7 +47,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         readonly RequestAckPairProcessor<CompletionPendingMessageState, PubRelPacket> pubRelPubCompProcessor;
         readonly ITopicNameRouter topicNameRouter;
         Dictionary<string, string> sessionContext;
-        string deviceId;
+        Identity identity;
         readonly IQos2StatePersistenceProvider qos2StateProvider;
         readonly QualityOfService maxSupportedQosToClient;
         TimeSpan keepAliveTimeout;
@@ -188,7 +188,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 {
                     MqttIotHubAdapterEventSource.Log.Verbose(
                         "Not reading per full inbound message queue",
-                        string.Format("deviceId: {0}, messages queued: {1}, channel: {2}", this.deviceId, inboundBacklogSize, context.Channel));
+                        string.Format("deviceId: {0}, messages queued: {1}, channel: {2}", this.identity, inboundBacklogSize, context.Channel));
                 }
             }
         }
@@ -254,7 +254,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                         .OnFault(ShutdownOnWriteFaultAction, context);
                     break;
                 case PacketType.DISCONNECT:
-                    MqttIotHubAdapterEventSource.Log.Verbose("Disconnecting gracefully.", this.deviceId);
+                    MqttIotHubAdapterEventSource.Log.Verbose("Disconnecting gracefully.", this.identity.ToString());
                     this.Shutdown(context, true);
                     break;
                 default:
@@ -304,7 +304,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     if (!this.sessionState.IsTransient)
                     {
                         // save updated session state, make it current once successfully set
-                        await this.sessionStateManager.SetAsync(this.deviceId, newState);
+                        await this.sessionStateManager.SetAsync(this.identity.ToString(), newState);
                     }
 
                     this.sessionState = newState;
@@ -385,7 +385,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             {
                 if (MqttIotHubAdapterEventSource.Log.IsVerboseEnabled)
                 {
-                    MqttIotHubAdapterEventSource.Log.Verbose("Resuming reading from channel as queue freed up.", string.Format("deviceId: {0}, channel: {1}", this.deviceId, context.Channel));
+                    MqttIotHubAdapterEventSource.Log.Verbose("Resuming reading from channel as queue freed up.", string.Format("deviceId: {0}, channel: {1}", this.identity, context.Channel));
                 }
                 context.Read();
             }
@@ -400,11 +400,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 string messageDeviceId;
                 if (message.Properties.TryGetValue(DeviceIdParam, out messageDeviceId))
                 {
-                    if (!this.deviceId.Equals(messageDeviceId, StringComparison.Ordinal))
+                    if (!this.identity.DeviceId.Equals(messageDeviceId, StringComparison.Ordinal))
                     {
-                        throw new InvalidOperationException(string.Format("Device ID provided in topic name ({0}) does not match ID of the device publishing message ({1}).",
-                            messageDeviceId,
-                            this.deviceId));
+                        throw new InvalidOperationException(
+                            string.Format("Device ID provided in topic name ({0}) does not match ID of the device publishing message ({1}). IoT Hub Name: {2}",
+                            messageDeviceId, this.identity.DeviceId, this.identity.IoTHubHostName));
                     }
                     message.Properties.Remove(DeviceIdParam);
                 }
@@ -869,7 +869,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 this.stateFlags = StateFlags.ProcessingConnect;
                 AuthenticationResult authResult = await this.authProvider.AuthenticateAsync(packet.ClientId,
                     packet.Username, packet.Password, context.Channel.RemoteAddress);
-                if (!authResult.IsSuccessful)
+                if (authResult == null)
                 {
                     connAckSent = true;
                     await Util.WriteMessageAsync(context, new ConnAckPacket
@@ -881,11 +881,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     return;
                 }
 
-                this.deviceId = authResult.DeviceId;
+                this.identity = authResult.Identity;
 
                 this.iotHubClient = await this.deviceClientFactory(authResult);
 
-                bool sessionPresent = await this.EstablishSessionStateAsync(this.deviceId, packet.CleanSession);
+                bool sessionPresent = await this.EstablishSessionStateAsync(this.identity.ToString(), packet.CleanSession);
 
                 this.keepAliveTimeout = this.DeriveKeepAliveTimeout(packet);
 
@@ -899,7 +899,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
                 this.sessionContext = new Dictionary<string, string>
                 {
-                    { DeviceIdParam, this.deviceId }
+                    { DeviceIdParam, this.identity.DeviceId }
                 };
 
                 this.StartReceiving(context);
@@ -1000,7 +1000,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         /// <param name="context"><see cref="IChannelHandlerContext" /> instance.</param>
         void CompleteConnect(IChannelHandlerContext context)
         {
-            MqttIotHubAdapterEventSource.Log.Verbose("Connection established.", this.deviceId);
+            MqttIotHubAdapterEventSource.Log.Verbose("Connection established.", this.identity.ToString());
 
             if (this.keepAliveTimeout > TimeSpan.Zero)
             {
@@ -1071,7 +1071,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             if (!self.IsInState(StateFlags.Closed))
             {
                 PerformanceCounters.ConnectionFailedOperationalPerSecond.Increment();
-                MqttIotHubAdapterEventSource.Log.Warning(string.Format("Closing connection ({0}, {1}): {2}", context.Channel.RemoteAddress, self.deviceId, reason));
+                MqttIotHubAdapterEventSource.Log.Warning(string.Format("Closing connection ({0}, {1}): {2}", context.Channel.RemoteAddress, self.identity, reason));
                 self.Shutdown(context, false);
             }
         }
