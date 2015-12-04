@@ -166,10 +166,10 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             return packet;
         }
 
-        internal static IAuthenticationMethod DeriveAuthenticationMethod(IAuthenticationMethod currentAuthenticationMethod, AuthenticationResult deviceCredentials)
+        internal static IAuthenticationMethod DeriveAuthenticationMethod(IAuthenticationMethod currentAuthenticationMethod, AuthenticationResult authenticationResult)
         {
-            string deviceId = deviceCredentials.DeviceId;
-            switch (deviceCredentials.Scope)
+            string deviceId = authenticationResult.Identity.DeviceId;
+            switch (authenticationResult.Properties.Scope)
             {
                 case AuthenticationScope.None:
                     var policyKeyAuth = currentAuthenticationMethod as DeviceAuthenticationWithSharedAccessPolicyKey;
@@ -189,13 +189,13 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     }
                     throw new InvalidOperationException("");
                 case AuthenticationScope.SasToken:
-                    return new DeviceAuthenticationWithToken(deviceId, deviceCredentials.Secret);
+                    return new DeviceAuthenticationWithToken(deviceId, authenticationResult.Properties.Secret);
                 case AuthenticationScope.DeviceKey:
-                    return new DeviceAuthenticationWithRegistrySymmetricKey(deviceId, deviceCredentials.Secret);
+                    return new DeviceAuthenticationWithRegistrySymmetricKey(deviceId, authenticationResult.Properties.Secret);
                 case AuthenticationScope.HubKey:
-                    return new DeviceAuthenticationWithSharedAccessPolicyKey(deviceId, deviceCredentials.PolicyName, deviceCredentials.Secret);
+                    return new DeviceAuthenticationWithSharedAccessPolicyKey(deviceId, authenticationResult.Properties.PolicyName, authenticationResult.Properties.Secret);
                 default:
-                    throw new InvalidOperationException("Unexpected AuthenticationScope value: " + deviceCredentials.Scope);
+                    throw new InvalidOperationException("Unexpected AuthenticationScope value: " + authenticationResult.Properties.Scope);
             }
         }
 

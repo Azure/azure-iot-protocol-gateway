@@ -3,59 +3,90 @@
 
 namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth
 {
-    public sealed class AuthenticationResult
+    public sealed class AuthenticationProperties
     {
-        static readonly AuthenticationResult FailedResult = new AuthenticationResult
+        public static AuthenticationProperties SuccessWithSasToken(string token)
         {
-            IsSuccessful = false
-        };
-
-        public static AuthenticationResult Failure()
-        {
-            return FailedResult;
-        }
-
-        public static AuthenticationResult SuccessWithSasToken(string deviceId, string token)
-        {
-            return new AuthenticationResult
+            return new AuthenticationProperties
             {
-                IsSuccessful = true,
-                DeviceId = deviceId,
                 Scope = AuthenticationScope.SasToken,
-                Secret = token
+                Secret = token,
             };
         }
 
-        public static AuthenticationResult SuccessWithHubKey(string deviceId, string keyName, string keyValue)
+        public static AuthenticationProperties SuccessWithHubKey(string keyName, string keyValue)
         {
-            return new AuthenticationResult
+            return new AuthenticationProperties
             {
-                IsSuccessful = true,
-                DeviceId = deviceId,
                 Scope = AuthenticationScope.HubKey,
                 PolicyName = keyName,
                 Secret = keyValue
             };
         }
 
-        public static AuthenticationResult SuccessWithDeviceKey(string deviceId, string keyValue)
+        public static AuthenticationProperties SuccessWithDeviceKey(string keyValue)
         {
-            return new AuthenticationResult
+            return new AuthenticationProperties
             {
-                IsSuccessful = true,
-                DeviceId = deviceId,
                 Scope = AuthenticationScope.DeviceKey,
                 Secret = keyValue
             };
         }
 
-        public static AuthenticationResult SuccessWithDefaultCredentials(string deviceId)
+        public static AuthenticationProperties SuccessWithDefaultCredentials()
+        {
+            return new AuthenticationProperties
+            {
+                Scope = AuthenticationScope.None
+            };
+        }
+
+        AuthenticationProperties()
+        {
+        }
+
+        public string PolicyName { get; private set; }
+        
+        public string Secret { get; private set; }
+
+        public AuthenticationScope Scope { get; private set; }
+    }
+
+    public sealed class AuthenticationResult
+    {
+        public static AuthenticationResult SuccessWithSasToken(Identity identity, string token)
         {
             return new AuthenticationResult
             {
-                IsSuccessful = true,
-                DeviceId = deviceId,
-                Scope = AuthenticationScope.None
+                Properties = AuthenticationProperties.SuccessWithSasToken(token),
+                Identity = identity
+            };
+        }
+
+        public static AuthenticationResult SuccessWithHubKey(Identity identity, string keyName, string keyValue)
+        {
+            return new AuthenticationResult
+            {
+                Identity = identity,
+                Properties = AuthenticationProperties.SuccessWithHubKey(keyName, keyValue)
+            };
+        }
+
+        public static AuthenticationResult SuccessWithDeviceKey(Identity identity, string keyValue)
+        {
+            return new AuthenticationResult
+            {
+                Identity = identity,
+                Properties = AuthenticationProperties.SuccessWithDeviceKey(keyValue)
+            };
+        }
+
+        public static AuthenticationResult SuccessWithDefaultCredentials(Identity identity)
+        {
+            return new AuthenticationResult
+            {
+                Identity = identity,
+                Properties = AuthenticationProperties.SuccessWithDefaultCredentials()
             };
         }
 
@@ -63,14 +94,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth
         {
         }
 
-        public bool IsSuccessful { get; private set; }
-
-        public string DeviceId { get; private set; }
-
-        public string PolicyName { get; private set; }
+        public AuthenticationProperties Properties { get; private set; }
         
-        public string Secret { get; private set; }
-
-        public AuthenticationScope Scope { get; private set; }
+        public Identity Identity { get; private set; }
     }
 }

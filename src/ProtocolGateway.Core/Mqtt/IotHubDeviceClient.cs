@@ -37,6 +37,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 }
                 //csb.GroupName = connectionIds[connectionIndex]; // todo: uncommment once explicit control over connection pooling is available
                 csb.AuthenticationMethod = Util.DeriveAuthenticationMethod(csb.AuthenticationMethod, deviceCredentials);
+                csb.HostName = deviceCredentials.Identity.IoTHubHostName;
                 string connectionString = csb.ToString();
                 return CreateFromConnectionStringAsync(connectionString);
             };
