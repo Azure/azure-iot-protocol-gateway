@@ -138,7 +138,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             TimeSpan? timeout = this.settings.ConnectArrivalTimeout;
             if (timeout.HasValue)
             {
-                context.Channel.EventLoop.Schedule(CheckConnectTimeoutCallback, context, timeout.Value);
+                context.Channel.EventLoop.ScheduleAsync(CheckConnectTimeoutCallback, context, timeout.Value);
             }
             base.ChannelActive(context);
 
@@ -1045,7 +1045,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 return;
             }
 
-            context.Channel.EventLoop.Schedule(CheckKeepAliveCallback, context, self.keepAliveTimeout - elapsedSinceLastActive);
+            context.Channel.EventLoop.ScheduleAsync(CheckKeepAliveCallback, context, self.keepAliveTimeout - elapsedSinceLastActive);
         }
 
         static void ShutdownOnError(IChannelHandlerContext context, string scope, Exception exception)

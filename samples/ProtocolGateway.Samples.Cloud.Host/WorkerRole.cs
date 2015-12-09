@@ -9,10 +9,7 @@ namespace ProtocolGateway.Samples.Cloud.Host
     using System.Security.Cryptography.X509Certificates;
     using System.Threading;
     using System.Threading.Tasks;
-    using DotNetty.Codecs.Mqtt;
-    using DotNetty.Common.Concurrency;
-    using DotNetty.Transport.Bootstrapping;
-    using DotNetty.Transport.Channels;
+    using DotNetty.Common.Internal.Logging;
     using Microsoft.Azure.Devices.ProtocolGateway;
     using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
     using Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage;
@@ -71,11 +68,8 @@ namespace ProtocolGateway.Samples.Cloud.Host
             eventListener.LogToWindowsAzureTable(RoleEnvironment.CurrentRoleInstance.Id, settingsProvider.GetSetting("BlobSessionStatePersistenceProvider.StorageConnectionString"), bufferingInterval: TimeSpan.FromMinutes(2));
             eventListener.EnableEvents(BootstrapperEventSource.Log, EventLevel.Informational);
             eventListener.EnableEvents(MqttIotHubAdapterEventSource.Log, EventLevel.Informational);
-            eventListener.EnableEvents(ChannelEventSource.Log, EventLevel.Informational);
-            eventListener.EnableEvents(BootstrapEventSource.Log, EventLevel.Informational);
-            eventListener.EnableEvents(ExecutorEventSource.Log, EventLevel.Informational);
-            eventListener.EnableEvents(MqttEventSource.Log, EventLevel.Informational);
-
+            eventListener.EnableEvents(DefaultEventSource.Log, EventLevel.Informational);
+            
             int minWorkerThreads;
             int minCompletionPortThreads;
             ThreadPool.GetMinThreads(out minWorkerThreads, out minCompletionPortThreads);

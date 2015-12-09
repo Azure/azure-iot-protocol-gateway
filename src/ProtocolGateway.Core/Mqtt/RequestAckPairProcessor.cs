@@ -114,7 +114,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             if (!this.retransmissionCheckScheduled)
             {
                 this.retransmissionCheckScheduled = true;
-                context.Channel.EventLoop.Schedule(StartRetransmissionIfNeededCallback, context, this, delay);
+                context.Channel.EventLoop.ScheduleAsync(StartRetransmissionIfNeededCallback, context, this, delay);
             }
         }
 

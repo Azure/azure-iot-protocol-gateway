@@ -9,6 +9,7 @@
           <PerformanceCounterConfiguration counterSpecifier="\Processor(_Total)\% Processor Time" sampleRate="PT30S" />
           <PerformanceCounterConfiguration counterSpecifier="\Memory\Available MBytes" sampleRate="PT30S" />
           <PerformanceCounterConfiguration counterSpecifier="\Process(WaWorkerHost)\% Processor Time" sampleRate="PT30S" />
+          <PerformanceCounterConfiguration counterSpecifier="\Process(WaIISHost)\Private Bytes" sampleRate="PT30S" />
           <PerformanceCounterConfiguration counterSpecifier="\Process(WaWorkerHost)\Private Bytes" sampleRate="PT30S" />
           <PerformanceCounterConfiguration counterSpecifier="\Process(WaWorkerHost)\Thread Count" sampleRate="PT30S" />
           <PerformanceCounterConfiguration counterSpecifier="\.NET CLR Memory(_Global_)\% Time in GC" sampleRate="PT30S" />
