@@ -17,10 +17,12 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
     using DotNetty.Codecs.Mqtt;
     using DotNetty.Codecs.Mqtt.Packets;
     using DotNetty.Common.Concurrency;
+    using DotNetty.Common.Internal.Logging;
     using DotNetty.Handlers.Tls;
     using DotNetty.Transport.Bootstrapping;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Sockets;
+    using global::ProtocolGateway.Samples.Common;
     using Microsoft.Azure.Devices.Client;
     using Microsoft.Azure.Devices.Common.Security;
     using Microsoft.Azure.Devices.Gateway.Tests;
@@ -62,11 +64,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
             this.eventListener = new ObservableEventListener();
             this.eventListener.LogToTestOutput(output);
             this.eventListener.EnableEvents(MqttIotHubAdapterEventSource.Log, EventLevel.Verbose);
-            this.eventListener.EnableEvents(ChannelEventSource.Log, EventLevel.Verbose);
-            this.eventListener.EnableEvents(BootstrapEventSource.Log, EventLevel.Verbose);
-            this.eventListener.EnableEvents(ExecutorEventSource.Log, EventLevel.Verbose);
-            this.eventListener.EnableEvents(MqttEventSource.Log, EventLevel.Verbose);
-
+            this.eventListener.EnableEvents(DefaultEventSource.Log, EventLevel.Verbose);
+            this.eventListener.EnableEvents(BootstrapperEventSource.Log, EventLevel.Verbose);
+            
             this.settingsProvider = new AppConfigSettingsProvider();
 
             this.ProtocolGatewayPort = 8883; // todo: dynamic port choice to parallelize test runs (first free port)
