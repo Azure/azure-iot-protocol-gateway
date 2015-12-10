@@ -6,7 +6,9 @@ namespace ProtocolGateway.Samples.Common
     using System;
     using System.Diagnostics.Tracing;
 
-    [EventSource(Name = "IoT-ProtocolGateway-Bootstrapper")]
+    [EventSource(
+        Name = "IoT-ProtocolGateway-Bootstrapper",
+        Guid = "e29735c9-6796-4228-ac96-9db40faB697a")]
     public class BootstrapperEventSource : EventSource
     {
         const int VerboseEventId = 1;

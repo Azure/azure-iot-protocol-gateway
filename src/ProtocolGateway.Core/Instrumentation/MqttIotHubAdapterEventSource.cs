@@ -6,7 +6,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
     using System;
     using System.Diagnostics.Tracing;
 
-    [EventSource(Name = "IoT-ProtocolGateway-MqttIotHubAdapter")]
+    [EventSource(
+        Name = "IoT-ProtocolGateway-MqttIotHubAdapter",
+        Guid = "06d7118e-3a71-4143-8aab-ed8cedf69e1c")]
     public class MqttIotHubAdapterEventSource : EventSource
     {
         const int VerboseEventId = 1;
