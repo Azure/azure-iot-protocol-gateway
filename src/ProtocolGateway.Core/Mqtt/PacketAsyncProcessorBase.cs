@@ -101,8 +101,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 Queue<T> queue = this.backlogQueue;
                 while (queue.Count > 0 && this.state != State.Aborted)
                 {
-                    T message = queue.Dequeue();
-                    await this.ProcessAsync(context, message);
+                    T packet = queue.Dequeue();
+                    await this.ProcessAsync(context, packet);
                 }
 
                 switch (this.state)

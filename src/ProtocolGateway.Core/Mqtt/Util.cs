@@ -201,27 +201,13 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
         public static SubAckPacket AddSubscriptions(ISessionState session, SubscribePacket packet, QualityOfService maxSupportedQos)
         {
-            List<Subscription> subscriptions = session.Subscriptions;
+            IReadOnlyList<ISubscription> subscriptions = session.Subscriptions;
             var returnCodes = new List<QualityOfService>(subscriptions.Count);
             foreach (SubscriptionRequest request in packet.Requests)
             {
-                Subscription existingSubscription = null;
-                for (int i = subscriptions.Count - 1; i >= 0; i--)
-                {
-                    Subscription subscription = subscriptions[i];
-                    if (subscription.TopicFilter.Equals(request.TopicFilter, StringComparison.Ordinal))
-                    {
-                        subscriptions.RemoveAt(i);
-                        existingSubscription = subscription;
-                        break;
-                    }
-                }
-
                 QualityOfService finalQos = request.QualityOfService < maxSupportedQos ? request.QualityOfService : maxSupportedQos;
 
-                subscriptions.Add(existingSubscription == null
-                    ? new Subscription(request.TopicFilter, request.QualityOfService)
-                    : existingSubscription.CreateUpdated(finalQos));
+                session.AddOrUpdateSubscription(request.TopicFilter, finalQos);
 
                 returnCodes.Add(finalQos);
             }
@@ -235,17 +221,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
         public static UnsubAckPacket RemoveSubscriptions(ISessionState session, UnsubscribePacket packet)
         {
-            List<Subscription> subscriptions = session.Subscriptions;
             foreach (string topicToRemove in packet.TopicFilters)
             {
-                for (int i = subscriptions.Count - 1; i >= 0; i--)
-                {
-                    if (subscriptions[i].TopicFilter.Equals(topicToRemove, StringComparison.Ordinal))
-                    {
-                        subscriptions.RemoveAt(i);
-                        break;
-                    }
-                }
+                session.RemoveSubscription(topicToRemove);
             }
             var ack = new UnsubAckPacket
             {

@@ -83,6 +83,9 @@
     <Compile Include="Extensions\TaskExtensions.cs" />
     <Compile Include="Mqtt\AckPendingMessageState.cs" />
     <Compile Include="Mqtt\Auth\Identity.cs" />
+    <Compile Include="Mqtt\FeedbackPacket.cs" />
+    <Compile Include="Mqtt\MessageProperties.cs" />
+    <Compile Include="Mqtt\MessageTypes.cs" />
     <Compile Include="Mqtt\PacketAsyncProcessorBase.cs" />
     <Compile Include="Mqtt\Auth\DeviceKeyAuthenticationProvider.cs" />
     <Compile Include="Mqtt\ChannelMessageProcessingException.cs" />
@@ -92,6 +95,7 @@
     <Compile Include="Mqtt\IDeviceClient.cs" />
     <Compile Include="Mqtt\IotHubDeviceClient.cs" />
     <Compile Include="Mqtt\ISupportRetransmission.cs" />
+    <Compile Include="Mqtt\Persistence\ISubscription.cs" />
     <Compile Include="Mqtt\Persistence\TransientSessionState.cs" />
     <Compile Include="Mqtt\Persistence\TransientSessionStatePersistenceProvider.cs" />
     <Compile Include="Mqtt\Persistence\IQos2StatePersistenceProvider.cs" />
@@ -102,6 +106,7 @@
     <Compile Include="Instrumentation\PerformanceCounterManager.cs" />
     <Compile Include="Instrumentation\PerformanceCounters.cs" />
     <Compile Include="Mqtt\StubDeviceClient.cs" />
+    <Compile Include="Mqtt\TypedPacket.cs" />
     <Compile Include="ReadOnlyMergeDictionary.cs" />
     <Compile Include="Mqtt\Persistence\Subscription.cs" />
     <Compile Include="ReadOnlyByteBufferStream.cs" />

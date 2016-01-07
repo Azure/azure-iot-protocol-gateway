@@ -7,7 +7,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
     using System.Collections.Generic;
     using System.Diagnostics.Contracts;
     using System.IO;
+    using System.Text;
     using System.Threading.Tasks;
+    using DotNetty.Buffers;
     using DotNetty.Codecs.Mqtt.Packets;
     using DotNetty.Common;
     using DotNetty.Common.Utilities;
@@ -23,10 +25,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
     public sealed class MqttIotHubAdapter : ChannelHandlerAdapter
     {
-        const string UnmatchedFlagPropertyName = "Unmatched";
-        const string SubjectPropertyName = "Subject";
-        const string DeviceIdParam = "deviceId";
-
         static readonly Action<object> CheckConnectTimeoutCallback = CheckConnectionTimeout;
         static readonly Action<object> CheckKeepAliveCallback = CheckKeepAlive;
         static readonly Action<Task, object> ShutdownOnWriteFaultAction = (task, ctx) => ShutdownOnError((IChannelHandlerContext)ctx, "WriteAndFlushAsync", task.Exception);
@@ -41,7 +39,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         IDeviceClient iotHubClient;
         DateTime lastClientActivityTime;
         ISessionState sessionState;
-        readonly PacketAsyncProcessor<PublishPacket> publishProcessor;
+        readonly PacketAsyncProcessor<TypedPacket<PublishPacket>> publishProcessor;
+        readonly PacketAsyncProcessor<FeedbackPacket> feedbackProcessor;
         readonly RequestAckPairProcessor<AckPendingMessageState, PublishPacket> publishPubAckProcessor;
         readonly RequestAckPairProcessor<AckPendingMessageState, PublishPacket> publishPubRecProcessor;
         readonly RequestAckPairProcessor<CompletionPendingMessageState, PubRelPacket> pubRelPubCompProcessor;
@@ -57,6 +56,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         readonly IAuthenticationProvider authProvider;
         Queue<Packet> connectPendingQueue;
         PublishPacket willPacket;
+        readonly IByteBuffer connectFeedbackPayload = Unpooled.WrappedBuffer(Encoding.UTF8.GetBytes("CONNECT"));
+        readonly IByteBuffer disconnectFeedbackPayload = Unpooled.WrappedBuffer(Encoding.UTF8.GetBytes("DISCONNECT"));
+
 
         public MqttIotHubAdapter(Settings settings, DeviceClientFactoryFunc deviceClientFactory, ISessionStatePersistenceProvider sessionStateManager, IAuthenticationProvider authProvider,
             ITopicNameRouter topicNameRouter, IQos2StatePersistenceProvider qos2StateProvider)
@@ -82,8 +84,10 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             this.authProvider = authProvider;
             this.topicNameRouter = topicNameRouter;
 
-            this.publishProcessor = new PacketAsyncProcessor<PublishPacket>(this.PublishToServerAsync);
+            this.publishProcessor = new PacketAsyncProcessor<TypedPacket<PublishPacket>>(this.PublishToServerAsync);
             this.publishProcessor.Completion.OnFault(ShutdownOnPublishToServerFaultAction);
+            this.feedbackProcessor = new PacketAsyncProcessor<FeedbackPacket>(this.PublishFeedbackToServerAsync);
+            this.feedbackProcessor.Completion.OnFault(ShutdownOnPublishToServerFaultAction);
 
             TimeSpan? ackTimeout = this.settings.DeviceReceiveAckCanTimeout ? this.settings.DeviceReceiveAckTimeout : (TimeSpan?)null;
             this.publishPubAckProcessor = new RequestAckPairProcessor<AckPendingMessageState, PublishPacket>(this.AcknowledgePublishAsync, this.RetransmitNextPublish, ackTimeout);
@@ -230,10 +234,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             {
                 case PacketType.CONNECT:
                     this.Connect(context, (ConnectPacket)packet);
+                    this.feedbackProcessor.Post(context, new FeedbackPacket{Payload = this.connectFeedbackPayload.Duplicate()});
                     break;
                 case PacketType.PUBLISH:
                     PerformanceCounters.PublishPacketsReceivedPerSecond.Increment();
-                    this.publishProcessor.Post(context, (PublishPacket)packet);
+                    this.publishProcessor.Post(context, new TypedPacket<PublishPacket>((PublishPacket)packet, MessageTypes.Telemetry));
                     break;
                 case PacketType.PUBACK:
                     this.publishPubAckProcessor.Post(context, (PubAckPacket)packet);
@@ -255,6 +260,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     break;
                 case PacketType.DISCONNECT:
                     MqttIotHubAdapterEventSource.Log.Verbose("Disconnecting gracefully.", this.identity.ToString());
+                    this.feedbackProcessor.Post(context, new FeedbackPacket { Payload = this.disconnectFeedbackPayload.Duplicate() });
                     this.Shutdown(context, true);
                     break;
                 default:
@@ -334,7 +340,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
         #region PUBLISH Client -> Server handling
 
-        async Task PublishToServerAsync(IChannelHandlerContext context, PublishPacket packet)
+        async Task PublishToServerAsync(IChannelHandlerContext context, TypedPacket<PublishPacket> packet)
         {
             if (!this.ConnectedToHub)
             {
@@ -345,12 +351,14 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
             this.ResumeReadingIfNecessary(context);
 
-            using (Stream bodyStream = packet.Payload.IsReadable() ? new ReadOnlyByteBufferStream(packet.Payload, true) : null)
+            PublishPacket publishPacket = packet.Packet;
+            using (Stream bodyStream = publishPacket.Payload.IsReadable() ? new ReadOnlyByteBufferStream(publishPacket.Payload, true) : null)
             {
                 var message = new Message(bodyStream);
-                this.ApplyRoutingConfiguration(message, packet);
+                message.Properties[MessageProperties.MessageType] = packet.Type;
+                this.ApplyRoutingConfiguration(message, publishPacket);
 
-                Util.CompleteMessageFromPacket(message, packet, this.settings);
+                Util.CompleteMessageFromPacket(message, publishPacket, this.settings);
 
                 await this.iotHubClient.SendAsync(message);
 
@@ -359,14 +367,14 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
             if (!this.IsInState(StateFlags.Closed))
             {
-                switch (packet.QualityOfService)
+                switch (publishPacket.QualityOfService)
                 {
                     case QualityOfService.AtMostOnce:
                         // no response necessary
                         PerformanceCounters.InboundMessageProcessingTime.Register(startedTimestamp);
                         break;
                     case QualityOfService.AtLeastOnce:
-                        Util.WriteMessageAsync(context, PubAckPacket.InResponseTo(packet))
+                        Util.WriteMessageAsync(context, PubAckPacket.InResponseTo(publishPacket))
                             .OnFault(ShutdownOnWriteFaultAction, context);
                         PerformanceCounters.InboundMessageProcessingTime.Register(startedTimestamp); // todo: assumes PUBACK is written out sync
                         break;
@@ -374,8 +382,26 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                         ShutdownOnError(context, "QoS 2 is not supported.");
                         break;
                     default:
-                        throw new InvalidOperationException("Unexpected QoS level: " + packet.QualityOfService);
+                        throw new InvalidOperationException("Unexpected QoS level: " + publishPacket.QualityOfService);
                 }
+            }
+        }
+
+        async Task PublishFeedbackToServerAsync(IChannelHandlerContext context, FeedbackPacket packet)
+        {
+            if (!this.ConnectedToHub)
+            {
+                return;
+            }
+
+            this.ResumeReadingIfNecessary(context);
+
+            using (Stream bodyStream = packet.Payload.IsReadable() ? new ReadOnlyByteBufferStream(packet.Payload, true) : null)
+            {
+                var message = new Message(bodyStream);
+                message.Properties[MessageProperties.MessageType] = MessageTypes.Feedback;
+
+                await this.iotHubClient.SendAsync(message);
             }
         }
 
@@ -398,7 +424,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             {
                 // successfully matched topic against configured routes -> validate topic name
                 string messageDeviceId;
-                if (message.Properties.TryGetValue(DeviceIdParam, out messageDeviceId))
+                if (message.Properties.TryGetValue(MessageProperties.DeviceIdParam, out messageDeviceId))
                 {
                     if (!this.identity.DeviceId.Equals(messageDeviceId, StringComparison.Ordinal))
                     {
@@ -406,7 +432,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                             string.Format("Device ID provided in topic name ({0}) does not match ID of the device publishing message ({1}). IoT Hub Name: {2}",
                             messageDeviceId, this.identity.DeviceId, this.identity.IoTHubHostName));
                     }
-                    message.Properties.Remove(DeviceIdParam);
+                    message.Properties.Remove(MessageProperties.DeviceIdParam);
                 }
             }
             else
@@ -416,8 +442,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     MqttIotHubAdapterEventSource.Log.Warning("Topic name could not be matched against any of the configured routes. Falling back to default telemetry settings.", packet.ToString());
                 }
                 routeType = RouteDestinationType.Telemetry;
-                message.Properties[UnmatchedFlagPropertyName] = bool.TrueString;
-                message.Properties[SubjectPropertyName] = packet.TopicName;
+                message.Properties[MessageProperties.UnmatchedFlagPropertyName] = bool.TrueString;
+                message.Properties[MessageProperties.SubjectPropertyName] = packet.TopicName;
             }
 
             // once we have different routes, this will change to tackle different aspects of route types
@@ -803,7 +829,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         {
             bool found = false;
             qos = QualityOfService.AtMostOnce;
-            foreach (Subscription subscription in this.sessionState.Subscriptions)
+            foreach (ISubscription subscription in this.sessionState.Subscriptions)
             {
                 if ((!found || subscription.QualityOfService > qos)
                     && subscription.CreationTime < messageTime
@@ -827,6 +853,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             this.publishProcessor.Abort();
             this.publishPubRecProcessor.Abort();
             this.pubRelPubCompProcessor.Abort();
+            this.feedbackProcessor.Abort();
 
             IDeviceClient hub = this.iotHubClient;
             if (hub != null)
@@ -899,7 +926,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
                 this.sessionContext = new Dictionary<string, string>
                 {
-                    { DeviceIdParam, this.identity.DeviceId }
+                    { MessageProperties.DeviceIdParam, this.identity.DeviceId }
                 };
 
                 this.StartReceiving(context);
@@ -1110,7 +1137,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     // try publishing will message before shutting down IoT Hub connection
                     try
                     {
-                        this.publishProcessor.Post(context, will);
+                        this.publishProcessor.Post(context, new TypedPacket<PublishPacket>(will, MessageTypes.Will));
                     }
                     catch (Exception ex)
                     {
