@@ -3,6 +3,8 @@
 
 namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth
 {
+    using System.Security.Principal;
+
     public sealed class AuthenticationProperties
     {
         public static AuthenticationProperties SuccessWithSasToken(string token)
@@ -54,7 +56,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth
 
     public sealed class AuthenticationResult
     {
-        public static AuthenticationResult SuccessWithSasToken(Identity identity, string token)
+        public static AuthenticationResult SuccessWithSasToken(IIdentity identity, string token)
         {
             return new AuthenticationResult
             {
@@ -63,7 +65,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth
             };
         }
 
-        public static AuthenticationResult SuccessWithHubKey(Identity identity, string keyName, string keyValue)
+        public static AuthenticationResult SuccessWithHubKey(IIdentity identity, string keyName, string keyValue)
         {
             return new AuthenticationResult
             {
@@ -72,7 +74,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth
             };
         }
 
-        public static AuthenticationResult SuccessWithDeviceKey(Identity identity, string keyValue)
+        public static AuthenticationResult SuccessWithDeviceKey(IIdentity identity, string keyValue)
         {
             return new AuthenticationResult
             {
@@ -81,7 +83,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth
             };
         }
 
-        public static AuthenticationResult SuccessWithDefaultCredentials(Identity identity)
+        public static AuthenticationResult SuccessWithDefaultCredentials(IIdentity identity)
         {
             return new AuthenticationResult
             {
@@ -96,6 +98,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth
 
         public AuthenticationProperties Properties { get; private set; }
         
-        public Identity Identity { get; private set; }
+        public IIdentity Identity { get; private set; }
     }
 }

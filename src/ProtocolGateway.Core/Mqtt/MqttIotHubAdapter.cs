@@ -7,6 +7,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
     using System.Collections.Generic;
     using System.Diagnostics.Contracts;
     using System.IO;
+    using System.Security.Principal;
     using System.Text;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
@@ -46,7 +47,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         readonly RequestAckPairProcessor<CompletionPendingMessageState, PubRelPacket> pubRelPubCompProcessor;
         readonly ITopicNameRouter topicNameRouter;
         Dictionary<string, string> sessionContext;
-        Identity identity;
+        IIdentity identity;
         readonly IQos2StatePersistenceProvider qos2StateProvider;
         readonly QualityOfService maxSupportedQosToClient;
         TimeSpan keepAliveTimeout;
@@ -426,11 +427,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 string messageDeviceId;
                 if (message.Properties.TryGetValue(MessageProperties.DeviceIdParam, out messageDeviceId))
                 {
-                    if (!this.identity.DeviceId.Equals(messageDeviceId, StringComparison.Ordinal))
+                    if (!this.identity.Name.Equals(messageDeviceId, StringComparison.Ordinal))
                     {
                         throw new InvalidOperationException(
-                            string.Format("Device ID provided in topic name ({0}) does not match ID of the device publishing message ({1}). IoT Hub Name: {2}",
-                            messageDeviceId, this.identity.DeviceId, this.identity.IoTHubHostName));
+                            string.Format("Device ID provided in topic name ({0}) does not match ID of the device publishing message ({1})",
+                            messageDeviceId, this.identity.Name));
                     }
                     message.Properties.Remove(MessageProperties.DeviceIdParam);
                 }
@@ -926,7 +927,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
                 this.sessionContext = new Dictionary<string, string>
                 {
-                    { MessageProperties.DeviceIdParam, this.identity.DeviceId }
+                    { MessageProperties.DeviceIdParam, this.identity.Name }
                 };
 
                 this.StartReceiving(context);

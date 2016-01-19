@@ -4,35 +4,52 @@
 namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth
 {
     using System;
+    using System.Collections.Generic;
+    using System.Security.Principal;
 
-    public sealed class Identity
+    public sealed class SimpleIdentity : IIdentity
     {
+        public const string AuthenticationTypeName = "SimpleIdentity";
+
+        public string Name { get; private set; }
+
+        public string AuthenticationType
+        {
+            get { return AuthenticationTypeName; }
+        }
+
+        public bool IsAuthenticated { get; private set; }
+
+        public SimpleIdentity(string username, bool isAuthenticated)
+        {
+            this.Name = username;
+            this.IsAuthenticated = isAuthenticated;
+        }
+    }
+
+    public sealed class IoTHubIdentity : IIdentity
+    {
+        public const string AuthenticationTypeName = "IoTHubIdentity";
+
+        public string Name { get; private set; }
+
+        public string AuthenticationType
+        {
+            get { return AuthenticationTypeName; }
+        }
+
+        public bool IsAuthenticated { get; private set; }
+
         public string IoTHubHostName { get; private set; }
 
         public string DeviceId { get; private set; }
 
-        public Identity(string iotHubHostName, string deviceId)
+        public IoTHubIdentity(string iotHubHostName, string deviceId, bool isAuthenticated)
         {
             this.IoTHubHostName = iotHubHostName;
             this.DeviceId = deviceId;
-        }
-
-        public override string ToString()
-        {
-            return this.IoTHubHostName + "/" + this.DeviceId;
-        }
-
-        public static Identity Parse(string username)
-        {
-            int delimiterPos = username.IndexOf("/", StringComparison.Ordinal);
-            if (delimiterPos < 0)
-            {
-                throw new FormatException(string.Format("Invalid username format: {0}", username));
-            }
-            string iotHubName = username.Substring(0, delimiterPos);
-            string deviceId = username.Substring(delimiterPos + 1);
-
-            return new Identity(iotHubName, deviceId);
+            this.Name = iotHubHostName + "/" + deviceId;
+            this.IsAuthenticated = isAuthenticated;
         }
     }
 }

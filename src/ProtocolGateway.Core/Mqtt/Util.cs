@@ -166,39 +166,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             return packet;
         }
 
-        internal static IAuthenticationMethod DeriveAuthenticationMethod(IAuthenticationMethod currentAuthenticationMethod, AuthenticationResult authenticationResult)
-        {
-            string deviceId = authenticationResult.Identity.DeviceId;
-            switch (authenticationResult.Properties.Scope)
-            {
-                case AuthenticationScope.None:
-                    var policyKeyAuth = currentAuthenticationMethod as DeviceAuthenticationWithSharedAccessPolicyKey;
-                    if (policyKeyAuth != null)
-                    {
-                        return new DeviceAuthenticationWithSharedAccessPolicyKey(deviceId, policyKeyAuth.PolicyName, policyKeyAuth.Key);
-                    }
-                    var deviceKeyAuth = currentAuthenticationMethod as DeviceAuthenticationWithRegistrySymmetricKey;
-                    if (deviceKeyAuth != null)
-                    {
-                        return new DeviceAuthenticationWithRegistrySymmetricKey(deviceId, deviceKeyAuth.DeviceId);
-                    }
-                    var deviceTokenAuth = currentAuthenticationMethod as DeviceAuthenticationWithToken;
-                    if (deviceTokenAuth != null)
-                    {
-                        return new DeviceAuthenticationWithToken(deviceId, deviceTokenAuth.Token);
-                    }
-                    throw new InvalidOperationException("");
-                case AuthenticationScope.SasToken:
-                    return new DeviceAuthenticationWithToken(deviceId, authenticationResult.Properties.Secret);
-                case AuthenticationScope.DeviceKey:
-                    return new DeviceAuthenticationWithRegistrySymmetricKey(deviceId, authenticationResult.Properties.Secret);
-                case AuthenticationScope.HubKey:
-                    return new DeviceAuthenticationWithSharedAccessPolicyKey(deviceId, authenticationResult.Properties.PolicyName, authenticationResult.Properties.Secret);
-                default:
-                    throw new InvalidOperationException("Unexpected AuthenticationScope value: " + authenticationResult.Properties.Scope);
-            }
-        }
-
         public static SubAckPacket AddSubscriptions(ISessionState session, SubscribePacket packet, QualityOfService maxSupportedQos)
         {
             IReadOnlyList<ISubscription> subscriptions = session.Subscriptions;
