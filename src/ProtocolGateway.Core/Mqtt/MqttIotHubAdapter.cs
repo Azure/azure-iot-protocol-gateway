@@ -311,7 +311,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     if (!this.sessionState.IsTransient)
                     {
                         // save updated session state, make it current once successfully set
-                        await this.sessionStateManager.SetAsync(this.identity.ToString(), newState);
+                        await this.sessionStateManager.SetAsync(this.identity, newState);
                     }
 
                     this.sessionState = newState;
@@ -913,7 +913,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
                 this.iotHubClient = await this.deviceClientFactory(authResult);
 
-                bool sessionPresent = await this.EstablishSessionStateAsync(this.identity.ToString(), packet.CleanSession);
+                bool sessionPresent = await this.EstablishSessionStateAsync(this.identity, packet.CleanSession);
 
                 this.keepAliveTimeout = this.DeriveKeepAliveTimeout(packet);
 
@@ -976,14 +976,14 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         /// <param name="clientId">Client identificator to load the session state for.</param>
         /// <param name="cleanSession">Determines whether session has to be deleted if it already exists.</param>
         /// <returns></returns>
-        async Task<bool> EstablishSessionStateAsync(string clientId, bool cleanSession)
+        async Task<bool> EstablishSessionStateAsync(IIdentity identity, bool cleanSession)
         {
-            ISessionState existingSessionState = await this.sessionStateManager.GetAsync(clientId);
+            ISessionState existingSessionState = await this.sessionStateManager.GetAsync(identity);
             if (cleanSession)
             {
                 if (existingSessionState != null)
                 {
-                    await this.sessionStateManager.DeleteAsync(clientId, existingSessionState);
+                    await this.sessionStateManager.DeleteAsync(identity, existingSessionState);
                     // todo: loop in case of concurrent access? how will we resolve conflict with concurrent connections?
                 }
 
