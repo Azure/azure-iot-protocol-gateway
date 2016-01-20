@@ -38,7 +38,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 }
                 //csb.GroupName = connectionIds[connectionIndex]; // todo: uncommment once explicit control over connection pooling is available
                 var identity = (IotHubIdentity)deviceCredentials.Identity;
-                csb.AuthenticationMethod = DeriveAuthenticationMethod(csb.AuthenticationMethod, identity.DeviceId, deviceCredentials.Properties);
+                csb.AuthenticationMethod = Util.DeriveAuthenticationMethod(csb.AuthenticationMethod, identity.DeviceId, deviceCredentials.Properties);
                 csb.HostName = identity.IotHubHostName;
                 string connectionString = csb.ToString();
                 return CreateFromConnectionStringAsync(connectionString);
@@ -74,38 +74,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         public Task DisposeAsync()
         {
             return this.deviceClient.CloseAsync();
-        }
-
-        internal static IAuthenticationMethod DeriveAuthenticationMethod(IAuthenticationMethod currentAuthenticationMethod, string deviceId, AuthenticationProperties authenticationProperties)
-        {
-            switch (authenticationProperties.Scope)
-            {
-                case AuthenticationScope.None:
-                    var policyKeyAuth = currentAuthenticationMethod as DeviceAuthenticationWithSharedAccessPolicyKey;
-                    if (policyKeyAuth != null)
-                    {
-                        return new DeviceAuthenticationWithSharedAccessPolicyKey(deviceId, policyKeyAuth.PolicyName, policyKeyAuth.Key);
-                    }
-                    var deviceKeyAuth = currentAuthenticationMethod as DeviceAuthenticationWithRegistrySymmetricKey;
-                    if (deviceKeyAuth != null)
-                    {
-                        return new DeviceAuthenticationWithRegistrySymmetricKey(deviceId, deviceKeyAuth.DeviceId);
-                    }
-                    var deviceTokenAuth = currentAuthenticationMethod as DeviceAuthenticationWithToken;
-                    if (deviceTokenAuth != null)
-                    {
-                        return new DeviceAuthenticationWithToken(deviceId, deviceTokenAuth.Token);
-                    }
-                    throw new InvalidOperationException("");
-                case AuthenticationScope.SasToken:
-                    return new DeviceAuthenticationWithToken(deviceId, authenticationProperties.Secret);
-                case AuthenticationScope.DeviceKey:
-                    return new DeviceAuthenticationWithRegistrySymmetricKey(deviceId, authenticationProperties.Secret);
-                case AuthenticationScope.HubKey:
-                    return new DeviceAuthenticationWithSharedAccessPolicyKey(deviceId, authenticationProperties.PolicyName, authenticationProperties.Secret);
-                default:
-                    throw new InvalidOperationException("Unexpected AuthenticationScope value: " + authenticationProperties.Scope);
-            }
         }
     }
 }

@@ -34,7 +34,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 if (wildcardIndex == -1)
                 {
                     int matchLength = Math.Max(topicFilter.Length - topicFilterIndex, topicName.Length - topicNameIndex);
-                    return string.Compare(topicFilter, topicFilterIndex, topicName, topicNameIndex, matchLength, StringComparison.Ordinal) == 0;
+                    return String.Compare(topicFilter, topicFilterIndex, topicName, topicNameIndex, matchLength, StringComparison.Ordinal) == 0;
                 }
                 else
                 {
@@ -47,7 +47,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                         else
                         {
                             int matchLength = wildcardIndex - topicFilterIndex - 1;
-                            if (string.Compare(topicFilter, topicFilterIndex, topicName, topicNameIndex, matchLength, StringComparison.Ordinal) == 0
+                            if (String.Compare(topicFilter, topicFilterIndex, topicName, topicNameIndex, matchLength, StringComparison.Ordinal) == 0
                                 && (topicName.Length == topicNameIndex + matchLength || (topicName.Length > topicNameIndex + matchLength && topicName[topicNameIndex + matchLength] == SegmentSeparatorChar)))
                             {
                                 // paths match up till wildcard and either it is parent topic in hierarchy (one level above # specified) or any child topic under a matching parent topic
@@ -63,7 +63,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     {
                         // single segment wildcard
                         int matchLength = wildcardIndex - topicFilterIndex;
-                        if (matchLength > 0 && string.Compare(topicFilter, topicFilterIndex, topicName, topicNameIndex, matchLength, StringComparison.Ordinal) != 0)
+                        if (matchLength > 0 && String.Compare(topicFilter, topicFilterIndex, topicName, topicNameIndex, matchLength, StringComparison.Ordinal) != 0)
                         {
                             return false;
                         }
@@ -88,18 +88,18 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             if (message.Properties.TryGetValue(config.QoSPropertyName, out qosValue))
             {
                 int qosAsInt;
-                if (int.TryParse(qosValue, out qosAsInt))
+                if (Int32.TryParse(qosValue, out qosAsInt))
                 {
                     qos = (QualityOfService)qosAsInt;
                     if (qos > QualityOfService.ExactlyOnce)
                     {
-                        MqttIotHubAdapterEventSource.Log.Warning(string.Format("Message defined QoS '{0}' is not supported. Downgrading to default value of '{1}'", qos, config.DefaultPublishToClientQoS));
+                        MqttIotHubAdapterEventSource.Log.Warning(String.Format("Message defined QoS '{0}' is not supported. Downgrading to default value of '{1}'", qos, config.DefaultPublishToClientQoS));
                         qos = config.DefaultPublishToClientQoS;
                     }
                 }
                 else
                 {
-                    MqttIotHubAdapterEventSource.Log.Warning(string.Format("Message defined QoS '{0}' could not be parsed. Resorting to default value of '{1}'", qosValue, config.DefaultPublishToClientQoS));
+                    MqttIotHubAdapterEventSource.Log.Warning(String.Format("Message defined QoS '{0}' could not be parsed. Resorting to default value of '{1}'", qosValue, config.DefaultPublishToClientQoS));
                     qos = config.DefaultPublishToClientQoS;
                 }
             }
@@ -126,7 +126,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         }
 
         public static async Task<PublishPacket> ComposePublishPacketAsync(IChannelHandlerContext context, Message message,
-            QualityOfService qos, string topicName)
+            QualityOfService qos, string topicName, IByteBufferAllocator allocator)
         {
             bool duplicate = message.DeliveryCount > 0;
 
@@ -151,13 +151,13 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             using (Stream payloadStream = message.GetBodyStream())
             {
                 long streamLength = payloadStream.Length;
-                if (streamLength > int.MaxValue)
+                if (streamLength > Int32.MaxValue)
                 {
-                    throw new InvalidOperationException(string.Format("Message size ({0} bytes) is too big to process.", streamLength));
+                    throw new InvalidOperationException(String.Format("Message size ({0} bytes) is too big to process.", streamLength));
                 }
 
                 int length = (int)streamLength;
-                IByteBuffer buffer = context.Channel.Allocator.Buffer(length, length);
+                IByteBuffer buffer = allocator.Buffer(length, length);
                 await buffer.WriteBytesAsync(payloadStream, length);
                 Contract.Assert(buffer.ReadableBytes == length);
 
@@ -219,6 +219,38 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             foreach (KeyValuePair<string, string> property in messageContext)
             {
                 message.Properties.Add(property);
+            }
+        }
+
+        internal static IAuthenticationMethod DeriveAuthenticationMethod(IAuthenticationMethod currentAuthenticationMethod, string deviceId, AuthenticationProperties authenticationProperties)
+        {
+            switch (authenticationProperties.Scope)
+            {
+                case AuthenticationScope.None:
+                    var policyKeyAuth = currentAuthenticationMethod as DeviceAuthenticationWithSharedAccessPolicyKey;
+                    if (policyKeyAuth != null)
+                    {
+                        return new DeviceAuthenticationWithSharedAccessPolicyKey(deviceId, policyKeyAuth.PolicyName, policyKeyAuth.Key);
+                    }
+                    var deviceKeyAuth = currentAuthenticationMethod as DeviceAuthenticationWithRegistrySymmetricKey;
+                    if (deviceKeyAuth != null)
+                    {
+                        return new DeviceAuthenticationWithRegistrySymmetricKey(deviceId, deviceKeyAuth.DeviceId);
+                    }
+                    var deviceTokenAuth = currentAuthenticationMethod as DeviceAuthenticationWithToken;
+                    if (deviceTokenAuth != null)
+                    {
+                        return new DeviceAuthenticationWithToken(deviceId, deviceTokenAuth.Token);
+                    }
+                    throw new InvalidOperationException("");
+                case AuthenticationScope.SasToken:
+                    return new DeviceAuthenticationWithToken(deviceId, authenticationProperties.Secret);
+                case AuthenticationScope.DeviceKey:
+                    return new DeviceAuthenticationWithRegistrySymmetricKey(deviceId, authenticationProperties.Secret);
+                case AuthenticationScope.HubKey:
+                    return new DeviceAuthenticationWithSharedAccessPolicyKey(deviceId, authenticationProperties.PolicyName, authenticationProperties.Secret);
+                default:
+                    throw new InvalidOperationException("Unexpected AuthenticationScope value: " + authenticationProperties.Scope);
             }
         }
     }

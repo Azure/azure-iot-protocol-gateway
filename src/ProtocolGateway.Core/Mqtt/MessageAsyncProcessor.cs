@@ -7,11 +7,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
     using System.Threading.Tasks;
     using DotNetty.Transport.Channels;
 
-    public sealed class PacketAsyncProcessor<T> : PacketAsyncProcessorBase<T>
+    public sealed class MessageAsyncProcessor<T> : MessageAsyncProcessorBase<T>
     {
         readonly Func<IChannelHandlerContext, T, Task> processFunc;
 
-        public PacketAsyncProcessor(Func<IChannelHandlerContext, T, Task> processFunc)
+        public MessageAsyncProcessor(Func<IChannelHandlerContext, T, Task> processFunc)
         {
             this.processFunc = processFunc;
         }

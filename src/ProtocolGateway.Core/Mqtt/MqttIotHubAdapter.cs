@@ -38,7 +38,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         IDeviceClient iotHubClient;
         DateTime lastClientActivityTime;
         ISessionState sessionState;
-        readonly PacketAsyncProcessor<PublishPacket> publishProcessor;
+        readonly MessageAsyncProcessor<PublishPacket> publishProcessor;
         readonly RequestAckPairProcessor<AckPendingMessageState, PublishPacket> publishPubAckProcessor;
         readonly RequestAckPairProcessor<AckPendingMessageState, PublishPacket> publishPubRecProcessor;
         readonly RequestAckPairProcessor<CompletionPendingMessageState, PubRelPacket> pubRelPubCompProcessor;
@@ -80,7 +80,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             this.authProvider = authProvider;
             this.topicNameRouter = topicNameRouter;
 
-            this.publishProcessor = new PacketAsyncProcessor<PublishPacket>(this.PublishToServerAsync);
+            this.publishProcessor = new MessageAsyncProcessor<PublishPacket>(this.PublishToServerAsync);
             this.publishProcessor.Completion.OnFault(ShutdownOnPublishToServerFaultAction);
             
             TimeSpan? ackTimeout = this.settings.DeviceReceiveAckCanTimeout ? this.settings.DeviceReceiveAckTimeout : (TimeSpan?)null;
@@ -571,7 +571,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                         return;
                     }
 
-                    PublishPacket packet = await Util.ComposePublishPacketAsync(context, message, qos, topicName);
+                    PublishPacket packet = await Util.ComposePublishPacketAsync(context, message, qos, topicName, context.Channel.Allocator);
                     switch (qos)
                     {
                         case QualityOfService.AtMostOnce:
@@ -779,7 +779,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                         throw new InvalidOperationException("Route mapping failed on retransmission.");
                     }
 
-                    PublishPacket packet = await Util.ComposePublishPacketAsync(context, message, messageInfo.QualityOfService, topicName);
+                    PublishPacket packet = await Util.ComposePublishPacketAsync(context, message, messageInfo.QualityOfService, topicName, context.Channel.Allocator);
 
                     messageInfo.ResetMessage(message);
                     await this.publishPubAckProcessor.RetransmitAsync(context, packet, messageInfo);
