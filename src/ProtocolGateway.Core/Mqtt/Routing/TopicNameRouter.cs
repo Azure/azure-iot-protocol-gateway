@@ -16,8 +16,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Routing
         const string BaseUriString = "http://x/";
         static readonly Uri BaseUri = new Uri(BaseUriString, UriKind.Absolute);
 
-        readonly HashSet<string> protocolGatewayProperties = new HashSet<string> { MessagePropertyNames.TemplateParameters.DeviceIdTemplateParam };
-        
         UriTemplateTable topicTemplateTable;
         Dictionary<RouteSourceType, UriPathTemplate> routeTemplateMap;
         public TopicNameRouter()
