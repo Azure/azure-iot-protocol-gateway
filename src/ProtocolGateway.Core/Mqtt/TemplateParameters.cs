@@ -3,8 +3,8 @@
 
 namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 {
-    public static class MessageTypes
+    public static class TemplateParameters
     {
-        public const string Will = "Will";
+        public const string DeviceIdTemplateParam = "deviceId";
     }
 }

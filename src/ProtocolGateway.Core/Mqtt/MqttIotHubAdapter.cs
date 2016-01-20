@@ -334,7 +334,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
         Task PublishToServerAsync(IChannelHandlerContext context, PublishPacket packet)
         {
-            return this.PublishToServerAsync(context, packet, MessageTypes.Telemetry);
+            return this.PublishToServerAsync(context, packet, null);
         }
 
         async Task PublishToServerAsync(IChannelHandlerContext context, PublishPacket packet, string messageType)
@@ -356,8 +356,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
                 Util.CompleteMessageFromPacket(message, publishPacket, this.settings);
 
-                message.Properties[MessageProperties.MessageType] = messageType;
-                
+                if (messageType != null)
+                {
+                    message.Properties[MessagePropertyNames.MessageType] = messageType;
+                }
+
                 await this.iotHubClient.SendAsync(message);
 
                 PerformanceCounters.MessagesSentPerSecond.Increment();
@@ -404,7 +407,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             {
                 // successfully matched topic against configured routes -> validate topic name
                 string messageDeviceId;
-                if (message.Properties.TryGetValue(MessageProperties.DeviceIdParam, out messageDeviceId))
+                if (message.Properties.TryGetValue(TemplateParameters.DeviceIdTemplateParam, out messageDeviceId))
                 {
                     if (!this.identity.Name.Equals(messageDeviceId, StringComparison.Ordinal))
                     {
@@ -412,7 +415,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                             string.Format("Device ID provided in topic name ({0}) does not match ID of the device publishing message ({1})",
                             messageDeviceId, this.identity.Name));
                     }
-                    message.Properties.Remove(MessageProperties.DeviceIdParam);
+                    message.Properties.Remove(TemplateParameters.DeviceIdTemplateParam);
                 }
             }
             else
@@ -422,8 +425,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     MqttIotHubAdapterEventSource.Log.Warning("Topic name could not be matched against any of the configured routes. Falling back to default telemetry settings.", packet.ToString());
                 }
                 routeType = RouteDestinationType.Telemetry;
-                message.Properties[MessageProperties.UnmatchedFlagPropertyName] = bool.TrueString;
-                message.Properties[MessageProperties.SubjectPropertyName] = packet.TopicName;
+                message.Properties[MessagePropertyNames.UnmatchedFlagPropertyName] = bool.TrueString;
+                message.Properties[MessagePropertyNames.SubjectPropertyName] = packet.TopicName;
             }
 
             // once we have different routes, this will change to tackle different aspects of route types
@@ -905,7 +908,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
                 this.sessionContext = new Dictionary<string, string>
                 {
-                    { MessageProperties.DeviceIdParam, this.identity.Name }
+                    { TemplateParameters.DeviceIdTemplateParam, this.identity.Name }
                 };
 
                 this.StartReceiving(context);
@@ -1150,20 +1153,22 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             }
         }
 
-        private async Task CompletePublishAsync(IChannelHandlerContext context, PublishPacket will)
+        async Task CompletePublishAsync(IChannelHandlerContext context, PublishPacket will)
         {
             await this.publishProcessor.Completion;
             await this.PublishWillMessageAsync(context, will);
         }
 
-        private async Task PublishWillMessageAsync(IChannelHandlerContext context, PublishPacket will)
+        async Task PublishWillMessageAsync(IChannelHandlerContext context, PublishPacket will)
         {
+            if (will == null)
+            {
+                return;
+            }
+
             try
             {
-                if (will != null)
-                {
-                    await this.PublishToServerAsync(context, will, MessageTypes.Will);
-                }
+                await this.PublishToServerAsync(context, will, MessageTypes.Will);
             }
             catch (Exception ex)
             {

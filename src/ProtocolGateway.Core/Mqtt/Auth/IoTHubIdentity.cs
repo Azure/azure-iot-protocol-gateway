@@ -26,7 +26,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth
         {
             this.IoTHubHostName = iotHubHostName;
             this.DeviceId = deviceId;
-            this.Name = iotHubHostName + "/" + deviceId;
+            this.Name = deviceId;
             this.IsAuthenticated = isAuthenticated;
         }
     }

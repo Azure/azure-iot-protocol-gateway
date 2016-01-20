@@ -84,7 +84,7 @@
     <Compile Include="Mqtt\AckPendingMessageState.cs" />
     <Compile Include="Mqtt\Auth\AuthenticationProperties.cs" />
     <Compile Include="Mqtt\Auth\IoTHubIdentity.cs" />
-    <Compile Include="Mqtt\MessageProperties.cs" />
+    <Compile Include="Mqtt\MessagePropertyNames.cs" />
     <Compile Include="Mqtt\MessageTypes.cs" />
     <Compile Include="Mqtt\PacketAsyncProcessorBase.cs" />
     <Compile Include="Mqtt\Auth\DeviceKeyAuthenticationProvider.cs" />
@@ -106,6 +106,7 @@
     <Compile Include="Instrumentation\PerformanceCounterManager.cs" />
     <Compile Include="Instrumentation\PerformanceCounters.cs" />
     <Compile Include="Mqtt\StubDeviceClient.cs" />
+    <Compile Include="Mqtt\TemplateParameters.cs" />
     <Compile Include="ReadOnlyMergeDictionary.cs" />
     <Compile Include="Mqtt\Persistence\Subscription.cs" />
     <Compile Include="ReadOnlyByteBufferStream.cs" />
