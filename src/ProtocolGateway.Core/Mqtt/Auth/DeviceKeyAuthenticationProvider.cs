@@ -24,7 +24,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth
             {
                 return Task.FromResult((AuthenticationResult)null);
             }
-            return Task.FromResult(AuthenticationResult.SuccessWithDeviceKey(new IoTHubIdentity(usernameSegments[0], usernameSegments[1], true), password));
+            return Task.FromResult(AuthenticationResult.SuccessWithDeviceKey(new IotHubIdentity(usernameSegments[0], usernameSegments[1], true), password));
         }
     }
 }

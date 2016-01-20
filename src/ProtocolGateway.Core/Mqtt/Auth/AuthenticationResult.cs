@@ -47,7 +47,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth
         {
             return new AuthenticationResult
             {
-                Identity = new IoTHubIdentity(null, null, false)
+                Identity = new IotHubIdentity(null, null, false)
             };
         }
 

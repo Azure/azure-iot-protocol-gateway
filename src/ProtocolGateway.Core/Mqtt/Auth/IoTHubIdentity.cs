@@ -5,9 +5,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth
 {
     using System.Security.Principal;
 
-    public sealed class IoTHubIdentity : IIdentity
+    public sealed class IotHubIdentity : IIdentity
     {
-        public const string AuthenticationTypeName = "IoTHubIdentity";
+        public const string AuthenticationTypeName = "IotHubIdentity";
 
         public string Name { get; private set; }
 
@@ -18,13 +18,13 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth
 
         public bool IsAuthenticated { get; private set; }
 
-        public string IoTHubHostName { get; private set; }
+        public string IotHubHostName { get; private set; }
 
         public string DeviceId { get; private set; }
 
-        public IoTHubIdentity(string iotHubHostName, string deviceId, bool isAuthenticated)
+        public IotHubIdentity(string iotHubHostName, string deviceId, bool isAuthenticated)
         {
-            this.IoTHubHostName = iotHubHostName;
+            this.IotHubHostName = iotHubHostName;
             this.DeviceId = deviceId;
             this.Name = deviceId;
             this.IsAuthenticated = isAuthenticated;
