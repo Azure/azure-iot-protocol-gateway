@@ -19,11 +19,12 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth
         /// <returns></returns>
         public Task<AuthenticationResult> AuthenticateAsync(string clientId, string username, string password, EndPoint clientAddress)
         {
-            if (!clientId.Equals(username, StringComparison.Ordinal))
+            string[] usernameSegments = username.Split('/');
+            if (usernameSegments.Length < 2 || !clientId.Equals(usernameSegments[1], StringComparison.Ordinal))
             {
                 return Task.FromResult((AuthenticationResult)null);
             }
-            return Task.FromResult(AuthenticationResult.SuccessWithDeviceKey(new SimpleIdentity(username, true), password));
+            return Task.FromResult(AuthenticationResult.SuccessWithSasToken(new IoTHubIdentity(usernameSegments[0], usernameSegments[1], true), password));
         }
     }
 }

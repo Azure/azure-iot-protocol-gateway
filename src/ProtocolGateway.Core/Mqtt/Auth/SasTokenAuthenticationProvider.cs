@@ -14,7 +14,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth
             string[] usernameSegments = username.Split('/');
             if (usernameSegments.Length < 2 || !clientId.Equals(usernameSegments[1], StringComparison.Ordinal))
             {
-                return Task.FromResult((AuthenticationResult)null);
+                return Task.FromResult(AuthenticationResult.Failure());
             }
             return Task.FromResult(AuthenticationResult.SuccessWithSasToken(new IoTHubIdentity(usernameSegments[0], usernameSegments[1], true), password));
         }

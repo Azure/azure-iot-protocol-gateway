@@ -868,7 +868,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 this.stateFlags = StateFlags.ProcessingConnect;
                 AuthenticationResult authResult = await this.authProvider.AuthenticateAsync(packet.ClientId,
                     packet.Username, packet.Password, context.Channel.RemoteAddress);
-                if (authResult == null)
+                if (!authResult.Identity.IsAuthenticated)
                 {
                     connAckSent = true;
                     await Util.WriteMessageAsync(context, new ConnAckPacket

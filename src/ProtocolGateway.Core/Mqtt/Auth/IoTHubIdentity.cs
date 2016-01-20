@@ -3,29 +3,7 @@
 
 namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth
 {
-    using System;
-    using System.Collections.Generic;
     using System.Security.Principal;
-
-    public sealed class SimpleIdentity : IIdentity
-    {
-        public const string AuthenticationTypeName = "SimpleIdentity";
-
-        public string Name { get; private set; }
-
-        public string AuthenticationType
-        {
-            get { return AuthenticationTypeName; }
-        }
-
-        public bool IsAuthenticated { get; private set; }
-
-        public SimpleIdentity(string username, bool isAuthenticated)
-        {
-            this.Name = username;
-            this.IsAuthenticated = isAuthenticated;
-        }
-    }
 
     public sealed class IoTHubIdentity : IIdentity
     {
