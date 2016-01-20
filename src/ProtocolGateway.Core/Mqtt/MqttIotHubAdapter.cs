@@ -332,7 +332,12 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
         #region PUBLISH Client -> Server handling
 
-        async Task PublishToServerAsync(IChannelHandlerContext context, PublishPacket packet)
+        Task PublishToServerAsync(IChannelHandlerContext context, PublishPacket packet)
+        {
+            return this.PublishToServerAsync(context, packet, MessageTypes.Telemetry);
+        }
+
+        async Task PublishToServerAsync(IChannelHandlerContext context, PublishPacket packet, string messageType)
         {
             if (!this.ConnectedToHub)
             {
@@ -351,6 +356,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
                 Util.CompleteMessageFromPacket(message, publishPacket, this.settings);
 
+                message.Properties[MessageProperties.MessageType] = messageType;
+                
                 await this.iotHubClient.SendAsync(message);
 
                 PerformanceCounters.MessagesSentPerSecond.Increment();
@@ -1103,20 +1110,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 }
 
                 PublishPacket will = !graceful && this.IsInState(StateFlags.Connected) ? this.willPacket : null;
-                if (will != null)
-                {
-                    // try publishing will message before shutting down IoT Hub connection
-                    try
-                    {
-                        this.publishProcessor.Post(context, will);
-                    }
-                    catch (Exception ex)
-                    {
-                        MqttIotHubAdapterEventSource.Log.Warning("Failed sending Will Message.", ex);
-                    }
-                }
-
-                this.CloseIotHubConnection();
+                
+                this.CloseIotHubConnection(context, will);
                 await context.CloseAsync();
             }
             catch (Exception ex)
@@ -1125,7 +1120,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             }
         }
 
-        async void CloseIotHubConnection()
+        async void CloseIotHubConnection(IChannelHandlerContext context, PublishPacket will)
         {
             if (!this.ConnectedToHub)
             {
@@ -1140,7 +1135,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 this.publishPubRecProcessor.Complete();
                 this.pubRelPubCompProcessor.Complete();
                 await Task.WhenAll(
-                    this.publishProcessor.Completion,
+                    this.CompletePublishAsync(context, will),
                     this.publishPubAckProcessor.Completion,
                     this.publishPubRecProcessor.Completion,
                     this.pubRelPubCompProcessor.Completion);
@@ -1152,6 +1147,27 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             catch (Exception ex)
             {
                 MqttIotHubAdapterEventSource.Log.Info("Failed to close IoT Hub Client cleanly.", ex.ToString());
+            }
+        }
+
+        private async Task CompletePublishAsync(IChannelHandlerContext context, PublishPacket will)
+        {
+            await this.publishProcessor.Completion;
+            await this.PublishWillMessageAsync(context, will);
+        }
+
+        private async Task PublishWillMessageAsync(IChannelHandlerContext context, PublishPacket will)
+        {
+            try
+            {
+                if (will != null)
+                {
+                    await this.PublishToServerAsync(context, will, MessageTypes.Will);
+                }
+            }
+            catch (Exception ex)
+            {
+                MqttIotHubAdapterEventSource.Log.Warning("Failed sending Will Message.", ex);
             }
         }
 

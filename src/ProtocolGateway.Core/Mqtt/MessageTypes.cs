@@ -7,6 +7,5 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
     {
         public const string Telemetry = "Publish";
         public const string Will = "Will";
-        public const string Feedback = "Feedback";
     }
 }

@@ -208,5 +208,18 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             }
             PerformanceCounters.PacketsSentPerSecond.Increment();
         }
+
+        public static void AppendMessageContext(Message message, IDictionary<string, string> messageContext)
+        {
+            if (messageContext == null)
+            {
+                return;
+            }
+
+            foreach (KeyValuePair<string, string> property in messageContext)
+            {
+                message.Properties.Add(property);
+            }
+        }
     }
 }
