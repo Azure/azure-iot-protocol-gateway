@@ -10,13 +10,13 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 
-    public abstract class PacketAsyncProcessorBase<T>
+    public abstract class MessageAsyncProcessorBase<T>
     {
         readonly Queue<T> backlogQueue;
         State state;
         readonly TaskCompletionSource completionSource;
 
-        protected PacketAsyncProcessorBase()
+        protected MessageAsyncProcessorBase()
         {
             this.backlogQueue = new Queue<T>();
             this.completionSource = new TaskCompletionSource();

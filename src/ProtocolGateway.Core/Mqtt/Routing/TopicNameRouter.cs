@@ -18,7 +18,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Routing
 
         UriTemplateTable topicTemplateTable;
         Dictionary<RouteSourceType, UriPathTemplate> routeTemplateMap;
-
         public TopicNameRouter()
             : this("mqttTopicRouting")
         {
@@ -105,7 +104,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Routing
             for (int i = 0; i < variableCount; i++)
             {
                 // todo: this will unconditionally set property values - is it acceptable to overwrite existing value?
-                contextOutput[match.BoundVariables.GetKey(i)] = match.BoundVariables.Get(i);
+                contextOutput.Add(match.BoundVariables.GetKey(i), match.BoundVariables.Get(i));
             }
             return true;
         }

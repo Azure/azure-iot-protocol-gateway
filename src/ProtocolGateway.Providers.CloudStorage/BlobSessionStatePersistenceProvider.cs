@@ -6,6 +6,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
     using System;
     using System.Globalization;
     using System.IO;
+    using System.Security.Principal;
     using System.Threading.Tasks;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence;
     using Microsoft.WindowsAzure.Storage;
@@ -54,11 +55,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
             return new BlobSessionState(transient);
         }
 
-        public async Task<ISessionState> GetAsync(string id)
+        public async Task<ISessionState> GetAsync(IIdentity identity)
         {
             // todo: handle server busy (throttle?)
 
-            CloudBlockBlob blob = this.container.GetBlockBlobReference(id);
+            CloudBlockBlob blob = this.container.GetBlockBlobReference(identity.Name);
             JsonSerializer serializer = JsonSerializer.Create();
 
             try
@@ -94,7 +95,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
             }
         }
 
-        public async Task SetAsync(string id, ISessionState sessionState)
+        public async Task SetAsync(IIdentity identity, ISessionState sessionState)
         {
             var state = sessionState as BlobSessionState;
 
@@ -108,7 +109,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
                 throw new ArgumentException("Cannot persist transient Session State object.", "sessionState");
             }
 
-            CloudBlockBlob blob = this.container.GetBlockBlobReference(id);
+            CloudBlockBlob blob = this.container.GetBlockBlobReference(identity.Name);
             using (var memoryStream = new MemoryStream())
             using (var streamWriter = new StreamWriter(memoryStream))
             {
@@ -124,7 +125,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
             }
         }
 
-        public async Task DeleteAsync(string id, ISessionState sessionState)
+        public async Task DeleteAsync(IIdentity identity, ISessionState sessionState)
         {
             var state = sessionState as BlobSessionState;
 
@@ -133,7 +134,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
                 throw new ArgumentException("Cannot set Session State object that hasn't been acquired from provider.", "sessionState");
             }
 
-            CloudBlockBlob blob = this.container.GetBlockBlobReference(id);
+            CloudBlockBlob blob = this.container.GetBlockBlobReference(identity.Name);
             await blob.DeleteAsync(
                 DeleteSnapshotsOption.None,
                 new AccessCondition

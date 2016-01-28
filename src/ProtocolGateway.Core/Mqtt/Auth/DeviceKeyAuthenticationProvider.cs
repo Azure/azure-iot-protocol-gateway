@@ -9,14 +9,22 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth
 
     public class DeviceKeyAuthenticationProvider : IAuthenticationProvider
     {
+        /// <summary>
+        /// Authenticates user
+        /// </summary>
+        /// <param name="clientId"></param>
+        /// <param name="username"></param>
+        /// <param name="password"></param>
+        /// <param name="clientAddress"></param>
+        /// <returns></returns>
         public Task<AuthenticationResult> AuthenticateAsync(string clientId, string username, string password, EndPoint clientAddress)
         {
-            Identity identity = Identity.Parse(username);
-            if (!clientId.Equals(identity.DeviceId, StringComparison.Ordinal))
+            string[] usernameSegments = username.Split('/');
+            if (usernameSegments.Length < 2 || !clientId.Equals(usernameSegments[1], StringComparison.Ordinal))
             {
-                return Task.FromResult((AuthenticationResult)null);
+                return Task.FromResult(AuthenticationResult.Failure);
             }
-            return Task.FromResult(AuthenticationResult.SuccessWithDeviceKey(identity, password));
+            return Task.FromResult(AuthenticationResult.SuccessWithDeviceKey(new IotHubIdentity(usernameSegments[0], usernameSegments[1], true), password));
         }
     }
 }

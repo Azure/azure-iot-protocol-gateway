@@ -7,6 +7,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
     using System.Linq;
     using System.Threading.Tasks;
     using Microsoft.Azure.Devices.Client;
+    using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth;
 
     public class IotHubDeviceClient : IDeviceClient
     {
@@ -36,8 +37,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     connectionIndex = 0;
                 }
                 //csb.GroupName = connectionIds[connectionIndex]; // todo: uncommment once explicit control over connection pooling is available
-                csb.AuthenticationMethod = Util.DeriveAuthenticationMethod(csb.AuthenticationMethod, deviceCredentials);
-                csb.HostName = deviceCredentials.Identity.IoTHubHostName;
+                var identity = (IotHubIdentity)deviceCredentials.Identity;
+                csb.AuthenticationMethod = Util.DeriveAuthenticationMethod(csb.AuthenticationMethod, identity.DeviceId, deviceCredentials.Properties);
+                csb.HostName = identity.IotHubHostName;
                 string connectionString = csb.ToString();
                 return CreateFromConnectionStringAsync(connectionString);
             };
