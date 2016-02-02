@@ -1,8 +1,9 @@
 # Microsoft Azure IoT Protocol Gateway
 
-Azure IoT protocol gateway is a framework that enables communication with Azure IoT Hub over the MQTT protocol. It is a pass-through component that bridges traffic between connected IoT devices and IoT Hub. The protocol gateway can be deployed in Azure using Cloud Services worker roles. It can also be deployed in on-premises environments.
+Azure IoT protocol gateway is a framework for protocol adaptation that enables bi-communication with Azure IoT Hub. It is a pass-through component that bridges traffic between connected IoT devices and IoT Hub. The protocol gateway can be deployed in Azure using Cloud Services worker roles. It can also be deployed in on-premises environments.
 
-The Azure IoT protocol gateway includes an MQTT adapter to facilitate communication with devices over the MQTT v3.1.1 protocol. The MQTT adapter also demonstrates the programing model for building protocol adapters for other protocols. The Azure IoT protocol gateway programming model allows you to plug in custom components for specialized processing such as custom authentication, message transformations, compression/decompression, or encryption/decryption of traffic between the devices and IoT Hub. 
+The Azure IoT protocol gateway provides a programing model for building custom protocol adapters for variety of protocols. It includes an MQTT protocol adapter to demonstrate the concepts and to enable customizations of the MQTT v3.1.1 protocol.
+The protocol gateway programming model also allows you to plug in custom components for specialized processing such as custom authentication, message transformations, compression/decompression, or encryption/decryption of traffic between the devices and IoT Hub. 
 
 This document describes how to get started using the Azure IoT protocol gateway including general overview, deployment, and setup instructions.
 
