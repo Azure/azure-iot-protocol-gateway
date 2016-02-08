@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace ProtocolGateway.Samples.Cloud.Host
+namespace ProtocolGateway.Host.Cloud.Host
 {
     using System;
     using System.Diagnostics;
@@ -15,7 +15,7 @@ namespace ProtocolGateway.Samples.Cloud.Host
     using Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage;
     using Microsoft.Practices.EnterpriseLibrary.SemanticLogging;
     using Microsoft.WindowsAzure.ServiceRuntime;
-    using ProtocolGateway.Samples.Common;
+    using ProtocolGateway.Host.Common;
 
     public class WorkerRole : RoleEntryPoint
     {

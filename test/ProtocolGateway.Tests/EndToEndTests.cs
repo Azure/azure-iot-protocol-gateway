@@ -22,7 +22,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
     using DotNetty.Transport.Bootstrapping;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Sockets;
-    using global::ProtocolGateway.Samples.Common;
+    using global::ProtocolGateway.Host.Common;
     using Microsoft.Azure.Devices.Client;
     using Microsoft.Azure.Devices.Common.Security;
     using Microsoft.Azure.Devices.Gateway.Tests;

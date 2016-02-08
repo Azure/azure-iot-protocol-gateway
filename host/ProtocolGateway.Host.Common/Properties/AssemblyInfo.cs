@@ -8,11 +8,11 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 
-[assembly: AssemblyTitle("Contoso.ProtocolGateway.Cloud.Host")]
+[assembly: AssemblyTitle("Microsoft.Azure.Devices.ProtocolGateway.Host.Common")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Contoso.ProtocolGateway.Cloud.Host")]
+[assembly: AssemblyProduct("Microsoft.Azure.Devices.ProtocolGateway.Host.Common")]
 [assembly: AssemblyCopyright("Copyright ©  2015")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -25,7 +25,7 @@ using System.Runtime.InteropServices;
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 
-[assembly: Guid("ad7f0c70-3558-42be-a423-ddaeabe879fc")]
+[assembly: Guid("6cc530d5-d1c6-4d14-88fb-b5b29d646cf8")]
 
 // Version information for an assembly consists of the following four values:
 //

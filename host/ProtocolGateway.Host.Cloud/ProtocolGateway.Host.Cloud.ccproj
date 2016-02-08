@@ -8,10 +8,10 @@
     <ProjectGuid>{67816602-2130-47e2-82c7-ecc315797625}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Microsoft.Azure.Devices.ProtocolGateway.Samples.Cloud</RootNamespace>
-    <AssemblyName>Microsoft.Azure.Devices.ProtocolGateway.Samples.Cloud</AssemblyName>
+    <RootNamespace>Microsoft.Azure.Devices.ProtocolGateway.Host.Cloud</RootNamespace>
+    <AssemblyName>Microsoft.Azure.Devices.ProtocolGateway.Host.Cloud</AssemblyName>
     <StartDevelopmentStorage>True</StartDevelopmentStorage>
-    <Name>ProtocolGateway.Samples.Cloud</Name>
+    <Name>ProtocolGateway.Host.Cloud</Name>
     <PackageEnableRemoteDebugger>False</PackageEnableRemoteDebugger>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -38,19 +38,10 @@
     <ServiceConfiguration Include="ServiceConfiguration.Cloud.cscfg" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="ProtocolGateway.Samples.Cloud.HostContent" />
+    <Folder Include="ProtocolGateway.Host.Cloud.HostContent" />
   </ItemGroup>
   <ItemGroup>
-    <DiagnosticsConfiguration Include="ProtocolGateway.Samples.Cloud.HostContent\diagnostics.wadcfgx" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\ProtocolGateway.Samples.Cloud.Host\ProtocolGateway.Samples.Cloud.Host.csproj">
-      <Name>ProtocolGateway.Samples.Cloud.Host</Name>
-      <Project>{9cd3e054-23ad-41a2-93b5-31a7a8cfb1cf}</Project>
-      <Private>True</Private>
-      <RoleType>Worker</RoleType>
-      <RoleName>ProtocolGateway.Samples.Cloud.Host</RoleName>
-    </ProjectReference>
+    <DiagnosticsConfiguration Include="ProtocolGateway.Host.Cloud.HostContent\diagnostics.wadcfgx" />
   </ItemGroup>
   <!-- Import the target files for this project template -->
   <PropertyGroup>

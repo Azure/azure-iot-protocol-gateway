@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace ProtocolGateway.Samples.Console
+namespace ProtocolGateway.Host.Console
 {
     using System;
     using System.Diagnostics.Tracing;
@@ -13,7 +13,7 @@ namespace ProtocolGateway.Samples.Console
     using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
     using Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage;
     using Microsoft.Practices.EnterpriseLibrary.SemanticLogging;
-    using ProtocolGateway.Samples.Common;
+    using ProtocolGateway.Host.Common;
 
     class Program
     {
