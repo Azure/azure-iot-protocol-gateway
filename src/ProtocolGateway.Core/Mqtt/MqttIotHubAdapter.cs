@@ -53,8 +53,13 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         Queue<Packet> connectPendingQueue;
         PublishPacket willPacket;
 
-        public MqttIotHubAdapter(Settings settings, ISessionStatePersistenceProvider sessionStateManager, IAuthenticationProvider authProvider,
-            IQos2StatePersistenceProvider qos2StateProvider, IIotHubCommunicationFactory iotHubCommunicationFactory, IIotHubMessageRouter iotHubMessageRouter)
+        public MqttIotHubAdapter(
+            Settings settings, 
+            ISessionStatePersistenceProvider sessionStateManager, 
+            IAuthenticationProvider authProvider,
+            IQos2StatePersistenceProvider qos2StateProvider, 
+            IIotHubCommunicationFactory iotHubCommunicationFactory, 
+            IIotHubMessageRouter iotHubMessageRouter)
         {
             Contract.Requires(settings != null);
             Contract.Requires(sessionStateManager != null);

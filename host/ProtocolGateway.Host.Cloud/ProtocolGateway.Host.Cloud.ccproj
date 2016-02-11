@@ -38,11 +38,9 @@
     <ServiceConfiguration Include="ServiceConfiguration.Cloud.cscfg" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="ProtocolGateway.Host.Cloud.HostContent" />
-    <Folder Include="ProtocolGateway.Host.Cloud.ServiceContent\" />
+    <Folder Include="ProtocolGateway.Host.Cloud.ServiceContent" />
   </ItemGroup>
   <ItemGroup>
-    <DiagnosticsConfiguration Include="ProtocolGateway.Host.Cloud.HostContent\diagnostics.wadcfgx" />
     <DiagnosticsConfiguration Include="ProtocolGateway.Host.Cloud.ServiceContent\diagnostics.wadcfgx" />
   </ItemGroup>
   <ItemGroup>

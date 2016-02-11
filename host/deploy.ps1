@@ -13,9 +13,9 @@ Param(
     $iotHubConnectionString,
     
     #common override
-    $packagePath = "ProtocolGateway.Samples.Cloud\bin\Release\app.publish\ProtocolGateway.Samples.Cloud.cspkg",
-    $configurationPath = "ProtocolGateway.Samples.Cloud\bin\Release\app.publish\ServiceConfiguration.Cloud.cscfg",
-    $diagnosticsConfigurationPath = "ProtocolGateway.Samples.Cloud\bin\Release\app.publish\Extensions\PaaSDiagnostics.ProtocolGateway.Samples.Cloud.Host.PubConfig.xml",
+    $packagePath = "ProtocolGateway.Host.Cloud\bin\Release\app.publish\ProtocolGateway.Host.Cloud.cspkg",
+    $configurationPath = "ProtocolGateway.Host.Cloud\bin\Release\app.publish\ServiceConfiguration.Cloud.cscfg",
+    $diagnosticsConfigurationPath = "ProtocolGateway.Host.Cloud\bin\Release\app.publish\Extensions\PaaSDiagnostics.ProtocolGateway.Host.Cloud.Service.PubConfig.xml",
     [string] $subscriptionName = $null,
     [string] $diagnostics = $null,
     $slot = "Staging",

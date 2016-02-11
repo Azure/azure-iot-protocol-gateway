@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace ProtocolGateway.Host.Cloud.Host
+namespace ProtocolGateway.Host.Cloud.Service
 {
     using System;
     using System.Diagnostics;
@@ -12,6 +12,7 @@ namespace ProtocolGateway.Host.Cloud.Host
     using DotNetty.Common.Internal.Logging;
     using Microsoft.Azure.Devices.ProtocolGateway;
     using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
+    using Microsoft.Azure.Devices.ProtocolGateway.IotHubClient;
     using Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage;
     using Microsoft.Practices.EnterpriseLibrary.SemanticLogging;
     using Microsoft.WindowsAzure.ServiceRuntime;

@@ -18,10 +18,13 @@ namespace ProtocolGateway.Host.Common
     using DotNetty.Transport.Channels.Sockets;
     using Microsoft.Azure.Devices.ProtocolGateway;
     using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
+    using Microsoft.Azure.Devices.ProtocolGateway.IotHub;
+    using Microsoft.Azure.Devices.ProtocolGateway.IotHub.Routing;
+    using Microsoft.Azure.Devices.ProtocolGateway.IotHubClient;
+    using Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Routing;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence;
-    using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Routing;
 
     public class Bootstrapper
     {
@@ -35,7 +38,7 @@ namespace ProtocolGateway.Host.Common
         readonly ISessionStatePersistenceProvider sessionStateManager;
         readonly IQos2StatePersistenceProvider qos2StateProvider;
         readonly IAuthenticationProvider authProvider;
-        readonly ITopicNameRouter iotHubMessageRouter;
+        readonly IIotHubMessageRouter iotHubMessageRouter;
         X509Certificate2 tlsCertificate;
         IEventLoopGroup parentEventLoopGroup;
         IEventLoopGroup eventLoopGroup;
@@ -54,7 +57,7 @@ namespace ProtocolGateway.Host.Common
             this.sessionStateManager = sessionStateManager;
             this.qos2StateProvider = qos2StateProvider;
             this.authProvider = new SasTokenAuthenticationProvider();
-            this.iotHubMessageRouter = new TopicNameRouter();
+            this.iotHubMessageRouter = new IotHubMessageRouter();
         }
 
         public Task CloseCompletion
@@ -134,8 +137,10 @@ namespace ProtocolGateway.Host.Common
             var deviceClientFactory = new ThreadLocal<DeviceClientFactoryFunc>(() =>
             {
                 string poolId = Guid.NewGuid().ToString("N");
-                return IotHubDeviceClient.PreparePoolFactory(connectionString, poolId, IotHubConnectionsPerThread);
+                return IotHubClient.PreparePoolFactory(connectionString, poolId, IotHubConnectionsPerThread);
             });
+
+            var iotHubCommunicationFactory = new IotHubCommunicationFactory(deviceClientFactory.Value);
 
             return new ServerBootstrap()
                 .Group(this.parentEventLoopGroup, this.eventLoopGroup)
@@ -151,11 +156,11 @@ namespace ProtocolGateway.Host.Common
                         new MqttDecoder(true, maxInboundMessageSize),
                         new MqttIotHubAdapter(
                             this.settings,
-                            deviceClientFactory.Value,
                             this.sessionStateManager,
                             this.authProvider,
-                            this.iotHubMessageRouter,
-                            this.qos2StateProvider));
+                            this.qos2StateProvider,
+                            iotHubCommunicationFactory,
+                            this.iotHubMessageRouter));
                 }));
         }
     }
