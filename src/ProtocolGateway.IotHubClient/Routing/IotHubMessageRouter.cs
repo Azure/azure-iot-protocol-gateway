@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Routing
+namespace ProtocolGateway.IotHubClient.Routing
 {
     using System;
     using System.Collections.Generic;
@@ -9,22 +9,25 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Routing
     using System.Configuration;
     using System.Diagnostics.Contracts;
     using System.Linq;
+    using Microsoft.Azure.Devices.ProtocolGateway;
     using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
+    using Microsoft.Azure.Devices.ProtocolGateway.IotHub;
+    using Microsoft.Azure.Devices.ProtocolGateway.IotHub.Routing;
 
-    public sealed class TopicNameRouter : ITopicNameRouter
+    public sealed class IotHubMessageRouter : IIotHubMessageRouter
     {
         const string BaseUriString = "http://x/";
         static readonly Uri BaseUri = new Uri(BaseUriString, UriKind.Absolute);
 
         UriTemplateTable topicTemplateTable;
         Dictionary<RouteSourceType, UriPathTemplate> routeTemplateMap;
-        public TopicNameRouter()
+        public IotHubMessageRouter()
             : this("mqttTopicRouting")
         {
         }
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="TopicNameRouter" /> class.
+        ///     Initializes a new instance of the <see cref="IotHubMessageRouter" /> class.
         /// </summary>
         /// <param name="configurationSectionName">Name of configuration section that contains routing configuration.</param>
         /// <remarks>
@@ -41,7 +44,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Routing
         ///         </outboundRoute>
         ///     </mqttTopicRouting>
         /// </example>
-        public TopicNameRouter(string configurationSectionName)
+        public IotHubMessageRouter(string configurationSectionName)
         {
             Contract.Requires(!string.IsNullOrEmpty(configurationSectionName));
 
@@ -49,7 +52,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Routing
             this.InitializeFromConfiguration(configuration);
         }
 
-        public TopicNameRouter(RoutingConfiguration configuration)
+        public IotHubMessageRouter(RoutingConfiguration configuration)
         {
             this.InitializeFromConfiguration(configuration);
         }
@@ -67,7 +70,14 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Routing
             this.routeTemplateMap = configuration.OutboundRoutes.ToDictionary(x => x.Type, x => new UriPathTemplate(x.Template));
         }
 
-        public bool TryMapRouteToTopicName(RouteSourceType routeType, IDictionary<string, string> context, out string topicName)
+        /// <summary>
+        /// Tries to route a device bound message and append route by message metadata
+        /// </summary>
+        /// <param name="routeType"></param>
+        /// <param name="context"></param>
+        /// <param name="topicName"></param>
+        /// <returns></returns>
+        public bool TryRouteOutgoingMessage(RouteSourceType routeType, IMessage context, out string topicName)
         {
             UriPathTemplate template;
             if (!this.routeTemplateMap.TryGetValue(routeType, out template))
@@ -75,11 +85,18 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Routing
                 topicName = null;
                 return false;
             }
-            topicName = template.Bind(context);
+            topicName = template.Bind(context.Properties);
             return true;
         }
 
-        public bool TryMapTopicNameToRoute(string topicName, out RouteDestinationType routeType, IDictionary<string, string> contextOutput)
+        /// <summary>
+        /// Tries to route the message to the destination and appends route properties to message metadata
+        /// </summary>
+        /// <param name="topicName"></param>
+        /// <param name="message"></param>
+        /// <param name="routeType"></param>
+        /// <returns></returns>
+        public bool TryRouteIncomingMessage(string topicName, IMessage message, out RouteDestinationType routeType)
         {
             Collection<UriTemplateMatch> matches = this.topicTemplateTable.Match(new Uri(BaseUri, topicName));
 
@@ -104,7 +121,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Routing
             for (int i = 0; i < variableCount; i++)
             {
                 // todo: this will unconditionally set property values - is it acceptable to overwrite existing value?
-                contextOutput.Add(match.BoundVariables.GetKey(i), match.BoundVariables.Get(i));
+                message.Properties.Add(match.BoundVariables.GetKey(i), match.BoundVariables.Get(i));
             }
             return true;
         }

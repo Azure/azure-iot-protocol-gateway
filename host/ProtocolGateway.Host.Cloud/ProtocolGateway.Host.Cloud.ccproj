@@ -39,9 +39,21 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="ProtocolGateway.Host.Cloud.HostContent" />
+    <Folder Include="ProtocolGateway.Host.Cloud.ServiceContent\" />
   </ItemGroup>
   <ItemGroup>
     <DiagnosticsConfiguration Include="ProtocolGateway.Host.Cloud.HostContent\diagnostics.wadcfgx" />
+    <DiagnosticsConfiguration Include="ProtocolGateway.Host.Cloud.ServiceContent\diagnostics.wadcfgx" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ProtocolGateway.Host.Cloud.Service\ProtocolGateway.Host.Cloud.Service.csproj">
+      <Name>ProtocolGateway.Host.Cloud.Service</Name>
+      <Project>{9cd3e054-23ad-41a2-93b5-31a7a8cfb1cf}</Project>
+      <Private>True</Private>
+      <RoleType>Worker</RoleType>
+      <RoleName>ProtocolGateway.Host.Cloud.Service</RoleName>
+      <UpdateDiagnosticsConnectionStringOnPublish>True</UpdateDiagnosticsConnectionStringOnPublish>
+    </ProjectReference>
   </ItemGroup>
   <!-- Import the target files for this project template -->
   <PropertyGroup>

@@ -56,18 +56,6 @@
       <HintPath>..\..\packages\DotNetty.Transport.0.2.1\lib\net45\DotNetty.Transport.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Microsoft.Azure.Amqp, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Microsoft.Azure.Amqp.1.0.0-preview-002\lib\net451\Microsoft.Azure.Amqp.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Microsoft.Azure.Devices.Client, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Microsoft.Azure.Devices.Client.1.0.0-preview-002\lib\net45\Microsoft.Azure.Devices.Client.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Newtonsoft.Json.6.0.8\lib\net45\Newtonsoft.Json.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
@@ -78,9 +66,13 @@
     <Compile Include="..\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="IotHub\IIotHubCommunicationFactory.cs" />
+    <Compile Include="IotHub\IMessage.cs" />
     <Compile Include="Instrumentation\AveragePerformanceCounter.cs" />
     <Compile Include="Instrumentation\MqttIotHubAdapterEventSource.cs" />
     <Compile Include="Extensions\TaskExtensions.cs" />
+    <Compile Include="IotHub\IMetadataSerializer.cs" />
+    <Compile Include="IotHub\IotHubCommunicationException.cs" />
     <Compile Include="Mqtt\AckPendingMessageState.cs" />
     <Compile Include="Mqtt\Auth\AuthenticationProperties.cs" />
     <Compile Include="Mqtt\Auth\IoTHubIdentity.cs" />
@@ -92,8 +84,7 @@
     <Compile Include="Mqtt\MessageAsyncProcessor.cs" />
     <Compile Include="Mqtt\CompletionPendingMessageState.cs" />
     <Compile Include="Mqtt\DeviceClientFactoryFunc.cs" />
-    <Compile Include="Mqtt\IDeviceClient.cs" />
-    <Compile Include="Mqtt\IotHubDeviceClient.cs" />
+    <Compile Include="IotHub\IIotHubClient.cs" />
     <Compile Include="Mqtt\ISupportRetransmission.cs" />
     <Compile Include="Mqtt\Persistence\ISubscription.cs" />
     <Compile Include="Mqtt\Persistence\TransientSessionState.cs" />
@@ -105,21 +96,15 @@
     <Compile Include="Instrumentation\PerformanceCounterCategoryInfo.cs" />
     <Compile Include="Instrumentation\PerformanceCounterManager.cs" />
     <Compile Include="Instrumentation\PerformanceCounters.cs" />
-    <Compile Include="Mqtt\StubDeviceClient.cs" />
+    <Compile Include="IotHub\Routing\IIotHubMessageRouter.cs" />
+    <Compile Include="IotHub\Routing\RouteDestinationType.cs" />
+    <Compile Include="IotHub\Routing\RouteSourceType.cs" />
     <Compile Include="Mqtt\TemplateParameters.cs" />
     <Compile Include="ReadOnlyMergeDictionary.cs" />
     <Compile Include="Mqtt\Persistence\Subscription.cs" />
     <Compile Include="ReadOnlyByteBufferStream.cs" />
     <Compile Include="AppConfigSettingsProvider.cs" />
     <Compile Include="Mqtt\Auth\AuthenticationScope.cs" />
-    <Compile Include="Mqtt\Routing\RouteDestinationType.cs" />
-    <Compile Include="Mqtt\Routing\ITopicNameRouter.cs" />
-    <Compile Include="Mqtt\Routing\OutboundRouteDefinition.cs" />
-    <Compile Include="Mqtt\Routing\RoutingConfiguration.cs" />
-    <Compile Include="Mqtt\Routing\TopicRoutingConfigurationHandler.cs" />
-    <Compile Include="Mqtt\Routing\InboundRouteDefinition.cs" />
-    <Compile Include="Mqtt\Routing\RouteSourceType.cs" />
-    <Compile Include="Mqtt\Routing\TopicNameRouter.cs" />
     <Compile Include="Properties\Friends.cs" />
     <Compile Include="ISettingsProvider.cs" />
     <Compile Include="Mqtt\Auth\AuthenticationResult.cs" />

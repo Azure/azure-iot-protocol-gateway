@@ -1,11 +1,12 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Routing
+namespace ProtocolGateway.IotHubClient.Routing
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using Microsoft.Azure.Devices.ProtocolGateway.IotHub.Routing;
 
     public class InboundRouteDefinition
     {

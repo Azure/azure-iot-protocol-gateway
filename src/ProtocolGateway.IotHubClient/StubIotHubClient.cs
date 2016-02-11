@@ -7,26 +7,28 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
     using System.Threading.Tasks;
     using DotNetty.Common.Utilities;
     using Microsoft.Azure.Devices.Client;
+    using Microsoft.Azure.Devices.ProtocolGateway.IotHub;
+    using Microsoft.Azure.Devices.ProtocolGateway.IotHub.Routing;
 
-    public class StubDeviceClient : IDeviceClient
+    public class StubIotHubClient : IIotHubClient
     {
-        public static readonly DeviceClientFactoryFunc Factory = deviceCredentials => Task.FromResult<IDeviceClient>(new StubDeviceClient());
+        public static readonly DeviceClientFactoryFunc Factory = deviceCredentials => Task.FromResult<IIotHubClient>(new StubIotHubClient());
 
         readonly CancellationTokenSource disposePromise;
 
-        public StubDeviceClient()
+        public StubIotHubClient()
         {
             this.disposePromise = new CancellationTokenSource();
         }
 
-        public Task SendAsync(Message message)
+        public Task SendAsync(IMessage message)
         {
             return TaskEx.Completed;
         }
 
-        public Task<Message> ReceiveAsync()
+        public Task<IMessage> ReceiveAsync()
         {
-            var tcs = new TaskCompletionSource<Message>();
+            var tcs = new TaskCompletionSource<IMessage>();
             this.disposePromise.Token.Register(() => tcs.SetCanceled());
             return tcs.Task;
         }

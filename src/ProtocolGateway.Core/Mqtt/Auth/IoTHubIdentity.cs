@@ -11,10 +11,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth
 
         public string Name { get; private set; }
 
-        public string AuthenticationType
-        {
-            get { return AuthenticationTypeName; }
-        }
+        public string AuthenticationType => AuthenticationTypeName;
 
         public bool IsAuthenticated { get; private set; }
 

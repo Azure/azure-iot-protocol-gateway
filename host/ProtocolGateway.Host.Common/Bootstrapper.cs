@@ -35,7 +35,7 @@ namespace ProtocolGateway.Host.Common
         readonly ISessionStatePersistenceProvider sessionStateManager;
         readonly IQos2StatePersistenceProvider qos2StateProvider;
         readonly IAuthenticationProvider authProvider;
-        readonly ITopicNameRouter topicNameRouter;
+        readonly ITopicNameRouter iotHubMessageRouter;
         X509Certificate2 tlsCertificate;
         IEventLoopGroup parentEventLoopGroup;
         IEventLoopGroup eventLoopGroup;
@@ -54,7 +54,7 @@ namespace ProtocolGateway.Host.Common
             this.sessionStateManager = sessionStateManager;
             this.qos2StateProvider = qos2StateProvider;
             this.authProvider = new SasTokenAuthenticationProvider();
-            this.topicNameRouter = new TopicNameRouter();
+            this.iotHubMessageRouter = new TopicNameRouter();
         }
 
         public Task CloseCompletion
@@ -124,6 +124,7 @@ namespace ProtocolGateway.Host.Common
         ServerBootstrap SetupBootstrap()
         {
             int maxInboundMessageSize = this.settingsProvider.GetIntegerSetting("MaxInboundMessageSize", 256 * 1024);
+            
             string connectionString = this.settings.IotHubConnectionString;
             if (connectionString.IndexOf("DeviceId=", StringComparison.OrdinalIgnoreCase) == -1)
             {
@@ -135,6 +136,7 @@ namespace ProtocolGateway.Host.Common
                 string poolId = Guid.NewGuid().ToString("N");
                 return IotHubDeviceClient.PreparePoolFactory(connectionString, poolId, IotHubConnectionsPerThread);
             });
+
             return new ServerBootstrap()
                 .Group(this.parentEventLoopGroup, this.eventLoopGroup)
                 .Option(ChannelOption.SoBacklog, ListenBacklogSize)
@@ -152,7 +154,7 @@ namespace ProtocolGateway.Host.Common
                             deviceClientFactory.Value,
                             this.sessionStateManager,
                             this.authProvider,
-                            this.topicNameRouter,
+                            this.iotHubMessageRouter,
                             this.qos2StateProvider));
                 }));
         }

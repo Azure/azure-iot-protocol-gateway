@@ -146,9 +146,13 @@
     <Compile Include="XUnitOutputSink.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\samples\ProtocolGateway.Samples.Common\ProtocolGateway.Samples.Common.csproj">
+    <ProjectReference Include="..\..\host\ProtocolGateway.Host.Common\ProtocolGateway.Host.Common.csproj">
       <Project>{5bc6e03a-7516-4aab-8191-1e187b8ee995}</Project>
-      <Name>ProtocolGateway.Samples.Common</Name>
+      <Name>ProtocolGateway.Host.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\ProtocolGateway.IotHubClient\ProtocolGateway.IotHubClient.csproj">
+      <Project>{4CE6905A-3978-4328-8281-7022CFA9A3A1}</Project>
+      <Name>ProtocolGateway.IotHubClient</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\src\ProtocolGateway.Providers.CloudStorage\ProtocolGateway.Providers.CloudStorage.csproj">
       <Project>{ac34c945-61de-4700-bd42-2b19a441b4c3}</Project>
