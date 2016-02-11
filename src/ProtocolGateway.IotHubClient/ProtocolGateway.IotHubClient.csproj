@@ -7,8 +7,8 @@
     <ProjectGuid>{4CE6905A-3978-4328-8281-7022CFA9A3A1}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ProtocolGateway.IotHubClient</RootNamespace>
-    <AssemblyName>ProtocolGateway.IotHubClient</AssemblyName>
+    <RootNamespace>Microsoft.Azure.Devices.ProtocolGateway.IotHubClient</RootNamespace>
+    <AssemblyName>Microsoft.Azure.Devices.ProtocolGateway.IotHubClient</AssemblyName>
     <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />

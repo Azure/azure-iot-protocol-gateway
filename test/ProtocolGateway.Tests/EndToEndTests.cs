@@ -23,14 +23,14 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Sockets;
     using global::ProtocolGateway.Host.Common;
-    using global::ProtocolGateway.IotHubClient;
-    using global::ProtocolGateway.IotHubClient.Routing;
     using Microsoft.Azure.Devices.Client;
     using Microsoft.Azure.Devices.Common.Security;
     using Microsoft.Azure.Devices.Gateway.Tests;
     using Microsoft.Azure.Devices.ProtocolGateway;
     using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
     using Microsoft.Azure.Devices.ProtocolGateway.IotHub;
+    using Microsoft.Azure.Devices.ProtocolGateway.IotHubClient;
+    using Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Routing;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth;
     using Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage;
