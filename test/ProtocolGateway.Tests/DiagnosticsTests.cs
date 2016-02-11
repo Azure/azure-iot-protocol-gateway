@@ -3,7 +3,7 @@
 
 namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
 {
-    using global::ProtocolGateway.Samples.Common;
+    using global::ProtocolGateway.Host.Common;
     using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
     using Microsoft.Practices.EnterpriseLibrary.SemanticLogging.Utility;
     using Xunit;

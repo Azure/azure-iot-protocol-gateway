@@ -11,9 +11,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
     using DotNetty.Buffers;
     using DotNetty.Codecs.Mqtt.Packets;
     using DotNetty.Transport.Channels;
-    using Microsoft.Azure.Devices.Client;
     using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
-    using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth;
+    using Microsoft.Azure.Devices.ProtocolGateway.IotHub;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence;
 
     static class Util
@@ -34,7 +33,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 if (wildcardIndex == -1)
                 {
                     int matchLength = Math.Max(topicFilter.Length - topicFilterIndex, topicName.Length - topicNameIndex);
-                    return string.Compare(topicFilter, topicFilterIndex, topicName, topicNameIndex, matchLength, StringComparison.Ordinal) == 0;
+                    return String.Compare(topicFilter, topicFilterIndex, topicName, topicNameIndex, matchLength, StringComparison.Ordinal) == 0;
                 }
                 else
                 {
@@ -81,7 +80,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             return topicFilterIndex == topicFilter.Length && topicNameIndex == topicName.Length;
         }
 
-        public static QualityOfService DeriveQos(Message message, Settings config)
+        public static QualityOfService DeriveQos(IMessage message, Settings config)
         {
             QualityOfService qos;
             string qosValue;
@@ -93,13 +92,13 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     qos = (QualityOfService)qosAsInt;
                     if (qos > QualityOfService.ExactlyOnce)
                     {
-                        MqttIotHubAdapterEventSource.Log.Warning(string.Format("Message defined QoS '{0}' is not supported. Downgrading to default value of '{1}'", qos, config.DefaultPublishToClientQoS));
+                        MqttIotHubAdapterEventSource.Log.Warning($"Message defined QoS '{qos}' is not supported. Downgrading to default value of '{config.DefaultPublishToClientQoS}'");
                         qos = config.DefaultPublishToClientQoS;
                     }
                 }
                 else
                 {
-                    MqttIotHubAdapterEventSource.Log.Warning(string.Format("Message defined QoS '{0}' could not be parsed. Resorting to default value of '{1}'", qosValue, config.DefaultPublishToClientQoS));
+                    MqttIotHubAdapterEventSource.Log.Warning($"Message defined QoS '{qosValue}' could not be parsed. Resorting to default value of '{config.DefaultPublishToClientQoS}'");
                     qos = config.DefaultPublishToClientQoS;
                 }
             }
@@ -110,7 +109,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             return qos;
         }
 
-        public static Message CompleteMessageFromPacket(Message message, PublishPacket packet, Settings settings)
+        public static IMessage CompleteMessageFromPacket(IMessage message, PublishPacket packet, Settings settings)
         {
             message.MessageId = Guid.NewGuid().ToString("N");
             if (packet.RetainRequested)
@@ -125,8 +124,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             return message;
         }
 
-        public static async Task<PublishPacket> ComposePublishPacketAsync(IChannelHandlerContext context, Message message,
-            QualityOfService qos, string topicName)
+        public static async Task<PublishPacket> ComposePublishPacketAsync(IChannelHandlerContext context, IMessage message,
+            QualityOfService qos, string topicName, IByteBufferAllocator allocator)
         {
             bool duplicate = message.DeliveryCount > 0;
 
@@ -134,7 +133,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             packet.TopicName = topicName;
             if (qos > QualityOfService.AtMostOnce)
             {
-                int packetId = unchecked((ushort)message.SequenceNumber);
+                int packetId = message.SequenceNumber;
                 switch (qos)
                 {
                     case QualityOfService.AtLeastOnce:
@@ -144,20 +143,20 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                         packetId |= 0x8000; // set 15th bit
                         break;
                     default:
-                        throw new ArgumentOutOfRangeException("qos", qos, null);
+                        throw new ArgumentOutOfRangeException(nameof(qos), qos, null);
                 }
                 packet.PacketId = packetId;
             }
-            using (Stream payloadStream = message.GetBodyStream())
+            using (Stream payloadStream = message.Body)
             {
                 long streamLength = payloadStream.Length;
                 if (streamLength > int.MaxValue)
                 {
-                    throw new InvalidOperationException(string.Format("Message size ({0} bytes) is too big to process.", streamLength));
+                    throw new InvalidOperationException($"Message size ({streamLength} bytes) is too big to process.");
                 }
 
                 int length = (int)streamLength;
-                IByteBuffer buffer = context.Channel.Allocator.Buffer(length, length);
+                IByteBuffer buffer = allocator.Buffer(length, length);
                 await buffer.WriteBytesAsync(payloadStream, length);
                 Contract.Assert(buffer.ReadableBytes == length);
 
@@ -166,62 +165,15 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             return packet;
         }
 
-        internal static IAuthenticationMethod DeriveAuthenticationMethod(IAuthenticationMethod currentAuthenticationMethod, AuthenticationResult authenticationResult)
-        {
-            string deviceId = authenticationResult.Identity.DeviceId;
-            switch (authenticationResult.Properties.Scope)
-            {
-                case AuthenticationScope.None:
-                    var policyKeyAuth = currentAuthenticationMethod as DeviceAuthenticationWithSharedAccessPolicyKey;
-                    if (policyKeyAuth != null)
-                    {
-                        return new DeviceAuthenticationWithSharedAccessPolicyKey(deviceId, policyKeyAuth.PolicyName, policyKeyAuth.Key);
-                    }
-                    var deviceKeyAuth = currentAuthenticationMethod as DeviceAuthenticationWithRegistrySymmetricKey;
-                    if (deviceKeyAuth != null)
-                    {
-                        return new DeviceAuthenticationWithRegistrySymmetricKey(deviceId, deviceKeyAuth.DeviceId);
-                    }
-                    var deviceTokenAuth = currentAuthenticationMethod as DeviceAuthenticationWithToken;
-                    if (deviceTokenAuth != null)
-                    {
-                        return new DeviceAuthenticationWithToken(deviceId, deviceTokenAuth.Token);
-                    }
-                    throw new InvalidOperationException("");
-                case AuthenticationScope.SasToken:
-                    return new DeviceAuthenticationWithToken(deviceId, authenticationResult.Properties.Secret);
-                case AuthenticationScope.DeviceKey:
-                    return new DeviceAuthenticationWithRegistrySymmetricKey(deviceId, authenticationResult.Properties.Secret);
-                case AuthenticationScope.HubKey:
-                    return new DeviceAuthenticationWithSharedAccessPolicyKey(deviceId, authenticationResult.Properties.PolicyName, authenticationResult.Properties.Secret);
-                default:
-                    throw new InvalidOperationException("Unexpected AuthenticationScope value: " + authenticationResult.Properties.Scope);
-            }
-        }
-
         public static SubAckPacket AddSubscriptions(ISessionState session, SubscribePacket packet, QualityOfService maxSupportedQos)
         {
-            List<Subscription> subscriptions = session.Subscriptions;
+            IReadOnlyList<ISubscription> subscriptions = session.Subscriptions;
             var returnCodes = new List<QualityOfService>(subscriptions.Count);
             foreach (SubscriptionRequest request in packet.Requests)
             {
-                Subscription existingSubscription = null;
-                for (int i = subscriptions.Count - 1; i >= 0; i--)
-                {
-                    Subscription subscription = subscriptions[i];
-                    if (subscription.TopicFilter.Equals(request.TopicFilter, StringComparison.Ordinal))
-                    {
-                        subscriptions.RemoveAt(i);
-                        existingSubscription = subscription;
-                        break;
-                    }
-                }
-
                 QualityOfService finalQos = request.QualityOfService < maxSupportedQos ? request.QualityOfService : maxSupportedQos;
 
-                subscriptions.Add(existingSubscription == null
-                    ? new Subscription(request.TopicFilter, request.QualityOfService)
-                    : existingSubscription.CreateUpdated(finalQos));
+                session.AddOrUpdateSubscription(request.TopicFilter, finalQos);
 
                 returnCodes.Add(finalQos);
             }
@@ -235,17 +187,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
         public static UnsubAckPacket RemoveSubscriptions(ISessionState session, UnsubscribePacket packet)
         {
-            List<Subscription> subscriptions = session.Subscriptions;
             foreach (string topicToRemove in packet.TopicFilters)
             {
-                for (int i = subscriptions.Count - 1; i >= 0; i--)
-                {
-                    if (subscriptions[i].TopicFilter.Equals(topicToRemove, StringComparison.Ordinal))
-                    {
-                        subscriptions.RemoveAt(i);
-                        break;
-                    }
-                }
+                session.RemoveSubscription(topicToRemove);
             }
             var ack = new UnsubAckPacket
             {
@@ -262,6 +206,19 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 PerformanceCounters.PublishPacketsSentPerSecond.Increment();
             }
             PerformanceCounters.PacketsSentPerSecond.Increment();
+        }
+
+        public static void AppendMessageContext(IMessage message, IDictionary<string, string> messageContext)
+        {
+            if (messageContext == null)
+            {
+                return;
+            }
+
+            foreach (KeyValuePair<string, string> property in messageContext)
+            {
+                message.Properties.Add(property);
+            }
         }
     }
 }
