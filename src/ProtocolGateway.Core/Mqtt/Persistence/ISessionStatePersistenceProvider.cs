@@ -3,16 +3,17 @@
 
 namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence
 {
+    using System.Security.Principal;
     using System.Threading.Tasks;
 
     public interface ISessionStatePersistenceProvider
     {
         ISessionState Create(bool transient);
 
-        Task<ISessionState> GetAsync(string id);
+        Task<ISessionState> GetAsync(IIdentity identity);
 
-        Task SetAsync(string id, ISessionState sessionState);
+        Task SetAsync(IIdentity identity, ISessionState sessionState);
 
-        Task DeleteAsync(string id, ISessionState sessionState);
+        Task DeleteAsync(IIdentity identity, ISessionState sessionState);
     }
 }

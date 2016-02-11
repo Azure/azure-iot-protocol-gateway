@@ -7,7 +7,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence
     using System.Diagnostics.Contracts;
     using DotNetty.Codecs.Mqtt.Packets;
 
-    public class Subscription
+    public class Subscription : ISubscription
     {
         public Subscription(string topicFilter, QualityOfService qualityOfService)
             : this(DateTime.UtcNow, topicFilter, qualityOfService)
@@ -28,7 +28,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence
         public QualityOfService QualityOfService { get; private set; }
 
         [Pure]
-        public Subscription CreateUpdated(QualityOfService qos)
+        public ISubscription CreateUpdated(QualityOfService qos)
         {
             return new Subscription(this.CreationTime, this.TopicFilter, qos);
         }

@@ -45,7 +45,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
         [Event(VerboseEventId, Level = EventLevel.Verbose)]
         public void Verbose(string message, string info)
         {
-            if (this.IsVerboseEnabled)
+//            if (this.IsVerboseEnabled)
             {
                 this.WriteEvent(VerboseEventId, message, info);
             }
@@ -54,7 +54,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
         [Event(InfoEventId, Level = EventLevel.Informational)]
         public void Info(string message, string info)
         {
-            if (this.IsInfoEnabled)
+//            if (this.IsInfoEnabled)
             {
                 this.WriteEvent(InfoEventId, message, info);
             }
@@ -69,7 +69,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
         [NonEvent]
         public void Warning(string message, Exception exception)
         {
-            if (this.IsWarningEnabled)
+//            if (this.IsWarningEnabled)
             {
                 this.Warning(message, exception == null ? string.Empty : exception.ToString());
             }
@@ -78,7 +78,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
         [Event(WarningEventId, Level = EventLevel.Warning)]
         public void Warning(string message, string exception)
         {
-            if (this.IsWarningEnabled)
+//            if (this.IsWarningEnabled)
             {
                 this.WriteEvent(WarningEventId, message, exception);
             }
@@ -87,7 +87,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
         [NonEvent]
         public void Error(string message, Exception exception)
         {
-            if (this.IsErrorEnabled)
+//            if (this.IsErrorEnabled)
             {
                 this.Error(message, exception == null ? string.Empty : exception.ToString());
             }
@@ -96,7 +96,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
         [Event(ErrorEventId, Level = EventLevel.Error)]
         public void Error(string message, string exception)
         {
-            if (this.IsErrorEnabled)
+//            if (this.IsErrorEnabled)
             {
                 this.WriteEvent(ErrorEventId, message, exception);
             }

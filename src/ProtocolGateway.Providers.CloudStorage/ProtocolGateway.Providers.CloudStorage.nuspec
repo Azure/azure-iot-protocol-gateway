@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage</id>
+    <version>1.0.0-preview-005-dev-003</version>
+    <title>Microsoft Azure IoT protocol gateway framework</title>
+    <authors>Microsoft Azure</authors>
+    <owners>Microsoft Azure</owners>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <licenseUrl><![CDATA[http://go.microsoft.com/fwlink/?LinkId=536623]]></licenseUrl>
+    <description>This library contains the core components of Azure IoT protocol gateway that enables protocol translation for Azure IoT Hub.</description>
+    <iconUrl>http://go.microsoft.com/fwlink/?LinkID=288890</iconUrl>
+    <language>en-US</language>
+    <dependencies>
+      <group targetFramework="net451" >
+        <dependency id="DotNetty.Codecs.Mqtt" version="0.2.3-signed" />
+        <dependency id="DotNetty.Handlers" version="0.2.3-signed" />
+        <dependency id="Microsoft.Azure.Devices.ProtocolGateway.Core" version="1.0.0-preview-005-dev-003" />
+        <dependency id="WindowsAzure.Storage" version="4.3.0" />
+        <dependency id="Newtonsoft.Json" version="6.0.8" />
+        <dependency id="murmurhash-signed" version="1.0.0" />
+      </group>
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="src\ProtocolGateway.Providers.CloudStorage\bin\Release\Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage.dll" target="lib\net451\Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage.dll" />
+  </files>
+</package>
