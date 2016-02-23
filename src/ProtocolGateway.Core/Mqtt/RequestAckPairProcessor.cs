@@ -12,7 +12,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
     using DotNetty.Transport.Channels;
     using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
 
-    sealed class RequestAckPairProcessor<TAckState, TRequest> : PacketAsyncProcessorBase<PacketWithId>
+    sealed class RequestAckPairProcessor<TAckState, TRequest> : MessageAsyncProcessorBase<PacketWithId>
         where TAckState : ISupportRetransmission, IPacketReference
     {
         // ReSharper disable once StaticMemberInGenericType -- generic type is used sparingly

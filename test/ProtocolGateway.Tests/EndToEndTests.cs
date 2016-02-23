@@ -22,15 +22,17 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
     using DotNetty.Transport.Bootstrapping;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Sockets;
-    using global::ProtocolGateway.Samples.Common;
+    using global::ProtocolGateway.Host.Common;
     using Microsoft.Azure.Devices.Client;
     using Microsoft.Azure.Devices.Common.Security;
     using Microsoft.Azure.Devices.Gateway.Tests;
     using Microsoft.Azure.Devices.ProtocolGateway;
     using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
+    using Microsoft.Azure.Devices.ProtocolGateway.IotHub;
+    using Microsoft.Azure.Devices.ProtocolGateway.IotHubClient;
+    using Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Mqtt.Routing;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth;
-    using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Routing;
     using Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage;
     using Microsoft.Practices.EnterpriseLibrary.SemanticLogging;
     using Microsoft.ServiceBus.Messaging;
@@ -99,10 +101,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
                 this.settingsProvider.GetSetting("TableQos2StatePersistenceProvider.StorageTableName"));
             var settings = new Settings(this.settingsProvider);
             var authProvider = new SasTokenAuthenticationProvider();
-            var topicNameRouter = new TopicNameRouter();
-
-            DeviceClientFactoryFunc deviceClientFactoryFactory = IotHubDeviceClient.PreparePoolFactory(settings.IotHubConnectionString + ";DeviceId=stub", "a", 1);
-
+            var topicNameRouter = new IotHubMqttMessageRouter();
+            
+            IotHubClientFactoryFunc iotHubClientFactoryMethod = IotHubClient.PreparePoolFactory(settings.IotHubConnectionString + ";DeviceId=stub", "a", 1);
+            var iotHubFactory = new IotHubCommunicationFactory(iotHubClientFactoryMethod);
+            
             ServerBootstrap server = new ServerBootstrap()
                 .Group(executorGroup)
                 .Channel<TcpServerSocketChannel>()
@@ -116,11 +119,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
                         new MqttDecoder(true, 256 * 1024),
                         new MqttIotHubAdapter(
                             settings,
-                            deviceClientFactoryFactory,
                             sessionStateProvider,
                             authProvider,
-                            topicNameRouter,
-                            qos2StateProvider),
+                            qos2StateProvider,
+                            iotHubFactory,
+                            topicNameRouter),
                         new XUnitLoggingHandler(this.output));
                 }));
 

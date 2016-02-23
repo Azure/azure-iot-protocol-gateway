@@ -3,58 +3,15 @@
 
 namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth
 {
-    public sealed class AuthenticationProperties
-    {
-        public static AuthenticationProperties SuccessWithSasToken(string token)
-        {
-            return new AuthenticationProperties
-            {
-                Scope = AuthenticationScope.SasToken,
-                Secret = token,
-            };
-        }
-
-        public static AuthenticationProperties SuccessWithHubKey(string keyName, string keyValue)
-        {
-            return new AuthenticationProperties
-            {
-                Scope = AuthenticationScope.HubKey,
-                PolicyName = keyName,
-                Secret = keyValue
-            };
-        }
-
-        public static AuthenticationProperties SuccessWithDeviceKey(string keyValue)
-        {
-            return new AuthenticationProperties
-            {
-                Scope = AuthenticationScope.DeviceKey,
-                Secret = keyValue
-            };
-        }
-
-        public static AuthenticationProperties SuccessWithDefaultCredentials()
-        {
-            return new AuthenticationProperties
-            {
-                Scope = AuthenticationScope.None
-            };
-        }
-
-        AuthenticationProperties()
-        {
-        }
-
-        public string PolicyName { get; private set; }
-        
-        public string Secret { get; private set; }
-
-        public AuthenticationScope Scope { get; private set; }
-    }
+    using System.Security.Principal;
 
     public sealed class AuthenticationResult
     {
-        public static AuthenticationResult SuccessWithSasToken(Identity identity, string token)
+        static readonly AuthenticationResult FailureAuthenticationResult = new AuthenticationResult { Identity = new IotHubIdentity(null, null, false) };
+
+        public static AuthenticationResult Failure => FailureAuthenticationResult;
+        
+        public static AuthenticationResult SuccessWithSasToken(IIdentity identity, string token)
         {
             return new AuthenticationResult
             {
@@ -63,7 +20,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth
             };
         }
 
-        public static AuthenticationResult SuccessWithHubKey(Identity identity, string keyName, string keyValue)
+        public static AuthenticationResult SuccessWithHubKey(IIdentity identity, string keyName, string keyValue)
         {
             return new AuthenticationResult
             {
@@ -72,7 +29,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth
             };
         }
 
-        public static AuthenticationResult SuccessWithDeviceKey(Identity identity, string keyValue)
+        public static AuthenticationResult SuccessWithDeviceKey(IIdentity identity, string keyValue)
         {
             return new AuthenticationResult
             {
@@ -81,7 +38,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth
             };
         }
 
-        public static AuthenticationResult SuccessWithDefaultCredentials(Identity identity)
+        public static AuthenticationResult SuccessWithDefaultCredentials(IIdentity identity)
         {
             return new AuthenticationResult
             {
@@ -96,6 +53,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth
 
         public AuthenticationProperties Properties { get; private set; }
         
-        public Identity Identity { get; private set; }
+        public IIdentity Identity { get; private set; }
     }
 }
