@@ -7,8 +7,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
     {
         public const string ProtocolGatewayPrefix = "$PG.";
         public const string MessageType = ProtocolGatewayPrefix + "MessageType";
-        public const string UnmatchedFlagPropertyName = ProtocolGatewayPrefix + "Unmatched";
-        public const string SubjectPropertyName = ProtocolGatewayPrefix + "Subject";
+        public const string UnmatchedFlagPropertyName = "Unmatched";
+        public const string SubjectPropertyName = "Subject";
         
     }
 }

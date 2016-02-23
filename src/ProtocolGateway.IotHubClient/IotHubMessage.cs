@@ -9,11 +9,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
     using Microsoft.Azure.Devices.Client;
     using Microsoft.Azure.Devices.ProtocolGateway.IotHub;
 
-    public sealed class DeviceClientMessage : IMessage
+    public sealed class IotHubMessage : IMessage
     {
         private readonly Message message;
 
-        public DeviceClientMessage(Message message)
+        public IotHubMessage(Message message)
         {
             this.message = message;
         }

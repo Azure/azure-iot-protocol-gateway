@@ -4,5 +4,5 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
     using Microsoft.Azure.Devices.ProtocolGateway.IotHub;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth;
 
-    public delegate Task<IIotHubClient> DeviceClientFactoryFunc(AuthenticationResult deviceCredentials);
+    public delegate Task<IIotHubClient> IotHubClientFactoryFunc(AuthenticationResult deviceCredentials);
 }

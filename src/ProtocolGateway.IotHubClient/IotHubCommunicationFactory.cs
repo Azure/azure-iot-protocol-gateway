@@ -12,21 +12,21 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
 
     public class IotHubCommunicationFactory : IIotHubCommunicationFactory
     {
-        readonly DeviceClientFactoryFunc deviceClientFactoryMethod;
+        readonly IotHubClientFactoryFunc iotHubClientFactoryMethod;
 
-        public IotHubCommunicationFactory(DeviceClientFactoryFunc deviceClientFactoryMethod)
+        public IotHubCommunicationFactory(IotHubClientFactoryFunc iotHubClientFactoryMethod)
         {
-            this.deviceClientFactoryMethod = deviceClientFactoryMethod;
+            this.iotHubClientFactoryMethod = iotHubClientFactoryMethod;
         }
 
         public Task<IIotHubClient> CreateIotHubClientAsync(AuthenticationResult authResult)
         {
-            return this.deviceClientFactoryMethod(authResult);
+            return this.iotHubClientFactoryMethod(authResult);
         }
 
         public IMessage CreateMessage(Stream bodyStream)
         {
-            return new DeviceClientMessage(new Message(bodyStream));
+            return new IotHubMessage(new Message(bodyStream));
         }
     }
 }

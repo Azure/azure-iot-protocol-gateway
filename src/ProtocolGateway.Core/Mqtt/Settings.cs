@@ -19,6 +19,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         const string QoSPropertyNameSetting = "QoSPropertyName";
         const string DeviceReceiveAckTimeoutSetting = "DeviceReceiveAckTimeout";
         const string MaxOutboundRetransmissionCountSetting = "MaxOutboundRetransmissionCount";
+        const string FailOnUnmatchedIncomingMessageNameSetting = "FailOnUnmatchedIncomingMessage";
 
         const string RetainPropertyNameDefaultValue = "mqtt-retain";
         const string DupPropertyNameDefaultValue = "mqtt-dup";
@@ -26,11 +27,14 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         const int MaxPendingOutboundMessagesDefaultValue = 1;
         const int MaxPendingInboundMessagesDefaultValue = 16;
         const int MaxOutboundRetransmissionCountDefaultValue = -1;
+        const bool FailOnUnmatchedIncomingMessageDefaultValue = false;
+
 
         readonly string retainPropertyName;
         readonly string dupPropertyName;
         readonly string qosPropertyName;
         readonly TimeSpan? deviceReceiveAckTimeout;
+        readonly bool failOnUnmatchedIncomingMessage;
 
         public Settings(ISettingsProvider settingsProvider)
         {
@@ -79,6 +83,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 this.qosPropertyName = QoSPropertyNameDefaultValue;
             }
 
+            if (!settingsProvider.TryGetBooleanSetting(FailOnUnmatchedIncomingMessageNameSetting, out this.failOnUnmatchedIncomingMessage))
+            {
+                this.failOnUnmatchedIncomingMessage = FailOnUnmatchedIncomingMessageDefaultValue;
+            }
+
             this.deviceReceiveAckTimeout = settingsProvider.TryGetTimeSpanSetting(DeviceReceiveAckTimeoutSetting, out timeout) && timeout > TimeSpan.Zero
                 ? timeout
                 : (TimeSpan?)null;
@@ -91,51 +100,35 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             this.MaxOutboundRetransmissionCount = retransmissionCount;
         }
 
-        public int MaxPendingOutboundMessages { get; private set; }
+        public int MaxPendingOutboundMessages { get; }
 
-        public int MaxPendingInboundMessages { get; private set; }
+        public int MaxPendingInboundMessages { get; }
 
-        public TimeSpan? ConnectArrivalTimeout { get; private set; }
+        public TimeSpan? ConnectArrivalTimeout { get; }
 
-        public QualityOfService DefaultPublishToClientQoS { get; private set; }
+        public QualityOfService DefaultPublishToClientQoS { get; }
 
-        public string IotHubConnectionString { get; private set; }
+        public string IotHubConnectionString { get; }
 
-        public TimeSpan? MaxKeepAliveTimeout { get; private set; }
+        public TimeSpan? MaxKeepAliveTimeout { get; }
 
-        public string RetainPropertyName
-        {
-            get { return this.retainPropertyName; }
-        }
+        public string RetainPropertyName => this.retainPropertyName;
 
-        public string DupPropertyName
-        {
-            get { return this.dupPropertyName; }
-        }
+        public string DupPropertyName => this.dupPropertyName;
 
-        public string QoSPropertyName
-        {
-            get { return this.qosPropertyName; }
-        }
+        public string QoSPropertyName => this.qosPropertyName;
 
         /// <summary>
         ///     When null, there is no limit on delay between sending PUBLISH to client and receiving PUBACK from the client
         /// </summary>
-        public TimeSpan DeviceReceiveAckTimeout
-        {
-            get { return this.deviceReceiveAckTimeout ?? TimeSpan.MinValue; }
-        }
+        public TimeSpan DeviceReceiveAckTimeout => this.deviceReceiveAckTimeout ?? TimeSpan.MinValue;
 
-        public bool DeviceReceiveAckCanTimeout
-        {
-            get { return this.deviceReceiveAckTimeout.HasValue; }
-        }
+        public bool DeviceReceiveAckCanTimeout => this.deviceReceiveAckTimeout.HasValue;
 
-        public bool MaxOutboundRetransmissionEnforced
-        {
-            get { return this.MaxOutboundRetransmissionCount >= 0; }
-        }
-        
-        public int MaxOutboundRetransmissionCount { get; private set; }
+        public bool MaxOutboundRetransmissionEnforced => this.MaxOutboundRetransmissionCount >= 0;
+
+        public int MaxOutboundRetransmissionCount { get; }
+
+        public bool FailOnUnmatchedIncomingMessage => this.failOnUnmatchedIncomingMessage;
     }
 }

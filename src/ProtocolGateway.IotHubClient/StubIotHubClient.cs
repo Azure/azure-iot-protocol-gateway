@@ -11,7 +11,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
 
     public class StubIotHubClient : IIotHubClient
     {
-        public static readonly DeviceClientFactoryFunc Factory = deviceCredentials => Task.FromResult<IIotHubClient>(new StubIotHubClient());
+        public static readonly IotHubClientFactoryFunc Factory = deviceCredentials => Task.FromResult<IIotHubClient>(new StubIotHubClient());
 
         readonly CancellationTokenSource disposePromise;
 

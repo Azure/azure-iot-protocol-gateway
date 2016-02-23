@@ -80,7 +80,7 @@ namespace Gateway.Tests.Load
             return taskCompletionSource.Task;
         }
 
-        public async virtual Task<bool> OnClosedAsync(string deviceId, Exception exception, bool onStart)
+        public virtual async Task<bool> OnClosedAsync(string deviceId, Exception exception, bool onStart)
         {
             Console.WriteLine("Error running client: id: {0}, onStart: {1}, exception({2}): {3}", deviceId, onStart, exception.GetType().Name, exception.Message);
             await Task.Delay(TimeSpan.FromSeconds(60));

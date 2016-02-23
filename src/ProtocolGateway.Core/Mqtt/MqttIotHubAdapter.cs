@@ -17,9 +17,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
     using Microsoft.Azure.Devices.ProtocolGateway.Extensions;
     using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
     using Microsoft.Azure.Devices.ProtocolGateway.IotHub;
-    using Microsoft.Azure.Devices.ProtocolGateway.IotHub.Routing;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence;
+    using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Routing;
 
     public sealed class MqttIotHubAdapter : ChannelHandlerAdapter
     {
@@ -41,7 +41,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         readonly RequestAckPairProcessor<AckPendingMessageState, PublishPacket> publishPubAckProcessor;
         readonly RequestAckPairProcessor<AckPendingMessageState, PublishPacket> publishPubRecProcessor;
         readonly RequestAckPairProcessor<CompletionPendingMessageState, PubRelPacket> pubRelPubCompProcessor;
-        readonly IIotHubMessageRouter iotHubMessageRouter;
+        readonly IIotHubMqttMessageRouter iotHubMqttMessageRouter;
         private readonly IIotHubCommunicationFactory iotHubCommunicationFactory;
         IIdentity identity;
         readonly IQos2StatePersistenceProvider qos2StateProvider;
@@ -59,12 +59,12 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             IAuthenticationProvider authProvider,
             IQos2StatePersistenceProvider qos2StateProvider, 
             IIotHubCommunicationFactory iotHubCommunicationFactory, 
-            IIotHubMessageRouter iotHubMessageRouter)
+            IIotHubMqttMessageRouter iotHubMqttMessageRouter)
         {
             Contract.Requires(settings != null);
             Contract.Requires(sessionStateManager != null);
             Contract.Requires(authProvider != null);
-            Contract.Requires(iotHubMessageRouter != null);
+            Contract.Requires(iotHubMqttMessageRouter != null);
 
             if (qos2StateProvider != null)
             {
@@ -80,7 +80,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             this.sessionStateManager = sessionStateManager;
             this.authProvider = authProvider;
             this.iotHubCommunicationFactory = iotHubCommunicationFactory;
-            this.iotHubMessageRouter = iotHubMessageRouter;
+            this.iotHubMqttMessageRouter = iotHubMqttMessageRouter;
 
             this.publishProcessor = new MessageAsyncProcessor<PublishPacket>(this.PublishToServerAsync);
             this.publishProcessor.Completion.OnFault(ShutdownOnPublishToServerFaultAction);
@@ -386,7 +386,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         void ApplyRoutingConfiguration(IMessage message, PublishPacket packet)
         {
             RouteDestinationType routeType;
-            if (this.iotHubMessageRouter.TryRouteIncomingMessage(packet.TopicName, message, out routeType))
+            if (this.iotHubMqttMessageRouter.TryRouteIncomingMessage(packet.TopicName, message, out routeType))
             {
                 // successfully matched topic against configured routes -> validate topic name
                 string messageDeviceId;
@@ -406,6 +406,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 {
                     MqttIotHubAdapterEventSource.Log.Warning("Topic name could not be matched against any of the configured routes. Falling back to default telemetry settings.", packet.ToString());
                 }
+                if (this.settings.FailOnUnmatchedIncomingMessage)
                 routeType = RouteDestinationType.Telemetry;
                 message.Properties[MessagePropertyNames.UnmatchedFlagPropertyName] = bool.TrueString;
                 message.Properties[MessagePropertyNames.SubjectPropertyName] = packet.TopicName;
@@ -527,7 +528,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
                     string topicName;
                     message.Properties.Add(TemplateParameters.DeviceIdTemplateParam, this.identity.Name);
-                    if (!this.iotHubMessageRouter.TryRouteOutgoingMessage(RouteSourceType.Notification, message, out topicName))
+                    if (!this.iotHubMqttMessageRouter.TryRouteOutgoingMessage(RouteSourceType.Notification, message, out topicName))
                     {
                         message.Properties.Remove(TemplateParameters.DeviceIdTemplateParam);
                         // source is not configured
@@ -756,7 +757,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 {
                     string topicName;
                     message.Properties.Add(TemplateParameters.DeviceIdTemplateParam, this.identity.Name);
-                    if (!this.iotHubMessageRouter.TryRouteOutgoingMessage(RouteSourceType.Notification, message, out topicName))
+                    if (!this.iotHubMqttMessageRouter.TryRouteOutgoingMessage(RouteSourceType.Notification, message, out topicName))
                     {
                         throw new InvalidOperationException("Route mapping failed on retransmission.");
                     }
@@ -1133,16 +1134,12 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
         async Task CompletePublishAsync(IChannelHandlerContext context, PublishPacket will)
         {
-            await this.publishProcessor.Completion;
-            await this.PublishWillMessageAsync(context, will);
-        }
-
-        async Task PublishWillMessageAsync(IChannelHandlerContext context, PublishPacket will)
-        {
             if (will == null)
             {
                 return;
             }
+
+            await this.publishProcessor.Completion;
 
             try
             {

@@ -9,6 +9,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth
     {
         static readonly AuthenticationResult FailureAuthenticationResult = new AuthenticationResult { Identity = new IotHubIdentity(null, null, false) };
 
+        public static AuthenticationResult Failure => FailureAuthenticationResult;
+        
         public static AuthenticationResult SuccessWithSasToken(IIdentity identity, string token)
         {
             return new AuthenticationResult
@@ -43,14 +45,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth
                 Identity = identity,
                 Properties = AuthenticationProperties.SuccessWithDefaultCredentials()
             };
-        }
-
-        public static AuthenticationResult Failure
-        {
-            get
-            {
-                return FailureAuthenticationResult;
-            }
         }
 
         AuthenticationResult()

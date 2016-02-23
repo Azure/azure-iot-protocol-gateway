@@ -86,16 +86,14 @@
     <Compile Include="..\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="DeviceClientMessage.cs" />
+    <Compile Include="IotHubMessage.cs" />
     <Compile Include="IotHubClient.cs" />
     <Compile Include="IotHubCommunicationFactory.cs" />
+    <Compile Include="Mqtt\IotHubMqttCommunicationFactory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Friends.cs" />
-    <Compile Include="Routing\InboundRouteDefinition.cs" />
-    <Compile Include="Routing\OutboundRouteDefinition.cs" />
-    <Compile Include="Routing\RoutingConfiguration.cs" />
-    <Compile Include="Routing\IotHubMessageRouter.cs" />
-    <Compile Include="Routing\TopicRoutingConfigurationHandler.cs" />
+    <Compile Include="Mqtt\Routing\IotHubMqttMessageRouter.cs" />
+    <Compile Include="Mqtt\Routing\TopicRoutingConfigurationHandler.cs" />
     <Compile Include="StubIotHubClient.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -105,6 +103,7 @@
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
+    <None Include="ProtocolGateway.IotHubClient.nuspec" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ProtocolGateway.Core\ProtocolGateway.Core.csproj">

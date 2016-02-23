@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>Microsoft.Azure.Devices.ProtocolGateway.IotHubClient</id>
-    <version>1.0.0-preview-005-dev-003</version>
+    <version>1.0.0-preview-005</version>
     <title>Microsoft Azure IoT protocol gateway framework</title>
     <authors>Microsoft Azure</authors>
     <owners>Microsoft Azure</owners>
@@ -16,7 +16,7 @@
         <dependency id="DotNetty.Codecs.Mqtt" version="0.2.3-signed" />
         <dependency id="DotNetty.Handlers" version="0.2.3-signed" />
         <dependency id="Microsoft.Azure.Devices.Client" version="1.0.2" />
-        <dependency id="Microsoft.Azure.Devices.ProtocolGateway.Core" version="1.0.0-preview-005-dev-003" />
+        <dependency id="Microsoft.Azure.Devices.ProtocolGateway" version="1.0.0-preview-005" />
         <dependency id="WindowsAzure.Storage" version="4.3.0" />
         <dependency id="Newtonsoft.Json" version="6.0.8" />
         <dependency id="murmurhash-signed" version="1.0.0" />
@@ -24,6 +24,6 @@
     </dependencies>
   </metadata>
   <files>
-    <file src="src\ProtocolGateway.IotHubClient\bin\Release\Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.dll" target="lib\net451\Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.dll" />
+    <file src="bin\Release\Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.dll" target="lib\net451\Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.dll" />
   </files>
 </package>

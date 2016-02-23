@@ -94,11 +94,11 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Azure.Devices.ProtocolGateway.IotHubClient, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Microsoft.Azure.Devices.ProtocolGateway.1.0.0-preview-005\lib\net451\Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.dll</HintPath>
+      <HintPath>..\..\packages\Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.1.0.0-preview-005\lib\net451\Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Microsoft.Azure.Devices.ProtocolGateway.1.0.0-preview-005\lib\net451\Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage.dll</HintPath>
+      <HintPath>..\..\packages\Microsoft.Azure.Devices.ProtocolGatewa.Providers.CloudStoragey.1.0.0-preview-005\lib\net451\Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />

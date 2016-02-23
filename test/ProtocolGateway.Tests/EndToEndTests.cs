@@ -30,7 +30,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
     using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
     using Microsoft.Azure.Devices.ProtocolGateway.IotHub;
     using Microsoft.Azure.Devices.ProtocolGateway.IotHubClient;
-    using Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Routing;
+    using Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Mqtt.Routing;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth;
     using Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage;
@@ -101,10 +101,10 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
                 this.settingsProvider.GetSetting("TableQos2StatePersistenceProvider.StorageTableName"));
             var settings = new Settings(this.settingsProvider);
             var authProvider = new SasTokenAuthenticationProvider();
-            var topicNameRouter = new IotHubMessageRouter();
+            var topicNameRouter = new IotHubMqttMessageRouter();
             
-            DeviceClientFactoryFunc deviceClientFactoryMethod = IotHubClient.PreparePoolFactory(settings.IotHubConnectionString + ";DeviceId=stub", "a", 1);
-            var iotHubFactory = new IotHubCommunicationFactory(deviceClientFactoryMethod);
+            IotHubClientFactoryFunc iotHubClientFactoryMethod = IotHubClient.PreparePoolFactory(settings.IotHubConnectionString + ";DeviceId=stub", "a", 1);
+            var iotHubFactory = new IotHubCommunicationFactory(iotHubClientFactoryMethod);
             
             ServerBootstrap server = new ServerBootstrap()
                 .Group(executorGroup)

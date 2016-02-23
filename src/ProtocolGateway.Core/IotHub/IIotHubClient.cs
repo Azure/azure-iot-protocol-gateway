@@ -4,7 +4,6 @@
 namespace Microsoft.Azure.Devices.ProtocolGateway.IotHub
 {
     using System.Threading.Tasks;
-    using Microsoft.Azure.Devices.ProtocolGateway.IotHub.Routing;
 
     public interface IIotHubClient
     {

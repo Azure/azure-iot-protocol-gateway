@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
-    <id>Microsoft.Azure.Devices.ProtocolGateway.Core</id>
-    <version>1.0.0-preview-005-dev-003</version>
+    <id>Microsoft.Azure.Devices.ProtocolGateway</id>
+    <version>1.0.0-preview-005-dev-005</version>
     <title>Microsoft Azure IoT protocol gateway framework</title>
     <authors>Microsoft Azure</authors>
     <owners>Microsoft Azure</owners>

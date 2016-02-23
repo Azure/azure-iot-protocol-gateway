@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Routing
+namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Mqtt.Routing
 {
     using System;
     using System.Collections.Generic;
@@ -12,22 +12,22 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Routing
     using Microsoft.Azure.Devices.ProtocolGateway;
     using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
     using Microsoft.Azure.Devices.ProtocolGateway.IotHub;
-    using Microsoft.Azure.Devices.ProtocolGateway.IotHub.Routing;
+    using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Routing;
 
-    public sealed class IotHubMessageRouter : IIotHubMessageRouter
+    public sealed class IotHubMqttMessageRouter : IIotHubMqttMessageRouter
     {
         const string BaseUriString = "http://x/";
         static readonly Uri BaseUri = new Uri(BaseUriString, UriKind.Absolute);
 
         UriTemplateTable topicTemplateTable;
         Dictionary<RouteSourceType, UriPathTemplate> routeTemplateMap;
-        public IotHubMessageRouter()
+        public IotHubMqttMessageRouter()
             : this("mqttTopicRouting")
         {
         }
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="IotHubMessageRouter" /> class.
+        ///     Initializes a new instance of the <see cref="IotHubMqttMessageRouter" /> class.
         /// </summary>
         /// <param name="configurationSectionName">Name of configuration section that contains routing configuration.</param>
         /// <remarks>
@@ -44,7 +44,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Routing
         ///         </outboundRoute>
         ///     </mqttTopicRouting>
         /// </example>
-        public IotHubMessageRouter(string configurationSectionName)
+        public IotHubMqttMessageRouter(string configurationSectionName)
         {
             Contract.Requires(!string.IsNullOrEmpty(configurationSectionName));
 
@@ -52,7 +52,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Routing
             this.InitializeFromConfiguration(configuration);
         }
 
-        public IotHubMessageRouter(RoutingConfiguration configuration)
+        public IotHubMqttMessageRouter(RoutingConfiguration configuration)
         {
             this.InitializeFromConfiguration(configuration);
         }
@@ -85,7 +85,16 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Routing
                 topicName = null;
                 return false;
             }
-            topicName = template.Bind(context.Properties);
+
+            try
+            {
+                topicName = template.Bind(context.Properties);
+            }
+            catch (InvalidOperationException)
+            {
+                topicName = null;
+                return false;
+            }
             return true;
         }
 

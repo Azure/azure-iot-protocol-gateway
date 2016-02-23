@@ -71,11 +71,11 @@
     <Compile Include="Instrumentation\AveragePerformanceCounter.cs" />
     <Compile Include="Instrumentation\MqttIotHubAdapterEventSource.cs" />
     <Compile Include="Extensions\TaskExtensions.cs" />
-    <Compile Include="IotHub\IMetadataSerializer.cs" />
     <Compile Include="IotHub\IotHubCommunicationException.cs" />
     <Compile Include="Mqtt\AckPendingMessageState.cs" />
     <Compile Include="Mqtt\Auth\AuthenticationProperties.cs" />
     <Compile Include="Mqtt\Auth\IoTHubIdentity.cs" />
+    <Compile Include="Mqtt\IIotHubCommunicationFactory.cs" />
     <Compile Include="Mqtt\MessagePropertyNames.cs" />
     <Compile Include="Mqtt\MessageTypes.cs" />
     <Compile Include="Mqtt\MessageAsyncProcessorBase.cs" />
@@ -96,9 +96,12 @@
     <Compile Include="Instrumentation\PerformanceCounterCategoryInfo.cs" />
     <Compile Include="Instrumentation\PerformanceCounterManager.cs" />
     <Compile Include="Instrumentation\PerformanceCounters.cs" />
-    <Compile Include="IotHub\Routing\IIotHubMessageRouter.cs" />
-    <Compile Include="IotHub\Routing\RouteDestinationType.cs" />
-    <Compile Include="IotHub\Routing\RouteSourceType.cs" />
+    <Compile Include="Mqtt\Routing\IIotHubMessageRouter.cs" />
+    <Compile Include="Mqtt\Routing\RouteDestinationType.cs" />
+    <Compile Include="Mqtt\Routing\RouteSourceType.cs" />
+    <Compile Include="Mqtt\Routing\InboundRouteDefinition.cs" />
+    <Compile Include="Mqtt\Routing\OutboundRouteDefinition.cs" />
+    <Compile Include="Mqtt\Routing\RoutingConfiguration.cs" />
     <Compile Include="Mqtt\TemplateParameters.cs" />
     <Compile Include="ReadOnlyMergeDictionary.cs" />
     <Compile Include="Mqtt\Persistence\Subscription.cs" />
@@ -123,6 +126,7 @@
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
+    <None Include="ProtocolGateway.Core.nuspec" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -28,13 +28,13 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             return new IotHubClient(client);
         }
 
-        public static DeviceClientFactoryFunc PreparePoolFactory(string baseConnectionString, string poolId, int connectionPoolSize)
+        public static IotHubClientFactoryFunc PreparePoolFactory(string baseConnectionString, string poolId, int connectionPoolSize)
         {
             IotHubConnectionStringBuilder csb = IotHubConnectionStringBuilder.Create(baseConnectionString);
             // todo: uncommment once explicit control over connection pooling is available
             //string[] connectionIds = Enumerable.Range(1, connectionPoolSize).Select(index => poolId + index).ToArray();
             int connectionIndex = 0;
-            DeviceClientFactoryFunc deviceClientFactory = deviceCredentials =>
+            IotHubClientFactoryFunc iotHubClientFactory = deviceCredentials =>
             {
                 if (++connectionIndex >= connectionPoolSize)
                 {
@@ -47,12 +47,12 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
                 string connectionString = csb.ToString();
                 return CreateFromConnectionStringAsync(connectionString);
             };
-            return deviceClientFactory;
+            return iotHubClientFactory;
         }
 
         public Task SendAsync(IMessage message)
         {
-            return ExecuteDeviceClientAction(() => this.deviceClient.SendEventAsync(((DeviceClientMessage)message).ToMessage()));
+            return ExecuteDeviceClientAction(() => this.deviceClient.SendEventAsync(((IotHubMessage)message).ToMessage()));
         }
 
         public async Task<IMessage> ReceiveAsync()
@@ -60,7 +60,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             return await ExecuteDeviceClientAction(async () =>
             {
                 Message message = await this.deviceClient.ReceiveAsync(TimeSpan.MaxValue);
-                return new DeviceClientMessage(message);
+                return new IotHubMessage(message);
             });
         }
 
