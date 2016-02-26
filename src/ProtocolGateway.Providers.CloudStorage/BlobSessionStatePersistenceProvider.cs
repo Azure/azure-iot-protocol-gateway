@@ -6,15 +6,24 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
     using System;
     using System.Globalization;
     using System.IO;
-    using System.Security.Principal;
     using System.Threading.Tasks;
+    using Microsoft.Azure.Devices.ProtocolGateway.Identity;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Blob;
     using Newtonsoft.Json;
+    using Newtonsoft.Json.Converters;
 
     public class BlobSessionStatePersistenceProvider : ISessionStatePersistenceProvider
     {
+        static readonly JsonSerializerSettings SerializerSettings = new JsonSerializerSettings
+        {
+            Converters =
+            {
+                new SubscriptionConverter()
+            }
+        };
+
         readonly CloudBlobContainer container;
 
         internal BlobSessionStatePersistenceProvider(string connectionString, string containerName)
@@ -55,12 +64,12 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
             return new BlobSessionState(transient);
         }
 
-        public async Task<ISessionState> GetAsync(IIdentity identity)
+        public async Task<ISessionState> GetAsync(IDeviceIdentity identity)
         {
             // todo: handle server busy (throttle?)
 
-            CloudBlockBlob blob = this.container.GetBlockBlobReference(identity.Name);
-            JsonSerializer serializer = JsonSerializer.Create();
+            CloudBlockBlob blob = this.container.GetBlockBlobReference(identity.Id);
+            JsonSerializer serializer = JsonSerializer.Create(SerializerSettings);
 
             try
             {
@@ -95,7 +104,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
             }
         }
 
-        public async Task SetAsync(IIdentity identity, ISessionState sessionState)
+        public async Task SetAsync(IDeviceIdentity identity, ISessionState sessionState)
         {
             var state = sessionState as BlobSessionState;
 
@@ -109,11 +118,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
                 throw new ArgumentException("Cannot persist transient Session State object.", "sessionState");
             }
 
-            CloudBlockBlob blob = this.container.GetBlockBlobReference(identity.Name);
+            CloudBlockBlob blob = this.container.GetBlockBlobReference(identity.Id);
             using (var memoryStream = new MemoryStream())
             using (var streamWriter = new StreamWriter(memoryStream))
             {
-                JsonSerializer serializer = JsonSerializer.Create();
+                JsonSerializer serializer = JsonSerializer.Create(SerializerSettings);
                 serializer.Serialize(streamWriter, state);
                 streamWriter.Flush();
 
@@ -125,7 +134,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
             }
         }
 
-        public async Task DeleteAsync(IIdentity identity, ISessionState sessionState)
+        public async Task DeleteAsync(IDeviceIdentity identity, ISessionState sessionState)
         {
             var state = sessionState as BlobSessionState;
 
@@ -134,7 +143,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
                 throw new ArgumentException("Cannot set Session State object that hasn't been acquired from provider.", "sessionState");
             }
 
-            CloudBlockBlob blob = this.container.GetBlockBlobReference(identity.Name);
+            CloudBlockBlob blob = this.container.GetBlockBlobReference(identity.Id);
             await blob.DeleteAsync(
                 DeleteSnapshotsOption.None,
                 new AccessCondition
@@ -143,6 +152,14 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
                 },
                 null,
                 null);
+        }
+
+        class SubscriptionConverter : CustomCreationConverter<ISubscription>
+        {
+            public override ISubscription Create(Type objectType)
+            {
+                return new Subscription();
+            }
         }
     }
 }

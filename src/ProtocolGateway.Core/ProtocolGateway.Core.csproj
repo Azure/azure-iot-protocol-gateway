@@ -32,27 +32,27 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="DotNetty.Buffers, Version=0.2.3.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="DotNetty.Buffers, Version=0.2.3.0, Culture=neutral, PublicKeyToken=e7a0210a354f294a, processorArchitecture=MSIL">
       <HintPath>..\..\packages\DotNetty.Buffers-signed.0.2.3\lib\net45\DotNetty.Buffers.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="DotNetty.Codecs, Version=0.2.3.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="DotNetty.Codecs, Version=0.2.3.0, Culture=neutral, PublicKeyToken=e7a0210a354f294a, processorArchitecture=MSIL">
       <HintPath>..\..\packages\DotNetty.Codecs-signed.0.2.3\lib\net45\DotNetty.Codecs.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="DotNetty.Codecs.Mqtt, Version=0.2.3.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="DotNetty.Codecs.Mqtt, Version=0.2.3.0, Culture=neutral, PublicKeyToken=e7a0210a354f294a, processorArchitecture=MSIL">
       <HintPath>..\..\packages\DotNetty.Codecs.Mqtt-signed.0.2.3\lib\net45\DotNetty.Codecs.Mqtt.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="DotNetty.Common, Version=0.2.3.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="DotNetty.Common, Version=0.2.3.0, Culture=neutral, PublicKeyToken=e7a0210a354f294a, processorArchitecture=MSIL">
       <HintPath>..\..\packages\DotNetty.Common-signed.0.2.3\lib\net45\DotNetty.Common.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="DotNetty.Handlers, Version=0.2.3.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="DotNetty.Handlers, Version=0.2.3.0, Culture=neutral, PublicKeyToken=e7a0210a354f294a, processorArchitecture=MSIL">
       <HintPath>..\..\packages\DotNetty.Handlers-signed.0.2.3\lib\net45\DotNetty.Handlers.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="DotNetty.Transport, Version=0.2.3.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="DotNetty.Transport, Version=0.2.3.0, Culture=neutral, PublicKeyToken=e7a0210a354f294a, processorArchitecture=MSIL">
       <HintPath>..\..\packages\DotNetty.Transport-signed.0.2.3\lib\net45\DotNetty.Transport.dll</HintPath>
       <Private>True</Private>
     </Reference>
@@ -66,65 +66,61 @@
     <Compile Include="..\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="IotHub\IIotHubCommunicationFactory.cs" />
-    <Compile Include="IotHub\IMessage.cs" />
+    <Compile Include="Messaging\IMessagingFactory.cs" />
+    <Compile Include="Messaging\IMessage.cs" />
     <Compile Include="Instrumentation\AveragePerformanceCounter.cs" />
     <Compile Include="Instrumentation\MqttIotHubAdapterEventSource.cs" />
     <Compile Include="Extensions\TaskExtensions.cs" />
-    <Compile Include="IotHub\IMetadataSerializer.cs" />
-    <Compile Include="IotHub\IotHubCommunicationException.cs" />
+    <Compile Include="Messaging\MessagingException.cs" />
+    <Compile Include="Messaging\StubMessagingServiceClient.cs" />
     <Compile Include="Mqtt\AckPendingMessageState.cs" />
-    <Compile Include="Mqtt\Auth\AuthenticationProperties.cs" />
-    <Compile Include="Mqtt\Auth\IoTHubIdentity.cs" />
+    <Compile Include="Identity\IDeviceIdentity.cs" />
     <Compile Include="Mqtt\MessagePropertyNames.cs" />
     <Compile Include="Mqtt\MessageTypes.cs" />
     <Compile Include="Mqtt\MessageAsyncProcessorBase.cs" />
-    <Compile Include="Mqtt\Auth\DeviceKeyAuthenticationProvider.cs" />
     <Compile Include="Mqtt\ChannelMessageProcessingException.cs" />
     <Compile Include="Mqtt\MessageAsyncProcessor.cs" />
     <Compile Include="Mqtt\CompletionPendingMessageState.cs" />
-    <Compile Include="Mqtt\DeviceClientFactoryFunc.cs" />
-    <Compile Include="IotHub\IIotHubClient.cs" />
+    <Compile Include="Messaging\IMessagingServiceClient.cs" />
     <Compile Include="Mqtt\ISupportRetransmission.cs" />
     <Compile Include="Mqtt\Persistence\ISubscription.cs" />
     <Compile Include="Mqtt\Persistence\TransientSessionState.cs" />
     <Compile Include="Mqtt\Persistence\TransientSessionStatePersistenceProvider.cs" />
     <Compile Include="Mqtt\Persistence\IQos2StatePersistenceProvider.cs" />
     <Compile Include="Mqtt\IPacketReference.cs" />
-    <Compile Include="Mqtt\Persistence\IQoS2MessageDeliveryState.cs" />
+    <Compile Include="Mqtt\Persistence\IQos2MessageDeliveryState.cs" />
     <Compile Include="Mqtt\RequestAckPairProcessor.cs" />
     <Compile Include="Instrumentation\PerformanceCounterCategoryInfo.cs" />
     <Compile Include="Instrumentation\PerformanceCounterManager.cs" />
     <Compile Include="Instrumentation\PerformanceCounters.cs" />
-    <Compile Include="IotHub\Routing\IIotHubMessageRouter.cs" />
-    <Compile Include="IotHub\Routing\RouteDestinationType.cs" />
-    <Compile Include="IotHub\Routing\RouteSourceType.cs" />
+    <Compile Include="Mqtt\Routing\ConfigurableMessageRouter.cs" />
+    <Compile Include="Routing\IMessageRouter.cs" />
+    <Compile Include="Mqtt\Routing\InboundRouteDefinition.cs" />
+    <Compile Include="Mqtt\Routing\OutboundRouteDefinition.cs" />
+    <Compile Include="Routing\RouteDestinationType.cs" />
+    <Compile Include="Routing\RouteSourceType.cs" />
+    <Compile Include="Mqtt\Routing\RoutingConfiguration.cs" />
+    <Compile Include="Mqtt\Routing\RoutingConfigurationHandler.cs" />
     <Compile Include="Mqtt\TemplateParameters.cs" />
-    <Compile Include="ReadOnlyMergeDictionary.cs" />
-    <Compile Include="Mqtt\Persistence\Subscription.cs" />
+    <Compile Include="Mqtt\Persistence\TransientSubscription.cs" />
     <Compile Include="ReadOnlyByteBufferStream.cs" />
     <Compile Include="AppConfigSettingsProvider.cs" />
-    <Compile Include="Mqtt\Auth\AuthenticationScope.cs" />
     <Compile Include="Properties\Friends.cs" />
     <Compile Include="ISettingsProvider.cs" />
-    <Compile Include="Mqtt\Auth\AuthenticationResult.cs" />
+    <Compile Include="Identity\UnauthenticatedDeviceIdentity.cs" />
     <Compile Include="Mqtt\MqttIotHubAdapter.cs" />
-    <Compile Include="Mqtt\Auth\IAuthenticationProvider.cs" />
+    <Compile Include="Identity\IDeviceIdentityProvider.cs" />
     <Compile Include="Mqtt\Persistence\ISessionState.cs" />
     <Compile Include="Mqtt\Persistence\ISessionStatePersistenceProvider.cs" />
     <Compile Include="Mqtt\Settings.cs" />
-    <Compile Include="Mqtt\Auth\SasTokenAuthenticationProvider.cs" />
     <Compile Include="Mqtt\Util.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Instrumentation\SafePerformanceCounter.cs" />
     <Compile Include="UriPathTemplate.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config">
-      <SubType>Designer</SubType>
-    </None>
+    <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

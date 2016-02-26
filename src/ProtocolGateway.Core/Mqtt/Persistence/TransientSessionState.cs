@@ -9,7 +9,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence
 
     class TransientSessionState : ISessionState
     {
-        private readonly List<ISubscription> subscriptions;
+        readonly List<ISubscription> subscriptions;
 
         public TransientSessionState(bool transient)
         {
@@ -17,12 +17,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence
             this.subscriptions = new List<ISubscription>();
         }
 
-        public bool IsTransient { get; private set; }
+        public bool IsTransient { get; }
 
-        public IReadOnlyList<ISubscription> Subscriptions
-        {
-            get { return this.subscriptions; }
-        }
+        public IReadOnlyList<ISubscription> Subscriptions => this.subscriptions;
 
         public ISessionState Copy()
         {
@@ -52,11 +49,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence
             }
             else
             {
-                this.subscriptions.Add(new Subscription(topicFilter, qos));
+                this.subscriptions.Add(new TransientSubscription(topicFilter, qos));
             }
         }
 
-        private int FindSubscriptionIndex(string topicFilter)
+        int FindSubscriptionIndex(string topicFilter)
         {
             for (int i = this.subscriptions.Count - 1; i >= 0; i--)
             {

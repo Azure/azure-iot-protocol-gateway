@@ -17,14 +17,13 @@ namespace ProtocolGateway.Host.Common
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Sockets;
     using Microsoft.Azure.Devices.ProtocolGateway;
+    using Microsoft.Azure.Devices.ProtocolGateway.Identity;
     using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
-    using Microsoft.Azure.Devices.ProtocolGateway.IotHub;
-    using Microsoft.Azure.Devices.ProtocolGateway.IotHub.Routing;
+    using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Routing;
     using Microsoft.Azure.Devices.ProtocolGateway.IotHubClient;
-    using Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Routing;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt;
-    using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence;
+    using Microsoft.Azure.Devices.ProtocolGateway.Routing;
 
     public class Bootstrapper
     {
@@ -37,8 +36,8 @@ namespace ProtocolGateway.Host.Common
         readonly Settings settings;
         readonly ISessionStatePersistenceProvider sessionStateManager;
         readonly IQos2StatePersistenceProvider qos2StateProvider;
-        readonly IAuthenticationProvider authProvider;
-        readonly IIotHubMessageRouter iotHubMessageRouter;
+        readonly IDeviceIdentityProvider authProvider;
+        readonly IMessageRouter iotHubMessageRouter;
         X509Certificate2 tlsCertificate;
         IEventLoopGroup parentEventLoopGroup;
         IEventLoopGroup eventLoopGroup;
@@ -56,8 +55,8 @@ namespace ProtocolGateway.Host.Common
             this.settings = new Settings(this.settingsProvider);
             this.sessionStateManager = sessionStateManager;
             this.qos2StateProvider = qos2StateProvider;
-            this.authProvider = new SasTokenAuthenticationProvider();
-            this.iotHubMessageRouter = new IotHubMessageRouter();
+            this.authProvider = new SasTokenDeviceIdentityProvider();
+            this.iotHubMessageRouter = new ConfigurableMessageRouter();
         }
 
         public Task CloseCompletion
@@ -134,7 +133,7 @@ namespace ProtocolGateway.Host.Common
                 connectionString += ";DeviceId=stub";
             }
 
-            var deviceClientFactory = new ThreadLocal<DeviceClientFactoryFunc>(() =>
+            var deviceClientFactory = new ThreadLocal<IotHubClientFactoryFunc>(() =>
             {
                 string poolId = Guid.NewGuid().ToString("N");
                 return IotHubClient.PreparePoolFactory(connectionString, poolId, IotHubConnectionsPerThread);

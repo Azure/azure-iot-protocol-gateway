@@ -6,27 +6,26 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
     using System.IO;
     using System.Threading.Tasks;
     using Microsoft.Azure.Devices.Client;
-    using Microsoft.Azure.Devices.ProtocolGateway.IotHub;
-    using Microsoft.Azure.Devices.ProtocolGateway.Mqtt;
-    using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth;
+    using Microsoft.Azure.Devices.ProtocolGateway.Identity;
+    using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
 
-    public class IotHubCommunicationFactory : IIotHubCommunicationFactory
+    public class IotHubCommunicationFactory : IMessagingFactory
     {
-        readonly DeviceClientFactoryFunc deviceClientFactoryMethod;
+        readonly IotHubClientFactoryFunc iotHubClientFactoryMethod;
 
-        public IotHubCommunicationFactory(DeviceClientFactoryFunc deviceClientFactoryMethod)
+        public IotHubCommunicationFactory(IotHubClientFactoryFunc iotHubClientFactoryMethod)
         {
-            this.deviceClientFactoryMethod = deviceClientFactoryMethod;
+            this.iotHubClientFactoryMethod = iotHubClientFactoryMethod;
         }
 
-        public Task<IIotHubClient> CreateIotHubClientAsync(AuthenticationResult authResult)
+        public Task<IMessagingServiceClient> CreateIotHubClientAsync(IDeviceIdentity authResult)
         {
-            return this.deviceClientFactoryMethod(authResult);
+            return this.iotHubClientFactoryMethod(authResult);
         }
 
-        public IMessage CreateMessage(Stream bodyStream)
+        public IMessage CreateMessage(Stream payload)
         {
-            return new DeviceClientMessage(new Message(bodyStream));
+            return new DeviceClientMessage(new Message(payload));
         }
     }
 }

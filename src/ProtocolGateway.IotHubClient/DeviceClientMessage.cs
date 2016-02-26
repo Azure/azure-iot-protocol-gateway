@@ -7,11 +7,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
     using System.Collections.Generic;
     using System.IO;
     using Microsoft.Azure.Devices.Client;
-    using Microsoft.Azure.Devices.ProtocolGateway.IotHub;
+    using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
 
     public sealed class DeviceClientMessage : IMessage
     {
-        private readonly Message message;
+        readonly Message message;
 
         public DeviceClientMessage(Message message)
         {
@@ -20,7 +20,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
 
         public IDictionary<string, string> Properties => this.message.Properties;
 
-        public Stream Body => this.message.GetBodyStream();
+        public Stream Payload => this.message.GetBodyStream();
 
         public string LockToken => this.message.LockToken;
 

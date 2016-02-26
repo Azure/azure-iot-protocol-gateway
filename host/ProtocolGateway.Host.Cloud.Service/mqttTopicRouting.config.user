@@ -1,0 +1,8 @@
+<mqttTopicRouting>
+  <inboundRoute to="telemetry">
+    <template>devices/{deviceId}/messages/events</template>
+  </inboundRoute>
+  <outboundRoute from="notification">
+    <template>devices/{deviceId}/messages/devicebound</template>
+  </outboundRoute>
+</mqttTopicRouting>

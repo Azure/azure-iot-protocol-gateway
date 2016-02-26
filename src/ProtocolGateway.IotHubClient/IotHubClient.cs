@@ -7,12 +7,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
     using System.Threading.Tasks;
     using Microsoft.Azure.Devices.Client;
     using Microsoft.Azure.Devices.Client.Exceptions;
-    using Microsoft.Azure.Devices.ProtocolGateway.IotHub;
-    using Microsoft.Azure.Devices.ProtocolGateway.Mqtt;
-    using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Auth;
-    using IotHubCommunicationException = Microsoft.Azure.Devices.ProtocolGateway.IotHub.IotHubCommunicationException;
+    using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
 
-    public class IotHubClient : IIotHubClient
+    public class IotHubClient : IMessagingServiceClient
     {
         readonly DeviceClient deviceClient;
 
@@ -21,116 +18,150 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             this.deviceClient = deviceClient;
         }
 
-        public static async Task<IIotHubClient> CreateFromConnectionStringAsync(string connectionString)
+        public static async Task<IMessagingServiceClient> CreateFromConnectionStringAsync(string connectionString)
         {
             DeviceClient client = DeviceClient.CreateFromConnectionString(connectionString);
-            await ExecuteDeviceClientAction(() => client.OpenAsync());
+            try
+            {
+                await client.OpenAsync();
+            }
+            catch (IotHubException ex)
+            {
+                throw ComposeIotHubCommunicationException(ex);
+            }
             return new IotHubClient(client);
         }
 
-        public static DeviceClientFactoryFunc PreparePoolFactory(string baseConnectionString, string poolId, int connectionPoolSize)
+        public static IotHubClientFactoryFunc PreparePoolFactory(string baseConnectionString, string poolId, int connectionPoolSize)
         {
             IotHubConnectionStringBuilder csb = IotHubConnectionStringBuilder.Create(baseConnectionString);
             // todo: uncommment once explicit control over connection pooling is available
             //string[] connectionIds = Enumerable.Range(1, connectionPoolSize).Select(index => poolId + index).ToArray();
             int connectionIndex = 0;
-            DeviceClientFactoryFunc deviceClientFactory = deviceCredentials =>
+            IotHubClientFactoryFunc iotHubClientFactory = deviceIdentity =>
             {
-                if (++connectionIndex >= connectionPoolSize)
-                {
-                    connectionIndex = 0;
-                }
+                //if (++connectionIndex >= connectionPoolSize)
+                //{
+                //    connectionIndex = 0;
+                //}
                 //csb.GroupName = connectionIds[connectionIndex]; // todo: uncommment once explicit control over connection pooling is available
-                var identity = (IotHubIdentity)deviceCredentials.Identity;
-                csb.AuthenticationMethod = DeriveAuthenticationMethod(csb.AuthenticationMethod, identity.DeviceId, deviceCredentials.Properties);
+                var identity = (IotHubDeviceIdentity)deviceIdentity;
+                csb.AuthenticationMethod = DeriveAuthenticationMethod(csb.AuthenticationMethod, identity);
                 csb.HostName = identity.IotHubHostName;
                 string connectionString = csb.ToString();
                 return CreateFromConnectionStringAsync(connectionString);
             };
-            return deviceClientFactory;
+            return iotHubClientFactory;
         }
 
-        public Task SendAsync(IMessage message)
+        public async Task SendAsync(IMessage message)
         {
-            return ExecuteDeviceClientAction(() => this.deviceClient.SendEventAsync(((DeviceClientMessage)message).ToMessage()));
+            try
+            {
+                await this.deviceClient.SendEventAsync(((DeviceClientMessage)message).ToMessage());
+            }
+            catch (IotHubException ex)
+            {
+                throw ComposeIotHubCommunicationException(ex);
+            }
         }
 
         public async Task<IMessage> ReceiveAsync()
         {
-            return await ExecuteDeviceClientAction(async () =>
+            try
             {
                 Message message = await this.deviceClient.ReceiveAsync(TimeSpan.MaxValue);
                 return new DeviceClientMessage(message);
-            });
+            }
+            catch (IotHubException ex)
+            {
+                throw new MessagingException(ex.Message, ex.InnerException, ex.IsTransient, ex.TrackingId);
+            }
         }
 
-        public Task AbandonAsync(string lockToken)
+        public async Task AbandonAsync(string lockToken)
         {
-            return ExecuteDeviceClientAction(() => this.deviceClient.AbandonAsync(lockToken));
+            try
+            {
+                await this.deviceClient.AbandonAsync(lockToken);
+            }
+            catch (IotHubException ex)
+            {
+                throw ComposeIotHubCommunicationException(ex);
+            }
         }
 
-        public Task CompleteAsync(string lockToken)
+        public async Task CompleteAsync(string lockToken)
         {
-            return ExecuteDeviceClientAction(() => this.deviceClient.CompleteAsync(lockToken));
+            try
+            {
+                await this.deviceClient.CompleteAsync(lockToken);
+            }
+            catch (IotHubException ex)
+            {
+                throw ComposeIotHubCommunicationException(ex);
+            }
         }
 
-        public Task RejectAsync(string lockToken)
+        public async Task RejectAsync(string lockToken)
         {
-            return ExecuteDeviceClientAction(() => this.deviceClient.RejectAsync(lockToken));
+            try
+            {
+                await this.deviceClient.RejectAsync(lockToken);
+            }
+            catch (IotHubException ex)
+            {
+                throw ComposeIotHubCommunicationException(ex);
+            }
         }
 
-        public Task DisposeAsync()
+        public async Task DisposeAsync()
         {
-            return ExecuteDeviceClientAction(() => this.deviceClient.CloseAsync());
+            try
+            {
+                await this.deviceClient.CloseAsync();
+            }
+            catch (IotHubException ex)
+            {
+                throw ComposeIotHubCommunicationException(ex);
+            }
         }
 
-        internal static IAuthenticationMethod DeriveAuthenticationMethod(IAuthenticationMethod currentAuthenticationMethod, string deviceId, AuthenticationProperties authenticationProperties)
+        internal static IAuthenticationMethod DeriveAuthenticationMethod(IAuthenticationMethod currentAuthenticationMethod, IotHubDeviceIdentity deviceIdentity)
         {
-            switch (authenticationProperties.Scope)
+            switch (deviceIdentity.Scope)
             {
                 case AuthenticationScope.None:
                     var policyKeyAuth = currentAuthenticationMethod as DeviceAuthenticationWithSharedAccessPolicyKey;
                     if (policyKeyAuth != null)
                     {
-                        return new DeviceAuthenticationWithSharedAccessPolicyKey(deviceId, policyKeyAuth.PolicyName, policyKeyAuth.Key);
+                        return new DeviceAuthenticationWithSharedAccessPolicyKey(deviceIdentity.Id, policyKeyAuth.PolicyName, policyKeyAuth.Key);
                     }
                     var deviceKeyAuth = currentAuthenticationMethod as DeviceAuthenticationWithRegistrySymmetricKey;
                     if (deviceKeyAuth != null)
                     {
-                        return new DeviceAuthenticationWithRegistrySymmetricKey(deviceId, deviceKeyAuth.DeviceId);
+                        return new DeviceAuthenticationWithRegistrySymmetricKey(deviceIdentity.Id, deviceKeyAuth.DeviceId);
                     }
                     var deviceTokenAuth = currentAuthenticationMethod as DeviceAuthenticationWithToken;
                     if (deviceTokenAuth != null)
                     {
-                        return new DeviceAuthenticationWithToken(deviceId, deviceTokenAuth.Token);
+                        return new DeviceAuthenticationWithToken(deviceIdentity.Id, deviceTokenAuth.Token);
                     }
                     throw new InvalidOperationException("");
                 case AuthenticationScope.SasToken:
-                    return new DeviceAuthenticationWithToken(deviceId, authenticationProperties.Secret);
+                    return new DeviceAuthenticationWithToken(deviceIdentity.Id, deviceIdentity.Secret);
                 case AuthenticationScope.DeviceKey:
-                    return new DeviceAuthenticationWithRegistrySymmetricKey(deviceId, authenticationProperties.Secret);
+                    return new DeviceAuthenticationWithRegistrySymmetricKey(deviceIdentity.Id, deviceIdentity.Secret);
                 case AuthenticationScope.HubKey:
-                    return new DeviceAuthenticationWithSharedAccessPolicyKey(deviceId, authenticationProperties.PolicyName, authenticationProperties.Secret);
+                    return new DeviceAuthenticationWithSharedAccessPolicyKey(deviceIdentity.Id, deviceIdentity.PolicyName, deviceIdentity.Secret);
                 default:
-                    throw new InvalidOperationException("Unexpected AuthenticationScope value: " + authenticationProperties.Scope);
+                    throw new InvalidOperationException("Unexpected AuthenticationScope value: " + deviceIdentity.Scope);
             }
         }
 
-        static async Task<T> ExecuteDeviceClientAction<T>(Func<Task<T>> action)
+        static MessagingException ComposeIotHubCommunicationException(IotHubException ex)
         {
-            try
-            {
-                return await action();
-            }
-            catch (IotHubException ex)
-            {
-                throw new IotHubCommunicationException(ex.Message, ex.InnerException, ex.IsTransient, ex.TrackingId);
-            }
-        }
-
-        static Task ExecuteDeviceClientAction(Func<Task> action)
-        {
-            return ExecuteDeviceClientAction(async () => { await action(); return 0; });
+            return new MessagingException(ex.Message, ex.InnerException, ex.IsTransient, ex.TrackingId);
         }
     }
 }

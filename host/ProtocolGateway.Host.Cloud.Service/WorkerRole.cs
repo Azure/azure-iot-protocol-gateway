@@ -12,7 +12,6 @@ namespace ProtocolGateway.Host.Cloud.Service
     using DotNetty.Common.Internal.Logging;
     using Microsoft.Azure.Devices.ProtocolGateway;
     using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
-    using Microsoft.Azure.Devices.ProtocolGateway.IotHubClient;
     using Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage;
     using Microsoft.Practices.EnterpriseLibrary.SemanticLogging;
     using Microsoft.WindowsAzure.ServiceRuntime;

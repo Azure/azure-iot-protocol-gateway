@@ -1,25 +1,37 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace Microsoft.Azure.Devices.Gateway.Tests.Extensions
+namespace Microsoft.Azure.Devices.ProtocolGateway.Tests.Extensions
 {
-    using System.Collections.Generic;
-    using System.Linq;
+    using System;
+    using System.Threading;
     using System.Threading.Tasks;
 
     public static class TaskExtensions
     {
-        public static async Task WhenSome(IEnumerable<Task> tasks, int count)
+        public static Task WithTimeout(this Task task, TimeSpan timeout)
         {
-            List<Task> remainingTasks = tasks.ToList();
-            int completed = 0;
-            while (completed < count)
+            if (task.IsCompleted || (timeout == Timeout.InfiniteTimeSpan))
             {
-                Task completedTask = await Task.WhenAny(remainingTasks);
-                completedTask.Wait(0);
-                remainingTasks.Remove(completedTask);
-                completed++;
+                return task;
             }
+
+            return WithTimeoutInternal(task, timeout);
+        }
+
+        static async Task WithTimeoutInternal(Task task, TimeSpan timeout)
+        {
+            using (var cts = new CancellationTokenSource())
+            {
+                if (task == await Task.WhenAny(task, Task.Delay(timeout, cts.Token)))
+                {
+                    cts.Cancel();
+                    await task;
+                    return;
+                }
+            }
+
+            throw new TimeoutException();
         }
     }
 }

@@ -1,12 +1,11 @@
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace Microsoft.Azure.Devices.ProtocolGateway.IotHub
+namespace Microsoft.Azure.Devices.ProtocolGateway.Messaging
 {
     using System.Threading.Tasks;
-    using Microsoft.Azure.Devices.ProtocolGateway.IotHub.Routing;
 
-    public interface IIotHubClient
+    public interface IMessagingServiceClient
     {
         Task SendAsync(IMessage message);
 

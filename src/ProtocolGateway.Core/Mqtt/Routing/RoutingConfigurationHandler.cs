@@ -1,15 +1,15 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Routing
+namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Routing
 {
     using System;
     using System.Configuration;
     using System.Linq;
     using System.Xml;
-    using Microsoft.Azure.Devices.ProtocolGateway.IotHub.Routing;
+    using Microsoft.Azure.Devices.ProtocolGateway.Routing;
 
-    public class TopicRoutingConfigurationHandler : IConfigurationSectionHandler
+    public class RoutingConfigurationHandler : IConfigurationSectionHandler
     {
         public object Create(object parent, object configContext, XmlNode section)
         {
@@ -36,7 +36,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Routing
             {
                 return result;
             }
-            throw new ConfigurationErrorsException(string.Format("routeType value `{0}`could not be parsed.", value));
+            throw new ConfigurationErrorsException($"routeType value `{value}`could not be parsed.");
         }
 
         static RouteSourceType ParseOutboundRouteType(string value)
@@ -46,7 +46,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Routing
             {
                 return result;
             }
-            throw new ConfigurationErrorsException(string.Format("routeType value `{0}`could not be parsed.", value));
+            throw new ConfigurationErrorsException($"routeType value `{value}`could not be parsed.");
         }
     }
 }

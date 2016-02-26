@@ -45,19 +45,13 @@ namespace ProtocolGateway.Host.Common
         [Event(VerboseEventId, Level = EventLevel.Verbose)]
         public void Verbose(string message, string info)
         {
-            if (this.IsVerboseEnabled)
-            {
-                this.WriteEvent(VerboseEventId, message, info);
-            }
+            this.WriteEvent(VerboseEventId, message, info);
         }
 
         [Event(InfoEventId, Level = EventLevel.Informational)]
         public void Info(string message, string info)
         {
-            if (this.IsInfoEnabled)
-            {
-                this.WriteEvent(InfoEventId, message, info);
-            }
+            this.WriteEvent(InfoEventId, message, info);
         }
 
         [NonEvent]
@@ -69,37 +63,25 @@ namespace ProtocolGateway.Host.Common
         [NonEvent]
         public void Warning(string message, Exception exception)
         {
-            if (this.IsWarningEnabled)
-            {
-                this.Warning(message, exception == null ? string.Empty : exception.ToString());
-            }
+            this.Warning(message, exception == null ? string.Empty : exception.ToString());
         }
 
         [Event(WarningEventId, Level = EventLevel.Warning)]
         public void Warning(string message, string exception)
         {
-            if (this.IsWarningEnabled)
-            {
-                this.WriteEvent(WarningEventId, message, exception);
-            }
+            this.WriteEvent(WarningEventId, message, exception);
         }
 
         [NonEvent]
         public void Error(string message, Exception exception)
         {
-            if (this.IsErrorEnabled)
-            {
-                this.Error(message, exception == null ? string.Empty : exception.ToString());
-            }
+            this.Error(message, exception == null ? string.Empty : exception.ToString());
         }
 
         [Event(ErrorEventId, Level = EventLevel.Error)]
         public void Error(string message, string exception)
         {
-            if (this.IsErrorEnabled)
-            {
-                this.WriteEvent(ErrorEventId, message, exception);
-            }
+            this.WriteEvent(ErrorEventId, message, exception);
         }
     }
 }

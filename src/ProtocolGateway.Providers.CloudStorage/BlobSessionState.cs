@@ -11,6 +11,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
 
     class BlobSessionState : ISessionState
     {
+        [DataMember(Name = "subscriptions")] // todo: name casing seems to be ignored by the serializer
         readonly List<ISubscription> subscriptions;
 
         public BlobSessionState(bool transient)
@@ -20,13 +21,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
         }
 
         [IgnoreDataMember]
-        public bool IsTransient { get; private set; }
+        public bool IsTransient { get; }
 
-        [DataMember(Name = "subscriptions")] // todo: name casing seems to be ignored by the serializer
-        public IReadOnlyList<ISubscription> Subscriptions
-        {
-            get { return this.subscriptions; }
-        }
+        public IReadOnlyList<ISubscription> Subscriptions => this.subscriptions;
 
         [IgnoreDataMember]
         public string ETag { get; set; }
@@ -64,7 +61,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
             }
         }
 
-        private int FindSubscriptionIndex(string topicFilter)
+        int FindSubscriptionIndex(string topicFilter)
         {
             for (int i = this.subscriptions.Count - 1; i >= 0; i--)
             {

@@ -6,7 +6,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
     using System;
     using DotNetty.Codecs.Mqtt.Packets;
     using DotNetty.Common;
-    using Microsoft.Azure.Devices.ProtocolGateway.IotHub;
+    using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
 
     sealed class AckPendingMessageState : IPacketReference, ISupportRetransmission // todo: recycle?
     {

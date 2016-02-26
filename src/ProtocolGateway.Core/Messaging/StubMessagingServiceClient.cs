@@ -1,21 +1,17 @@
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
+namespace Microsoft.Azure.Devices.ProtocolGateway.Messaging
 {
     using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Common.Utilities;
-    using Microsoft.Azure.Devices.ProtocolGateway.IotHub;
-    using Microsoft.Azure.Devices.ProtocolGateway.Mqtt;
 
-    public class StubIotHubClient : IIotHubClient
+    public class StubMessagingServiceClient : IMessagingServiceClient
     {
-        public static readonly DeviceClientFactoryFunc Factory = deviceCredentials => Task.FromResult<IIotHubClient>(new StubIotHubClient());
-
         readonly CancellationTokenSource disposePromise;
 
-        public StubIotHubClient()
+        public StubMessagingServiceClient()
         {
             this.disposePromise = new CancellationTokenSource();
         }
@@ -28,7 +24,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
         public Task<IMessage> ReceiveAsync()
         {
             var tcs = new TaskCompletionSource<IMessage>();
-            this.disposePromise.Token.Register(() => tcs.SetCanceled());
+            this.disposePromise.Token.Register(state => ((TaskCompletionSource<IMessage>)state).TrySetCanceled(), tcs);
             return tcs.Task;
         }
 
@@ -47,9 +43,10 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             return TaskEx.Completed;
         }
 
-        public async Task DisposeAsync()
+        public Task DisposeAsync()
         {
             this.disposePromise.Cancel();
+            return TaskEx.Completed;
         }
     }
 }

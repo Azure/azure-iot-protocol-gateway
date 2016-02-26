@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Routing
+namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Routing
 {
     using System;
     using System.Collections.Generic;
@@ -11,23 +11,23 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Routing
     using System.Linq;
     using Microsoft.Azure.Devices.ProtocolGateway;
     using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
-    using Microsoft.Azure.Devices.ProtocolGateway.IotHub;
-    using Microsoft.Azure.Devices.ProtocolGateway.IotHub.Routing;
+    using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
+    using Microsoft.Azure.Devices.ProtocolGateway.Routing;
 
-    public sealed class IotHubMessageRouter : IIotHubMessageRouter
+    public sealed class ConfigurableMessageRouter : IMessageRouter
     {
         const string BaseUriString = "http://x/";
         static readonly Uri BaseUri = new Uri(BaseUriString, UriKind.Absolute);
 
         UriTemplateTable topicTemplateTable;
         Dictionary<RouteSourceType, UriPathTemplate> routeTemplateMap;
-        public IotHubMessageRouter()
+        public ConfigurableMessageRouter()
             : this("mqttTopicRouting")
         {
         }
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="IotHubMessageRouter" /> class.
+        ///     Initializes a new instance of the <see cref="ConfigurableMessageRouter" /> class.
         /// </summary>
         /// <param name="configurationSectionName">Name of configuration section that contains routing configuration.</param>
         /// <remarks>
@@ -44,7 +44,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Routing
         ///         </outboundRoute>
         ///     </mqttTopicRouting>
         /// </example>
-        public IotHubMessageRouter(string configurationSectionName)
+        public ConfigurableMessageRouter(string configurationSectionName)
         {
             Contract.Requires(!string.IsNullOrEmpty(configurationSectionName));
 
@@ -52,7 +52,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Routing
             this.InitializeFromConfiguration(configuration);
         }
 
-        public IotHubMessageRouter(RoutingConfiguration configuration)
+        public ConfigurableMessageRouter(RoutingConfiguration configuration)
         {
             this.InitializeFromConfiguration(configuration);
         }
@@ -75,30 +75,38 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Routing
         /// </summary>
         /// <param name="routeType"></param>
         /// <param name="context"></param>
-        /// <param name="topicName"></param>
+        /// <param name="path"></param>
         /// <returns></returns>
-        public bool TryRouteOutgoingMessage(RouteSourceType routeType, IMessage context, out string topicName)
+        public bool TryRouteOutgoingMessage(RouteSourceType routeType, IMessage context, out string path)
         {
             UriPathTemplate template;
             if (!this.routeTemplateMap.TryGetValue(routeType, out template))
             {
-                topicName = null;
+                path = null;
                 return false;
             }
-            topicName = template.Bind(context.Properties);
+            try
+            {
+                path = template.Bind(context.Properties);
+            }
+            catch (InvalidOperationException)
+            {
+                path = null;
+                return false;
+            }
             return true;
         }
 
         /// <summary>
         /// Tries to route the message to the destination and appends route properties to message metadata
         /// </summary>
-        /// <param name="topicName"></param>
+        /// <param name="path"></param>
         /// <param name="message"></param>
         /// <param name="routeType"></param>
         /// <returns></returns>
-        public bool TryRouteIncomingMessage(string topicName, IMessage message, out RouteDestinationType routeType)
+        public bool TryRouteIncomingMessage(string path, IMessage message, out RouteDestinationType routeType)
         {
-            Collection<UriTemplateMatch> matches = this.topicTemplateTable.Match(new Uri(BaseUri, topicName));
+            Collection<UriTemplateMatch> matches = this.topicTemplateTable.Match(new Uri(BaseUri, path));
 
             if (matches.Count == 0)
             {
@@ -110,7 +118,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Routing
             {
                 if (MqttIotHubAdapterEventSource.Log.IsVerboseEnabled)
                 {
-                    MqttIotHubAdapterEventSource.Log.Verbose("Topic name matches more than one route.", topicName);
+                    MqttIotHubAdapterEventSource.Log.Verbose("Topic name matches more than one route.", path);
                 }
             }
 

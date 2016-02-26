@@ -12,7 +12,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
     using DotNetty.Codecs.Mqtt.Packets;
     using DotNetty.Transport.Channels;
     using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
-    using Microsoft.Azure.Devices.ProtocolGateway.IotHub;
+    using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence;
 
     static class Util
@@ -33,7 +33,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 if (wildcardIndex == -1)
                 {
                     int matchLength = Math.Max(topicFilter.Length - topicFilterIndex, topicName.Length - topicNameIndex);
-                    return String.Compare(topicFilter, topicFilterIndex, topicName, topicNameIndex, matchLength, StringComparison.Ordinal) == 0;
+                    return string.Compare(topicFilter, topicFilterIndex, topicName, topicNameIndex, matchLength, StringComparison.Ordinal) == 0;
                 }
                 else
                 {
@@ -147,7 +147,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 }
                 packet.PacketId = packetId;
             }
-            using (Stream payloadStream = message.Body)
+            using (Stream payloadStream = message.Payload)
             {
                 long streamLength = payloadStream.Length;
                 if (streamLength > int.MaxValue)
@@ -206,19 +206,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 PerformanceCounters.PublishPacketsSentPerSecond.Increment();
             }
             PerformanceCounters.PacketsSentPerSecond.Increment();
-        }
-
-        public static void AppendMessageContext(IMessage message, IDictionary<string, string> messageContext)
-        {
-            if (messageContext == null)
-            {
-                return;
-            }
-
-            foreach (KeyValuePair<string, string> property in messageContext)
-            {
-                message.Properties.Add(property);
-            }
         }
     }
 }
