@@ -12,19 +12,19 @@ For guidance on customizations and extensibility of the protocol gateway, please
 ## How to Build and Run
 
 ### Prerequisites
-The protocol gateway requires an Azure IoT hub to connect to and an Azure Storage account used for persisting state. You can also use the Azure Storage Emulator for the console or cloud samples running locally.
+The protocol gateway requires an Azure IoT hub to connect to and an Azure Storage account used for persisting state. You can also use the Azure Storage Emulator for the console or cloud hosts running locally.
 
 To build the protocol gateway you need Microsoft Visual Studio 2013 (or later) and Microsoft Azure SDK 2.6 installed on your development machine. For deployment of the protocol gateway you need Microsoft Azure PowerShell installed.
 
 ### Running the Console Sample
-The Azure IoT protocol gateway repository contains samples in the ‘/samples’ folder. The console app in this folder hosts a protocol gateway that connects to IoT Hub and starts listening for devices to connect (Note: by default the gateway listens on port 8883 for MQTT and uses port 5672 for AMQP traffic).
+The Azure IoT protocol gateway repository contains reference implementations of hosts in the ‘/host’ folder. The console app in this folder hosts a protocol gateway that connects to IoT Hub and starts listening for devices to connect (Note: by default the gateway listens on port 8883 for MQTTS and uses port 5671 for AMQPS traffic).
 In order to run the console sample please follow these steps:
 
-1. Provide the IoT hub connection string in the `IoTHubConnectionString` setting in the app settings configuration file samples\ProtocolGateway.Samples.Console\appSettings.config.user. You can use the connection string for the device policy in the `Shared access policies` settings of IoT Hub.
+1. Provide the IoT hub connection string in the `IoTHubConnectionString` setting in the app settings configuration file host\ProtocolGateway.Host.Console\appSettings.config.user. You can use the connection string for the device policy in the `Shared access policies` settings of IoT Hub.
 2. Run `build.cmd` or build the solution from Visual Studio. 
 	Both the build.cmd and the solution file are in the root folder of the repository
 3. Start the Microsoft Azure Storage Emulator
-4. As administrator, run the compiled binary (samples\ProtocolGateway.Samples.Console\[Debug or Release]\Gateway.Samples.Console.exe)
+4. As administrator, run the compiled binary (host\ProtocolGateway.Host.Console\[Debug or Release]\Gateway.Host.Console.exe)
 	If you run this from Visual Studio, then Visual Studio needs to be run as administrator.
 	Note: If the required network ports are not enabled for communication with IoT Hub, you might be prompted to open the firewall ports.
 
@@ -44,17 +44,17 @@ Please follow these steps in order to run the end-to-end test for the protocol g
 		Note: It is recommended to use an IoT hub instance specifically created for the tests. The test will register a device in the IoT hub and will use it for to exchange messages between the device and the simulated app back end.
 	- `End2End.DeviceName` - identity of the device that will be used during the test. If the device name is not specified, a new device will be created for the test.
 	- If you want to run the test against an already running protocol gateway, uncomment the `End2End.ServerAddress` setting in the test configuration file and provide the IP-address of the protocol gateway you want to use. Otherwise, the test will start a new in-process protocol gateway. If you want to connect to a running protocol gateway on the same machine you can use 127.0.0.1 as the IP address.
-	(Note: by default, the gateway listens on port 8883 for MQTT and uses port 5672 for AMQP traffic).
+	(Note: by default, the gateway listens on port 8883 for MQTTS and uses port 5671 for AMQPS traffic).
 2. In Visual Studio, run the unit test `EndToEndTests.BasicFunctionalityTest` in the ProtocolGateway.Tests project. This test is expected to pass if the setup has been successful.
 
 ### Deploying Cloud Sample
 Please follow these steps to deploy the cloud sample in Azure Cloud Services worker roles:
 	
 1. Open the solution in Visual Studio.
-2. Right-click on **samples/ProtocolGateway.Samples.Cloud** project and choose **Package**.
-3. Open command line and set current directory to `<repo root>\samples`.
+2. Right-click on **host/ProtocolGateway.Host.Cloud** project and choose **Package**.
+3. Open command line and set current directory to `<repo root>\host`.
 4. Execute the following command: `PowerShell -File deploy.ps1 <cloud service name> <storage account name> <location> <tls cert path> <tls cert password> <IoT Hub connection string> [-SubscriptionName <subscription name>] [-VmCount <VM count>]`
-	- `<IoT Hub connection string>` can contain any credentials as the default Authentication Provider (`SasTokenAuthenticationProvider`) will override them with the ones provided by the device upon connection.
+	- `<IoT Hub connection string>` can contain any credentials as the default Device Identity Provider (`SasTokenDeviceIdentityProvider`) will override them with the ones provided by the device upon connection.
 	- Please note that based on your local configuration you might need to change the PowerShell execution policy if you are receiving an execution error.  
 5. You will be prompted to sign-in to your Azure account. Your account will be used for the deployment session.
 6. Wait for the script execution to complete. 

@@ -6,11 +6,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
     using System;
     using DotNetty.Codecs.Mqtt.Packets;
     using DotNetty.Common;
-    using Microsoft.Azure.Devices.Client;
+    using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
 
     sealed class AckPendingMessageState : IPacketReference, ISupportRetransmission // todo: recycle?
     {
-        public AckPendingMessageState(Message message, PublishPacket packet)
+        public AckPendingMessageState(IMessage message, PublishPacket packet)
             : this(message.MessageId, packet.PacketId, packet.QualityOfService, message.LockToken)
         {
         }
@@ -37,7 +37,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
         public QualityOfService QualityOfService { get; private set; }
 
-        public void Reset(Message message)
+        public void Reset(IMessage message)
         {
             if (message.MessageId != this.MessageId)
             {
@@ -50,7 +50,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             this.SentTime = DateTime.UtcNow;
         }
 
-        public void ResetMessage(Message message)
+        public void ResetMessage(IMessage message)
         {
             if (message.MessageId != this.MessageId)
             {

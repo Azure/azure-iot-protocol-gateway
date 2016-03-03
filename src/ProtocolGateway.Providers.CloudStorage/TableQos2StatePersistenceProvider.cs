@@ -8,9 +8,10 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
     using System.Diagnostics.Contracts;
     using System.Globalization;
     using System.Linq;
-    using System.Net;
+    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
+    using Microsoft.Azure.Devices.ProtocolGateway.Identity;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Table;
@@ -19,6 +20,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
     public class TableQos2StatePersistenceProvider : IQos2StatePersistenceProvider
     {
         const int PartitionCount = 0x10; // WARNING: changing partition count will change placement of rows in partitions. Do it only if table is wiped or migrated along the change.
+        const int PartitionCountModulusMask = 0xF;
+
         static readonly string[] PartitionKeys = Enumerable.Range(0, PartitionCount).Select(i => (i + 1).ToString()).ToArray();
 
         readonly CloudTable table;
@@ -61,18 +64,19 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
             return new TableMessageDeliveryState(messageId);
         }
 
-        public async Task<IQos2MessageDeliveryState> GetMessageAsync(int packetId)
+        public async Task<IQos2MessageDeliveryState> GetMessageAsync(IDeviceIdentity deviceIdentity, int packetId)
         {
             TableQuery<TableMessageDeliveryState> query = this.table.CreateQuery<TableMessageDeliveryState>();
+            string rowKey = CalculateRowKey(deviceIdentity.Id, packetId);
             query.FilterString =
                 TableQuery.CombineFilters(
-                    TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, CalculatePartitionKey(packetId)),
+                    TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, CalculatePartitionKey(rowKey)),
                     TableOperators.And,
-                    TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, packetId.ToString(CultureInfo.InvariantCulture)));
+                    TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, rowKey));
             return await this.ReadRowAsync(query, CancellationToken.None);
         }
 
-        public Task DeleteMessageAsync(int packetId, IQos2MessageDeliveryState message)
+        public Task DeleteMessageAsync(IDeviceIdentity deviceIdentity, int packetId, IQos2MessageDeliveryState message)
         {
             Contract.Requires(message != null);
 
@@ -86,7 +90,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
             return this.table.ExecuteAsync(TableOperation.Delete(tableMessage));
         }
 
-        public Task SetMessageAsync(int packetId, IQos2MessageDeliveryState message)
+        public Task SetMessageAsync(IDeviceIdentity deviceIdentity, int packetId, IQos2MessageDeliveryState message)
         {
             Contract.Requires(message != null);
 
@@ -94,8 +98,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
             TableOperation tableOperation;
             if (tableMessage.ETag == null)
             {
-                tableMessage.PartitionKey = CalculatePartitionKey(packetId);
-                tableMessage.RowKey = packetId.ToString(CultureInfo.InvariantCulture);
+                string rowKey = CalculateRowKey(deviceIdentity.Id, packetId);
+                tableMessage.PartitionKey = CalculatePartitionKey(rowKey);
+                tableMessage.RowKey = rowKey;
                 tableOperation = TableOperation.Insert(tableMessage);
             }
             else
@@ -138,13 +143,12 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
             return null;
         }
 
-        static string CalculatePartitionKey(int packetId)
+        static string CalculateRowKey(string deviceId, int packetId) => deviceId + "_" + packetId.ToString(CultureInfo.InvariantCulture);
+
+        static string CalculatePartitionKey(string rowKey)
         {
-            const int PartitionCountModulusMask = 0xF;
-
-            byte[] hash = MurmurHash.Create32(0, true).ComputeHash(BitConverter.GetBytes(IPAddress.HostToNetworkOrder(packetId))); // hash of big-endian value representation
-
-            return PartitionKeys[hash[3] & PartitionCountModulusMask];
+            byte[] hash = MurmurHash.Create32(0, false).ComputeHash(Encoding.ASCII.GetBytes(rowKey));
+            return PartitionKeys[hash[BitConverter.IsLittleEndian ? 0 : 3] & PartitionCountModulusMask];
         }
     }
 }

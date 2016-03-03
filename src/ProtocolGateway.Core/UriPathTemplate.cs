@@ -71,14 +71,14 @@ namespace Microsoft.Azure.Devices.ProtocolGateway
                     int varEndIndex = template.IndexOf(VariablePlaceholderEndCharacter, varStartIndex + 1);
                     if (varEndIndex == -1)
                     {
-                        throw new Exception("Variable definition is never closed.");
+                        throw new InvalidOperationException("Variable definition is never closed.");
                     }
 
                     string varDefinition = template.Substring(varStartIndex + 1, varEndIndex - varStartIndex - 1);
 
                     if (varDefinition.IndexOf(VariablePlaceholderStartCharacter) != -1)
                     {
-                        throw new Exception("Variable definition syntax is invalid in template definition.");
+                        throw new InvalidOperationException("Variable definition syntax is invalid in template definition.");
                     }
 
                     int eqIndex = varDefinition.IndexOf(VariableNameValueSeparator);

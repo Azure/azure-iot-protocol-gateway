@@ -5,6 +5,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence
 {
     using System.Threading.Tasks;
     using DotNetty.Common.Utilities;
+    using Microsoft.Azure.Devices.ProtocolGateway.Identity;
 
     public sealed class TransientSessionStatePersistenceProvider : ISessionStatePersistenceProvider
     {
@@ -13,17 +14,17 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence
             return new TransientSessionState(transient);
         }
 
-        public Task<ISessionState> GetAsync(string id)
+        public Task<ISessionState> GetAsync(IDeviceIdentity identity)
         {
             return Task.FromResult((ISessionState)null);
         }
 
-        public Task SetAsync(string id, ISessionState sessionState)
+        public Task SetAsync(IDeviceIdentity identity, ISessionState sessionState)
         {
             return TaskEx.Completed;
         }
 
-        public Task DeleteAsync(string id, ISessionState sessionState)
+        public Task DeleteAsync(IDeviceIdentity identity, ISessionState sessionState)
         {
             return TaskEx.Completed;
         }

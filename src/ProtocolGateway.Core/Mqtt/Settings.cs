@@ -19,13 +19,15 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         const string QoSPropertyNameSetting = "QoSPropertyName";
         const string DeviceReceiveAckTimeoutSetting = "DeviceReceiveAckTimeout";
         const string MaxOutboundRetransmissionCountSetting = "MaxOutboundRetransmissionCount";
+        const string PassThroughUnmatchedMessagesSetting = "PassThroughUnmatchedMessages";
+        const string ServicePropertyPrefixSetting = "ServicePropertyPrefix";
 
         const string RetainPropertyNameDefaultValue = "mqtt-retain";
         const string DupPropertyNameDefaultValue = "mqtt-dup";
         const string QoSPropertyNameDefaultValue = "mqtt-qos";
         const int MaxPendingOutboundMessagesDefaultValue = 1;
         const int MaxPendingInboundMessagesDefaultValue = 16;
-        const int MaxOutboundRetransmissionCountDefaultValue = -1;
+        const int NoMaxOutboundRetransmissionCountValue = -1;
 
         readonly string retainPropertyName;
         readonly string dupPropertyName;
@@ -84,11 +86,16 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 : (TimeSpan?)null;
 
             int retransmissionCount;
-            if (!settingsProvider.TryGetIntegerSetting(MaxOutboundRetransmissionCountSetting, out retransmissionCount) || retransmissionCount < MaxOutboundRetransmissionCountDefaultValue)
+            if (!settingsProvider.TryGetIntegerSetting(MaxOutboundRetransmissionCountSetting, out retransmissionCount) 
+                || (retransmissionCount < 0))
             {
-                retransmissionCount = MaxOutboundRetransmissionCountDefaultValue;
+                retransmissionCount = NoMaxOutboundRetransmissionCountValue;
             }
             this.MaxOutboundRetransmissionCount = retransmissionCount;
+
+            this.PassThroughUnmatchedMessages = settingsProvider.GetBooleanSetting(PassThroughUnmatchedMessagesSetting, false);
+
+            this.ServicePropertyPrefix = settingsProvider.GetSetting(ServicePropertyPrefixSetting, string.Empty);
         }
 
         public int MaxPendingOutboundMessages { get; private set; }
@@ -133,9 +140,13 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
         public bool MaxOutboundRetransmissionEnforced
         {
-            get { return this.MaxOutboundRetransmissionCount >= 0; }
+            get { return this.MaxOutboundRetransmissionCount > NoMaxOutboundRetransmissionCountValue; }
         }
         
         public int MaxOutboundRetransmissionCount { get; private set; }
+
+        public bool PassThroughUnmatchedMessages { get; private set; }
+
+        public string ServicePropertyPrefix { get; private set; }
     }
 }

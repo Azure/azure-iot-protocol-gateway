@@ -4,6 +4,7 @@
 namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Routing
 {
     using System;
+    using Microsoft.Azure.Devices.ProtocolGateway.Routing;
 
     public class OutboundRouteDefinition
     {

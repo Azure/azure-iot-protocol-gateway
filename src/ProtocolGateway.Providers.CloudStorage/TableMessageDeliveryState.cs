@@ -25,6 +25,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
             set { this.Timestamp = value; }
         }
 
-        public string MessageId { get; private set; }
+        public string MessageId { get; set; }
     }
 }

@@ -4,6 +4,7 @@
 namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence
 {
     using System.Threading.Tasks;
+    using Microsoft.Azure.Devices.ProtocolGateway.Identity;
 
     public interface IQos2StatePersistenceProvider
     {
@@ -12,15 +13,16 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence
         /// <summary>
         ///     Performs a lookup of message delivery state by packet identifier
         /// </summary>
-        /// <param name="packetId">Packet identifier.</param>
+        /// <param name="deviceIdentity">Device identity</param>
+        /// <param name="packetId">Packet identifier</param>
         /// <returns>
         ///     <see cref="IQos2MessageDeliveryState" /> object if message was previously persisted with
         ///     the given packet id; null - if no message could be found.
         /// </returns>
-        Task<IQos2MessageDeliveryState> GetMessageAsync(int packetId);
+        Task<IQos2MessageDeliveryState> GetMessageAsync(IDeviceIdentity deviceIdentity, int packetId);
 
-        Task DeleteMessageAsync(int packetId, IQos2MessageDeliveryState message);
+        Task DeleteMessageAsync(IDeviceIdentity deviceIdentity, int packetId, IQos2MessageDeliveryState message);
 
-        Task SetMessageAsync(int packetId, IQos2MessageDeliveryState message);
+        Task SetMessageAsync(IDeviceIdentity deviceIdentity, int packetId, IQos2MessageDeliveryState message);
     }
 }
