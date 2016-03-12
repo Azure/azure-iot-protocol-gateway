@@ -48,7 +48,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             {
                 outboundMessages = MaxPendingOutboundMessagesDefaultValue;
             }
-            this.MaxPendingOutboundMessages = Math.Min(outboundMessages, ushort.MaxValue / 2); // limited due to separation of packet id domains for QoS 1 and 2.
+            this.MaxPendingOutboundMessages = Math.Min(outboundMessages, ushort.MaxValue >> 2); // limited due to separation of packet id domains for QoS 1 and 2.
 
             TimeSpan timeout;
             this.ConnectArrivalTimeout = settingsProvider.TryGetTimeSpanSetting(ConnectArrivalTimeoutSetting, out timeout) && timeout > TimeSpan.Zero

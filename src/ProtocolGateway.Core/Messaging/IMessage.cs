@@ -21,9 +21,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Messaging
 
         uint DeliveryCount { get; }
 
-        /// <remarks>
-        /// Only 15 least significant bits will be honored
-        /// </remarks>
-        ushort SequenceNumber { get; }
+        ulong SequenceNumber { get; }
     }
 }

@@ -9,6 +9,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence
     {
         DateTime LastModified { get; }
 
-        string MessageId { get; }
+        ulong SequenceNumber { get; }
     }
 }

@@ -13,9 +13,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
         {
         }
 
-        public TableMessageDeliveryState(string messageId)
+        public TableMessageDeliveryState(ulong sequenceNumber)
         {
-            this.MessageId = messageId;
+            this.SequenceNumber = sequenceNumber;
             this.LastModified = DateTime.UtcNow;
         }
 
@@ -25,6 +25,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
             set { this.Timestamp = value; }
         }
 
-        public string MessageId { get; set; }
+        public ulong SequenceNumber { get; set; }
     }
 }

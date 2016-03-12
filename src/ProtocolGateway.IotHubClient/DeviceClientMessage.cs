@@ -28,7 +28,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
 
         public uint DeliveryCount => this.message.DeliveryCount;
 
-        public ushort SequenceNumber => unchecked ((ushort)this.message.SequenceNumber);
+        public ulong SequenceNumber => this.message.SequenceNumber;
 
         public string MessageId
         {

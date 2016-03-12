@@ -11,13 +11,13 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
     sealed class AckPendingMessageState : IPacketReference, ISupportRetransmission // todo: recycle?
     {
         public AckPendingMessageState(IMessage message, PublishPacket packet)
-            : this(message.MessageId, packet.PacketId, packet.QualityOfService, message.LockToken)
+            : this(message.SequenceNumber, packet.PacketId, packet.QualityOfService, message.LockToken)
         {
         }
 
-        public AckPendingMessageState(string messageId, int packetId, QualityOfService qualityOfService, string lockToken)
+        public AckPendingMessageState(ulong sequenceNumber, int packetId, QualityOfService qualityOfService, string lockToken)
         {
-            this.MessageId = messageId;
+            this.SequenceNumber = sequenceNumber;
             this.PacketId = packetId;
             this.QualityOfService = qualityOfService;
             this.LockToken = lockToken;
@@ -27,7 +27,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
         public PreciseTimeSpan StartTimestamp { get; set; }
 
-        public string MessageId { get; private set; }
+        public ulong SequenceNumber { get; private set; }
 
         public int PacketId { get; private set; }
 
@@ -39,11 +39,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
         public void Reset(IMessage message)
         {
-            if (message.MessageId != this.MessageId)
+            if (message.SequenceNumber != this.SequenceNumber)
             {
                 throw new InvalidOperationException(string.Format(
                     "Expected to receive message with id of {0} but saw a message with id of {1}. Protocol Gateway only supports exclusive connection to IoT Hub.",
-                    this.MessageId, message.MessageId));
+                    this.SequenceNumber, message.MessageId));
             }
 
             this.LockToken = message.LockToken;
@@ -52,11 +52,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
         public void ResetMessage(IMessage message)
         {
-            if (message.MessageId != this.MessageId)
+            if (message.SequenceNumber != this.SequenceNumber)
             {
                 throw new InvalidOperationException(string.Format(
                     "Expected to receive message with id of {0} but saw a message with id of {1}. Protocol Gateway only supports exclusive connection to IoT Hub.",
-                    this.MessageId, message.MessageId));
+                    this.SequenceNumber.ToString(), message.MessageId));
             }
 
             this.LockToken = message.LockToken;

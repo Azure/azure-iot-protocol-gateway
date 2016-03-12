@@ -452,7 +452,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 {
                     processorsInRetransmission++;
                     AckPendingMessageState pendingPubAck = this.publishPubAckProcessor.FirstRequestPendingAck;
-                    if (pendingPubAck.MessageId.Equals(message.MessageId, StringComparison.Ordinal))
+                    if (pendingPubAck.SequenceNumber == message.SequenceNumber)
                     {
                         this.RetransmitPublishMessage(context, message, pendingPubAck);
                         messageSent = true;
@@ -465,7 +465,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     if (!messageSent)
                     {
                         AckPendingMessageState pendingPubRec = this.publishPubRecProcessor.FirstRequestPendingAck;
-                        if (pendingPubRec.MessageId.Equals(message.MessageId, StringComparison.Ordinal))
+                        if (pendingPubRec.SequenceNumber == message.SequenceNumber)
                         {
                             this.RetransmitPublishMessage(context, message, pendingPubRec);
                             messageSent = true;
@@ -617,7 +617,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             int packetId = packet.PacketId;
             IQos2MessageDeliveryState messageInfo = await this.qos2StateProvider.GetMessageAsync(this.identity, packetId);
 
-            if (messageInfo != null && !message.MessageId.Equals(messageInfo.MessageId, StringComparison.Ordinal))
+            if (messageInfo != null && message.SequenceNumber != messageInfo.SequenceNumber)
             {
                 await this.qos2StateProvider.DeleteMessageAsync(this.identity, packetId, messageInfo);
                 messageInfo = null;
@@ -675,7 +675,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             // todo: is try-catch needed here?
             try
             {
-                IQos2MessageDeliveryState messageInfo = this.qos2StateProvider.Create(message.MessageId);
+                IQos2MessageDeliveryState messageInfo = this.qos2StateProvider.Create(message.SequenceNumber);
                 await this.qos2StateProvider.SetMessageAsync(this.identity, message.PacketId, messageInfo);
 
                 await this.PublishReleaseToClientAsync(context, message.PacketId, message.LockToken, messageInfo, message.StartTimestamp);

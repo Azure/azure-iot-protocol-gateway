@@ -71,7 +71,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             try
             {
                 Message message = await this.deviceClient.ReceiveAsync(TimeSpan.MaxValue);
-                return new DeviceClientMessage(message);
+                return message == null ? null : new DeviceClientMessage(message);
             }
             catch (IotHubException ex)
             {
