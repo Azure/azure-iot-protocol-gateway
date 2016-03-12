@@ -1,3 +1,10 @@
+#### 1.0.1 March 12
+- Azure Table QoS 2 persistence provider uses proper query API to retrieve only relevant row.
+- QoS 2 persistence provider API is modified to work with SequenceNumber instead of MessageId.
+- Azure Blob session state persistence provider is modified to update ETag value on in-memory session state object to allow saving it later on without any issue.
+- 14 least significant bits are used when converting SequenceNumber into PacketId.
+- `IMessage.SequenceNumber` type is changed to ulong.
+
 #### 1.0.0 March 03
 - `IQos2StatePersistenceProvider` now accepts device identity to scope messages in flight to device level.
 - `IAuthenticationProvider` has been renamed into `IDeviceIdentityProvider` and the API has changed to allow for a flexible interaction between device identity source and other protocol gateway components.
