@@ -131,6 +131,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
                     ? AccessCondition.GenerateIfNoneMatchCondition("*") // create
                     : AccessCondition.GenerateIfMatchCondition(state.ETag); // update
                 await blob.UploadFromStreamAsync(memoryStream, accessCondition, null, null);
+                state.ETag = blob.Properties.ETag;
             }
         }
 

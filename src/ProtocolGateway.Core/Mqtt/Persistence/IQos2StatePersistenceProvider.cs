@@ -8,7 +8,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence
 
     public interface IQos2StatePersistenceProvider
     {
-        IQos2MessageDeliveryState Create(string messageId);
+        IQos2MessageDeliveryState Create(ulong sequenceNumber);
 
         /// <summary>
         ///     Performs a lookup of message delivery state by packet identifier

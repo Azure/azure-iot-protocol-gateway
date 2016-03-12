@@ -59,20 +59,19 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
             }
         }
 
-        public IQos2MessageDeliveryState Create(string messageId)
+        public IQos2MessageDeliveryState Create(ulong sequenceNumber)
         {
-            return new TableMessageDeliveryState(messageId);
+            return new TableMessageDeliveryState(sequenceNumber);
         }
 
         public async Task<IQos2MessageDeliveryState> GetMessageAsync(IDeviceIdentity deviceIdentity, int packetId)
         {
-            TableQuery<TableMessageDeliveryState> query = this.table.CreateQuery<TableMessageDeliveryState>();
             string rowKey = CalculateRowKey(deviceIdentity.Id, packetId);
-            query.FilterString =
-                TableQuery.CombineFilters(
+            TableQuery<TableMessageDeliveryState> query = new TableQuery<TableMessageDeliveryState>()
+                .Where(TableQuery.CombineFilters(
                     TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, CalculatePartitionKey(rowKey)),
                     TableOperators.And,
-                    TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, rowKey));
+                    TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, rowKey)));
             return await this.ReadRowAsync(query, CancellationToken.None);
         }
 

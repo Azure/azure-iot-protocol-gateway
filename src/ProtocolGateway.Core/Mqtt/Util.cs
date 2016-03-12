@@ -133,19 +133,18 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             packet.TopicName = topicName;
             if (qos > QualityOfService.AtMostOnce)
             {
-                int packetId = message.SequenceNumber;
+                int packetId = unchecked((int)message.SequenceNumber) & 0x3FFF; // clear bits #14 and #15
                 switch (qos)
                 {
                     case QualityOfService.AtLeastOnce:
-                        packetId &= 0x7FFF; // clear 15th bit
                         break;
                     case QualityOfService.ExactlyOnce:
-                        packetId |= 0x8000; // set 15th bit
+                        packetId |= 0x8000; // set bit #15
                         break;
                     default:
                         throw new ArgumentOutOfRangeException(nameof(qos), qos, null);
                 }
-                packet.PacketId = packetId;
+                packet.PacketId = packetId + 1;
             }
             using (Stream payloadStream = message.Payload)
             {
