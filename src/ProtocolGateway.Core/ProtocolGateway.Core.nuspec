@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>Microsoft.Azure.Devices.ProtocolGateway.Core</id>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
     <title>Microsoft Azure IoT protocol gateway framework - Core</title>
     <authors>Microsoft Azure</authors>
     <owners>Microsoft Azure</owners>
@@ -12,8 +12,8 @@
     <language>en-US</language>
     <dependencies>
       <group targetFramework="net451">
-        <dependency id="DotNetty.Codecs.Mqtt-signed" version="0.2.3" />
-        <dependency id="DotNetty.Handlers-signed" version="0.2.3" />
+        <dependency id="DotNetty.Codecs.Mqtt-signed" version="0.2.4" />
+        <dependency id="DotNetty.Handlers-signed" version="0.2.4" />
       </group>
     </dependencies>
   </metadata>
