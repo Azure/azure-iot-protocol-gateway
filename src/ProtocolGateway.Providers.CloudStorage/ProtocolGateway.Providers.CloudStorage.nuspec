@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage</id>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
     <title>Microsoft Azure IoT protocol gateway framework - Azure Storage persistence providers</title>
     <authors>Microsoft Azure</authors>
     <owners>Microsoft Azure</owners>
@@ -12,8 +12,8 @@
     <language>en-US</language>
     <dependencies>
       <group targetFramework="net451">
-        <dependency id="DotNetty.Codecs.Mqtt-signed" version="0.2.3" />
-        <dependency id="Microsoft.Azure.Devices.ProtocolGateway.Core" version="1.0.1" />
+        <dependency id="DotNetty.Codecs.Mqtt-signed" version="0.2.4" />
+        <dependency id="Microsoft.Azure.Devices.ProtocolGateway.Core" version="1.0.2" />
         <dependency id="WindowsAzure.Storage" version="4.3.0" />
         <dependency id="Newtonsoft.Json" version="6.0.8" />
         <dependency id="murmurhash-signed" version="1.0.0" />

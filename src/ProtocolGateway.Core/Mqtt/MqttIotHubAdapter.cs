@@ -1059,7 +1059,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             if (!self.IsInState(StateFlags.Closed))
             {
                 PerformanceCounters.ConnectionFailedOperationalPerSecond.Increment();
-                MqttIotHubAdapterEventSource.Log.Warning($"Closing connection ({context.Channel.RemoteAddress}, {self.identity}): {reason}");
+                MqttIotHubAdapterEventSource.Log.Warning($"Closing connection: {self.identity}", reason);
                 self.Shutdown(context, false);
             }
         }

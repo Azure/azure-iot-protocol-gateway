@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>Microsoft.Azure.Devices.ProtocolGateway.IotHubClient</id>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
     <title>Microsoft Azure IoT protocol gateway framework - IoT Hub client</title>
     <authors>Microsoft Azure</authors>
     <owners>Microsoft Azure</owners>
@@ -13,7 +13,7 @@
     <dependencies>
       <group targetFramework="net451">
         <dependency id="Microsoft.Azure.Devices.Client" version="1.0.2" />
-        <dependency id="Microsoft.Azure.Devices.ProtocolGateway.Core" version="1.0.1" />
+        <dependency id="Microsoft.Azure.Devices.ProtocolGateway.Core" version="1.0.2" />
       </group>
     </dependencies>
   </metadata>
