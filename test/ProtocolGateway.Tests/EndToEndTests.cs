@@ -56,7 +56,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
         string deviceId;
         string deviceSas;
         readonly X509Certificate2 tlsCertificate;
-        static readonly TimeSpan CommunicationTimeout = TimeSpan.FromMilliseconds(-1); //TimeSpan.FromSeconds(15);
+        static readonly TimeSpan CommunicationTimeout = TimeSpan.FromSeconds(15);
         static readonly TimeSpan TestTimeout = TimeSpan.FromMinutes(5); //TimeSpan.FromMinutes(1);
 
         public EndToEndTests(ITestOutputHelper output)
@@ -436,6 +436,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
 
                 var pubRelQoS2Packet1 = Assert.IsAssignableFrom<PubRelPacket>(currentMessageFunc());
                 Assert.Equal(publishQoS2Packet1.PacketId, pubRelQoS2Packet1.PacketId);
+
+                yield return TestScenarioStep.ReadMore();
+
+                var pubRelQoS2Packet2 = Assert.IsAssignableFrom<PubRelPacket>(currentMessageFunc());
+                Assert.Equal(publishQoS2Packet2.PacketId, pubRelQoS2Packet2.PacketId);
 
                 yield return TestScenarioStep.Write(
                     false, // it is a final step and we do not expect response
