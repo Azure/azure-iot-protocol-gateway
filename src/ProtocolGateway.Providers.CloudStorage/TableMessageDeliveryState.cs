@@ -25,6 +25,12 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
             set { this.Timestamp = value; }
         }
 
-        public ulong SequenceNumber { get; set; }
+        public ulong SequenceNumber
+        {
+            get { return unchecked((ulong)this.MessageNumber); }
+            set { this.MessageNumber = unchecked((long)value); }
+        }
+
+        public long MessageNumber { get; set; }
     }
 }
