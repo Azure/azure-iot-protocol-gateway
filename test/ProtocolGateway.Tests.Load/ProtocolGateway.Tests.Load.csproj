@@ -37,54 +37,54 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="CommandLine, Version=1.9.71.2, Culture=neutral, PublicKeyToken=de6f01bd326f8c32, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\CommandLineParser.1.9.71\lib\net45\CommandLine.dll</HintPath>
+      <HintPath>$(SolutionDir)\packages\CommandLineParser.1.9.71\lib\net45\CommandLine.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="DotNetty.Buffers, Version=0.2.5.0, Culture=neutral, PublicKeyToken=e7a0210a354f294a, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\DotNetty.Buffers-signed.0.2.5\lib\net45\DotNetty.Buffers.dll</HintPath>
+      <HintPath>$(SolutionDir)\packages\DotNetty.Buffers-signed.0.2.5\lib\net45\DotNetty.Buffers.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="DotNetty.Codecs, Version=0.2.5.0, Culture=neutral, PublicKeyToken=e7a0210a354f294a, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\DotNetty.Codecs-signed.0.2.5\lib\net45\DotNetty.Codecs.dll</HintPath>
+      <HintPath>$(SolutionDir)\packages\DotNetty.Codecs-signed.0.2.5\lib\net45\DotNetty.Codecs.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="DotNetty.Codecs.Mqtt, Version=0.2.5.0, Culture=neutral, PublicKeyToken=e7a0210a354f294a, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\DotNetty.Codecs.Mqtt-signed.0.2.5\lib\net45\DotNetty.Codecs.Mqtt.dll</HintPath>
+      <HintPath>$(SolutionDir)\packages\DotNetty.Codecs.Mqtt-signed.0.2.5\lib\net45\DotNetty.Codecs.Mqtt.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="DotNetty.Common, Version=0.2.5.0, Culture=neutral, PublicKeyToken=e7a0210a354f294a, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\DotNetty.Common-signed.0.2.5\lib\net45\DotNetty.Common.dll</HintPath>
+      <HintPath>$(SolutionDir)\packages\DotNetty.Common-signed.0.2.5\lib\net45\DotNetty.Common.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="DotNetty.Handlers, Version=0.2.5.0, Culture=neutral, PublicKeyToken=e7a0210a354f294a, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\DotNetty.Handlers-signed.0.2.5\lib\net45\DotNetty.Handlers.dll</HintPath>
+      <HintPath>$(SolutionDir)\packages\DotNetty.Handlers-signed.0.2.5\lib\net45\DotNetty.Handlers.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="DotNetty.Transport, Version=0.2.5.0, Culture=neutral, PublicKeyToken=e7a0210a354f294a, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\DotNetty.Transport-signed.0.2.5\lib\net45\DotNetty.Transport.dll</HintPath>
+      <HintPath>$(SolutionDir)\packages\DotNetty.Transport-signed.0.2.5\lib\net45\DotNetty.Transport.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Azure.Amqp, Version=1.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Microsoft.Azure.Amqp.1.1.1\lib\net451\Microsoft.Azure.Amqp.dll</HintPath>
+      <HintPath>$(SolutionDir)\packages\Microsoft.Azure.Amqp.1.1.1\lib\net451\Microsoft.Azure.Amqp.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Azure.Devices, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Microsoft.Azure.Devices.1.0.5\lib\net451\Microsoft.Azure.Devices.dll</HintPath>
+      <HintPath>$(SolutionDir)\packages\Microsoft.Azure.Devices.1.0.5\lib\net451\Microsoft.Azure.Devices.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Newtonsoft.Json.6.0.8\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <HintPath>$(SolutionDir)\packages\Newtonsoft.Json.6.0.8\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Net.Http.Formatting, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Microsoft.AspNet.WebApi.Client.5.2.3\lib\net45\System.Net.Http.Formatting.dll</HintPath>
+      <HintPath>$(SolutionDir)\packages\Microsoft.AspNet.WebApi.Client.5.2.3\lib\net45\System.Net.Http.Formatting.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Web.Http, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Microsoft.AspNet.WebApi.Core.5.2.3\lib\net45\System.Web.Http.dll</HintPath>
+      <HintPath>$(SolutionDir)\packages\Microsoft.AspNet.WebApi.Core.5.2.3\lib\net45\System.Web.Http.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Net.Http" />
