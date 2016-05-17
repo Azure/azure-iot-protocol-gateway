@@ -15,7 +15,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
 
         public TableMessageDeliveryState(ulong sequenceNumber)
         {
-            this.SequenceNumber = sequenceNumber;
+            this.MessageNumber = unchecked ((long)sequenceNumber);
             this.LastModified = DateTime.UtcNow;
         }
 
@@ -25,12 +25,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
             set { this.Timestamp = value; }
         }
 
-        public ulong SequenceNumber
-        {
-            get { return unchecked((ulong)this.MessageNumber); }
-            set { this.MessageNumber = unchecked((long)value); }
-        }
-
         public long MessageNumber { get; set; }
+
+        ulong IQos2MessageDeliveryState.SequenceNumber => unchecked((ulong)this.MessageNumber);
     }
 }

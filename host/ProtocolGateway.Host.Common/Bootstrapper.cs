@@ -41,7 +41,6 @@ namespace ProtocolGateway.Host.Common
         X509Certificate2 tlsCertificate;
         IEventLoopGroup parentEventLoopGroup;
         IEventLoopGroup eventLoopGroup;
-        IByteBufferAllocator bufferAllocator;
         IChannel serverChannel;
 
         public Bootstrapper(ISettingsProvider settingsProvider, ISessionStatePersistenceProvider sessionStateManager, IQos2StatePersistenceProvider qos2StateProvider)
@@ -79,7 +78,6 @@ namespace ProtocolGateway.Host.Common
                 this.tlsCertificate = certificate;
                 this.parentEventLoopGroup = new MultithreadEventLoopGroup(1);
                 this.eventLoopGroup = new MultithreadEventLoopGroup(threadCount);
-                this.bufferAllocator = new PooledByteBufferAllocator(16 * 1024, 300 * 1024 * 1024 / threadCount); // reserve up to 300 MB of 16 KB buffers
 
                 ServerBootstrap bootstrap = this.SetupBootstrap();
                 BootstrapperEventSource.Log.Info(string.Format("Initializing TLS endpoint on port {0} with certificate {1}.", MqttsPort, this.tlsCertificate.Thumbprint), null);
@@ -144,7 +142,7 @@ namespace ProtocolGateway.Host.Common
             return new ServerBootstrap()
                 .Group(this.parentEventLoopGroup, this.eventLoopGroup)
                 .Option(ChannelOption.SoBacklog, ListenBacklogSize)
-                .ChildOption(ChannelOption.Allocator, this.bufferAllocator)
+                .ChildOption(ChannelOption.Allocator, PooledByteBufferAllocator.Default)
                 .ChildOption(ChannelOption.AutoRead, false)
                 .Channel<TcpServerSocketChannel>()
                 .ChildHandler(new ActionChannelInitializer<ISocketChannel>(channel =>

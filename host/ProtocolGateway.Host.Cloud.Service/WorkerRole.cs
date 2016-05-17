@@ -94,8 +94,16 @@ namespace ProtocolGateway.Host.Cloud.Service
 
             X509Certificate2 tlsCertificate = GetTlsCertificate(settingsProvider.GetSetting("TlsCertificateThumbprint"),
                 StoreName.My, StoreLocation.LocalMachine);
-            
-            await bootstrapper.RunAsync(tlsCertificate, threadCount, cancellationToken);
+
+            try
+            {
+                await bootstrapper.RunAsync(tlsCertificate, threadCount, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceError(ex.ToString());
+                throw;
+            }
             await bootstrapper.CloseCompletion;
         }
 
