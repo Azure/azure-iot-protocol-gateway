@@ -228,6 +228,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
 
             Stopwatch sw = Stopwatch.StartNew();
 
+            await CleanupDeviceQueueAsync(hubConnectionStringBuilder.HostName, device);
+
             var clientScenarios = new ClientScenarios(hubConnectionStringBuilder.HostName, this.deviceId, this.deviceSas);
 
             var group = new MultithreadEventLoopGroup();
@@ -319,6 +321,40 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
                     }
                 }
                 Assert.True(leftToTarget == 0, $"actual device length is less than expected ({expectedLength}).");
+            }
+            finally
+            {
+                if (deviceClient != null)
+                {
+                    await deviceClient.CloseAsync();
+                }
+            }
+        }
+
+        async Task CleanupDeviceQueueAsync(string hostname, Device device)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(1));
+
+            DeviceClient deviceClient = null;
+            try
+            {
+                deviceClient = DeviceClient.Create(
+                    hostname,
+                    new DeviceAuthenticationWithRegistrySymmetricKey(this.deviceId, device.Authentication.SymmetricKey.PrimaryKey));
+                while (true)
+                {
+                    using (Client.Message message = await deviceClient.ReceiveAsync(TimeSpan.FromSeconds(2)))
+                    {
+                        if (message == null)
+                        {
+                            break;
+                        }
+                        if (message.LockToken != null)
+                        {
+                            await deviceClient.CompleteAsync(message.LockToken);
+                        }
+                    }
+                }
             }
             finally
             {

@@ -102,7 +102,14 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 while (queue.Count > 0 && this.state != State.Aborted)
                 {
                     T message = queue.Dequeue();
-                    await this.ProcessAsync(context, message);
+                    try
+                    {
+                        await this.ProcessAsync(context, message);
+                    }
+                    finally
+                    {
+                        ReferenceCountUtil.Release(message);
+                    }
                 }
 
                 switch (this.state)

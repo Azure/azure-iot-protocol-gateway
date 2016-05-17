@@ -52,8 +52,8 @@
       <HintPath>$(SolutionDir)\packages\DotNetty.Common-signed.0.2.5\lib\net45\DotNetty.Common.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="DotNetty.Handlers, Version=0.2.3.0, Culture=neutral, PublicKeyToken=e7a0210a354f294a, processorArchitecture=MSIL">
-      <HintPath>$(SolutionDir)\packages\DotNetty.Handlers-signed.0.2.3\lib\net45\DotNetty.Handlers.dll</HintPath>
+    <Reference Include="DotNetty.Handlers, Version=0.2.5.0, Culture=neutral, PublicKeyToken=e7a0210a354f294a, processorArchitecture=MSIL">
+      <HintPath>$(SolutionDir)\packages\DotNetty.Handlers-signed.0.2.5\lib\net45\DotNetty.Handlers.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="DotNetty.Transport, Version=0.2.5.0, Culture=neutral, PublicKeyToken=e7a0210a354f294a, processorArchitecture=MSIL">
