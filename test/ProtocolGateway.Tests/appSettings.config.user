@@ -1,11 +1,11 @@
 <appSettings>
   <!-- uncomment next line to connect to running protocol gateway deployment instead of starting in-process protocol gateway during test initialization -->
-  <!--<add key="End2End.ServerAddress" value="TODO: protocol gateway deployment IP-address" />-->
+  <add key="End2End.ServerAddress" value="104.211.0.197" />
   <!-- uncomment next line to use an existing device. WARNING: any existing messages in device queue will be completed -->
   <!--<add key="End2End.DeviceName" value="TODO: test device name" />-->
 
   <!-- Protocol Gateway settings -->
-  <add key="IoTHubConnectionString" value="TODO: IoT Hub connection string to connect to" />
+  <add key="IoTHubConnectionString" value="HostName=tryme.azure-devices.net;SharedAccessKeyName=iothubowner;SharedAccessKey=mBBxJHLTxQ/Rp5lw/fzhYkBO//htWrHGoS4CJIYdmDo=" />
   <add key="MaxPendingInboundMessages" value="16" />
   <add key="MaxPendingOutboundMessages" value="10" />
   <add key="DeviceReceiveAckTimeout" value="00:01:00" />

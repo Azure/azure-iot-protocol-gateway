@@ -79,7 +79,7 @@ namespace ProtocolGateway.Host.Common
                 this.tlsCertificate = certificate;
                 this.parentEventLoopGroup = new MultithreadEventLoopGroup(1);
                 this.eventLoopGroup = new MultithreadEventLoopGroup(threadCount);
-                this.bufferAllocator = new PooledByteBufferAllocator(16 * 1024, 300 * 1024 * 1024 / threadCount); // reserve up to 300 MB of 16 KB buffers
+                this.bufferAllocator = new PooledByteBufferAllocator(); 
 
                 ServerBootstrap bootstrap = this.SetupBootstrap();
                 BootstrapperEventSource.Log.Info(string.Format("Initializing TLS endpoint on port {0} with certificate {1}.", MqttsPort, this.tlsCertificate.Thumbprint), null);

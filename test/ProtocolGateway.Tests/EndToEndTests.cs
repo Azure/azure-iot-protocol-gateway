@@ -91,7 +91,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
 
             int threadCount = Environment.ProcessorCount;
             var executorGroup = new MultithreadEventLoopGroup(threadCount);
-            var bufAllocator = new PooledByteBufferAllocator(16 * 1024, 10 * 1024 * 1024 / threadCount); // reserve 10 MB for 64 KB buffers
+            var bufAllocator = new PooledByteBufferAllocator();
             BlobSessionStatePersistenceProvider sessionStateProvider = await BlobSessionStatePersistenceProvider.CreateAsync(
                 this.settingsProvider.GetSetting("BlobSessionStatePersistenceProvider.StorageConnectionString"),
                 this.settingsProvider.GetSetting("BlobSessionStatePersistenceProvider.StorageContainerName"));
