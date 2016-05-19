@@ -101,7 +101,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
             var authProvider = new SasTokenDeviceIdentityProvider();
             var topicNameRouter = new ConfigurableMessageRouter();
 
-            IotHubClientFactoryFunc iotHubClientFactoryMethod = IotHubClient.PreparePoolFactory(settings.IotHubConnectionString + ";DeviceId=stub", "a", 1);
+            IotHubClientFactoryFunc iotHubClientFactoryMethod = IotHubClient.PreparePoolFactory(settings.IotHubConnectionString + ";DeviceId=stub", "a", 400, TimeSpan.FromMinutes(5));
             var iotHubFactory = new IotHubCommunicationFactory(iotHubClientFactoryMethod);
 
             ServerBootstrap server = new ServerBootstrap()

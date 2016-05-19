@@ -29,7 +29,8 @@ namespace ProtocolGateway.Host.Common
     {
         const int MqttsPort = 8883;
         const int ListenBacklogSize = 200; // connections allowed pending accept
-        const int IotHubConnectionsPerThread = 200; // IoT Hub connections per thread
+        const int DefaultConnectionPoolSize = 400; // IoT Hub default connection pool size
+        static readonly TimeSpan DefaultConnectionIdleTimeout = TimeSpan.FromSeconds(210); // IoT Hub default connection idle timeout
 
         readonly TaskCompletionSource closeCompletionSource;
         readonly ISettingsProvider settingsProvider;
@@ -124,6 +125,17 @@ namespace ProtocolGateway.Host.Common
         ServerBootstrap SetupBootstrap()
         {
             int maxInboundMessageSize = this.settingsProvider.GetIntegerSetting("MaxInboundMessageSize", 256 * 1024);
+            int connectionPoolSize;
+            if (!this.settingsProvider.TryGetIntegerSetting("IotHubClient.ConnectionPoolSize", out connectionPoolSize))
+            {
+                connectionPoolSize = DefaultConnectionPoolSize;
+            }
+
+            TimeSpan connectionIdleTimeout;
+            if (!this.settingsProvider.TryGetTimeSpanSetting("IotHubClient.ConnectionIdleTimeout", out connectionIdleTimeout))
+            {
+                connectionIdleTimeout = DefaultConnectionIdleTimeout;
+            }
             
             string connectionString = this.settings.IotHubConnectionString;
             if (connectionString.IndexOf("DeviceId=", StringComparison.OrdinalIgnoreCase) == -1)
@@ -134,7 +146,7 @@ namespace ProtocolGateway.Host.Common
             var deviceClientFactory = new ThreadLocal<IotHubClientFactoryFunc>(() =>
             {
                 string poolId = Guid.NewGuid().ToString("N");
-                return IotHubClient.PreparePoolFactory(connectionString, poolId, IotHubConnectionsPerThread);
+                return IotHubClient.PreparePoolFactory(connectionString, poolId, connectionPoolSize, connectionIdleTimeout);
             });
 
             var iotHubCommunicationFactory = new IotHubCommunicationFactory(deviceClientFactory.Value);

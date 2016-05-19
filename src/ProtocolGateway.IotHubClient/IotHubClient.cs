@@ -18,9 +18,33 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             this.deviceClient = deviceClient;
         }
 
-        public static async Task<IMessagingServiceClient> CreateFromConnectionStringAsync(string connectionString)
+        public static async Task<IMessagingServiceClient> CreateFromConnectionStringAsync(string connectionString, int connectionPoolSize, TimeSpan? connectionIdleTimeout)
         {
-            DeviceClient client = DeviceClient.CreateFromConnectionString(connectionString);
+            DeviceClient client;
+            if (connectionPoolSize > 0)
+            {
+                var amqpConnectionPoolSettings = new AmqpConnectionPoolSettings
+                {
+                    MaxPoolSize = unchecked ((uint)connectionPoolSize),
+                    Pooling = connectionPoolSize > 0
+                };
+                if (connectionIdleTimeout.HasValue)
+                {
+                    amqpConnectionPoolSettings.ConnectionIdleTimeout = connectionIdleTimeout.Value;
+                }
+                var transportSettings = new ITransportSettings[]
+                {
+                    new AmqpTransportSettings(TransportType.Amqp)
+                    {
+                        AmqpConnectionPoolSettings = amqpConnectionPoolSettings
+                    }
+                };
+                client = DeviceClient.CreateFromConnectionString(connectionString, transportSettings);
+            }
+            else
+            {
+                client = DeviceClient.CreateFromConnectionString(connectionString);
+            }
             try
             {
                 await client.OpenAsync();
@@ -32,24 +56,21 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             return new IotHubClient(client);
         }
 
-        public static IotHubClientFactoryFunc PreparePoolFactory(string baseConnectionString, string poolId, int connectionPoolSize)
+        public static IotHubClientFactoryFunc PreparePoolFactory(string baseConnectionString, string poolId)
+        {
+            return PreparePoolFactory(baseConnectionString, poolId, 0, null);
+        }
+
+        public static IotHubClientFactoryFunc PreparePoolFactory(string baseConnectionString, string poolId, int connectionPoolSize, TimeSpan? connectionIdleTimeout)
         {
             IotHubConnectionStringBuilder csb = IotHubConnectionStringBuilder.Create(baseConnectionString);
-            // todo: uncommment once explicit control over connection pooling is available
-            //string[] connectionIds = Enumerable.Range(1, connectionPoolSize).Select(index => poolId + index).ToArray();
-            int connectionIndex = 0;
             IotHubClientFactoryFunc iotHubClientFactory = deviceIdentity =>
             {
-                //if (++connectionIndex >= connectionPoolSize)
-                //{
-                //    connectionIndex = 0;
-                //}
-                //csb.GroupName = connectionIds[connectionIndex]; // todo: uncommment once explicit control over connection pooling is available
                 var identity = (IotHubDeviceIdentity)deviceIdentity;
                 csb.AuthenticationMethod = DeriveAuthenticationMethod(csb.AuthenticationMethod, identity);
                 csb.HostName = identity.IotHubHostName;
                 string connectionString = csb.ToString();
-                return CreateFromConnectionStringAsync(connectionString);
+                return CreateFromConnectionStringAsync(connectionString, connectionPoolSize, connectionIdleTimeout);
             };
             return iotHubClientFactory;
         }
