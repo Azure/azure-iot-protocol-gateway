@@ -14,6 +14,8 @@
       <Setting name="RetainPropertyName" />
       <Setting name="DupPropertyName" />
       <Setting name="QoSPropertyName" />
+      <Setting name="IotHubClient.ConnectionPoolSize" />
+      <Setting name="IotHubClient.ConnectionIdleTimeout" />
       <Setting name="BlobSessionStatePersistenceProvider.StorageConnectionString" />
       <Setting name="BlobSessionStatePersistenceProvider.StorageContainerName" />
       <Setting name="TableQos2StatePersistenceProvider.StorageConnectionString" />
