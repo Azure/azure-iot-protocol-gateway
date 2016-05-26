@@ -68,7 +68,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Azure.Devices.ProtocolGateway.IotHubClient, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.1.0.5\lib\net451\Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.dll</HintPath>
+      <HintPath>..\..\packages\Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.1.0.6\lib\net451\Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Mono.Security, Version=4.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
