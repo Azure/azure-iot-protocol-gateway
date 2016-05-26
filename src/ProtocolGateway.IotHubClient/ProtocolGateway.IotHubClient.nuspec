@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>Microsoft.Azure.Devices.ProtocolGateway.IotHubClient</id>
-    <version>1.0.5</version>
+    <version>1.0.6</version>
     <title>Microsoft Azure IoT protocol gateway framework - IoT Hub client</title>
     <authors>Microsoft Azure</authors>
     <owners>Microsoft Azure</owners>

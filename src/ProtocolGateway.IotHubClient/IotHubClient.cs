@@ -34,7 +34,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
                 }
                 var transportSettings = new ITransportSettings[]
                 {
-                    new AmqpTransportSettings(TransportType.Amqp)
+                    new AmqpTransportSettings(TransportType.Amqp_Tcp_Only)
+                    {
+                        AmqpConnectionPoolSettings = amqpConnectionPoolSettings
+                    },
+                    new AmqpTransportSettings(TransportType.Amqp_WebSocket_Only)
                     {
                         AmqpConnectionPoolSettings = amqpConnectionPoolSettings
                     }
