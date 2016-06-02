@@ -64,7 +64,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage.1.0.6\lib\net451\Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage.dll</HintPath>
+      <HintPath>..\..\packages\Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage.1.0.5\lib\net451\Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Data.Edm, Version=5.6.2.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
