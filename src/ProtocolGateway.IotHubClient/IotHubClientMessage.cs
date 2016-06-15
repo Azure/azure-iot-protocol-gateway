@@ -5,24 +5,33 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
 {
     using System;
     using System.Collections.Generic;
-    using System.IO;
+    using DotNetty.Buffers;
     using Microsoft.Azure.Devices.Client;
     using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
 
-    public sealed class DeviceClientMessage : IMessage
+    public sealed class IotHubClientMessage : IMessage
     {
         readonly Message message;
 
-        public DeviceClientMessage(Message message)
+        public IotHubClientMessage(Message message, IByteBuffer payload)
         {
             this.message = message;
+            this.Payload = payload;
+        }
+
+        public IotHubClientMessage(string address, Message message)
+            : this(message, null)
+        {
+            this.Address = address;
         }
 
         public IDictionary<string, string> Properties => this.message.Properties;
 
-        public Stream Payload => this.message.GetBodyStream();
+        public string Address { get; set; }
 
-        public string LockToken => this.message.LockToken;
+        public IByteBuffer Payload { get; }
+
+        public string Id => this.message.LockToken;
 
         public DateTime CreatedTimeUtc => this.message.EnqueuedTimeUtc;
 
@@ -30,15 +39,10 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
 
         public ulong SequenceNumber => this.message.SequenceNumber;
 
-        public string MessageId
-        {
-            get { return this.message.MessageId; }
-            set { this.message.MessageId = value; }
-        }
-
         public void Dispose()
         {
             this.message.Dispose();
+            this.message.BodyStream?.Dispose();
         }
 
         internal Message ToMessage()

@@ -6,7 +6,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
     using System;
     using System.Collections.Generic;
     using System.Diagnostics.Contracts;
-    using System.IO;
     using System.Threading.Tasks;
     using DotNetty.Codecs.Mqtt.Packets;
     using DotNetty.Common;
@@ -18,9 +17,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
     using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
     using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence;
-    using Microsoft.Azure.Devices.ProtocolGateway.Routing;
 
-    public sealed class MqttIotHubAdapter : ChannelHandlerAdapter
+    public sealed class MqttAdapter : ChannelHandlerAdapter, IMessagingChannel<MessageWithFeedback>
     {
         static readonly Action<object> CheckConnectTimeoutCallback = CheckConnectionTimeout;
         static readonly Action<object> CheckKeepAliveCallback = CheckKeepAlive;
@@ -31,17 +29,17 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         static readonly Action<Task> ShutdownOnPubRecFaultAction = CreateScopedFaultAction("-> PUBREC");
         static readonly Action<Task> ShutdownOnPubCompFaultAction = CreateScopedFaultAction("-> PUBCOMP");
 
+        IChannelHandlerContext capturedContext;
         readonly Settings settings;
         StateFlags stateFlags;
-        IMessagingServiceClient messagingServiceClient;
         DateTime lastClientActivityTime;
         ISessionState sessionState;
-        readonly MessageAsyncProcessor<PublishPacket> publishProcessor;
-        readonly RequestAckPairProcessor<AckPendingMessageState, PublishPacket> publishPubAckProcessor;
-        readonly RequestAckPairProcessor<AckPendingMessageState, PublishPacket> publishPubRecProcessor;
-        readonly RequestAckPairProcessor<CompletionPendingMessageState, PubRelPacket> pubRelPubCompProcessor;
-        readonly IMessageRouter messageRouter;
-        readonly IMessagingFactory messagingFactory;
+        Dictionary<IMessagingServiceClient, MessageAsyncProcessor<PublishPacket>> publishProcessors;
+        RequestAckPairProcessor<AckPendingMessageState, PublishPacket> publishPubAckProcessor;
+        RequestAckPairProcessor<AckPendingMessageState, PublishPacket> publishPubRecProcessor;
+        RequestAckPairProcessor<CompletionPendingMessageState, PubRelPacket> pubRelPubCompProcessor;
+        IMqttMessagingBridge messagingBridge;
+        readonly MqttBridgeFactoryFunc messagingBridgeFactory;
         IDeviceIdentity identity;
         readonly IQos2StatePersistenceProvider qos2StateProvider;
         readonly QualityOfService maxSupportedQosToClient;
@@ -52,18 +50,17 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         Queue<Packet> connectPendingQueue;
         PublishPacket willPacket;
 
-        public MqttIotHubAdapter(
+        public MqttAdapter(
             Settings settings,
             ISessionStatePersistenceProvider sessionStateManager,
             IDeviceIdentityProvider authProvider,
             IQos2StatePersistenceProvider qos2StateProvider,
-            IMessagingFactory messagingFactory,
-            IMessageRouter messageRouter)
+            MqttBridgeFactoryFunc messagingBridgeFactory)
         {
             Contract.Requires(settings != null);
             Contract.Requires(sessionStateManager != null);
             Contract.Requires(authProvider != null);
-            Contract.Requires(messageRouter != null);
+            Contract.Requires(messagingBridgeFactory != null);
 
             if (qos2StateProvider != null)
             {
@@ -78,11 +75,25 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             this.settings = settings;
             this.sessionStateManager = sessionStateManager;
             this.authProvider = authProvider;
-            this.messagingFactory = messagingFactory;
-            this.messageRouter = messageRouter;
+            this.messagingBridgeFactory = messagingBridgeFactory;
+        }
 
-            this.publishProcessor = new MessageAsyncProcessor<PublishPacket>(this.PublishToServerAsync);
-            this.publishProcessor.Completion.OnFault(ShutdownOnPublishToServerFaultAction);
+        bool ConnectedToHub => this.messagingBridge != null;
+
+        string DeviceId => this.identity.Id;
+
+        int InboundBacklogSize =>
+            this.publishPubAckProcessor.BacklogSize
+            + this.publishPubRecProcessor.BacklogSize
+            + this.pubRelPubCompProcessor.BacklogSize;
+
+        #region IChannelHandler overrides
+
+        public override void ChannelActive(IChannelHandlerContext context)
+        {
+            this.capturedContext = context;
+
+            this.publishProcessors = new Dictionary<IMessagingServiceClient, MessageAsyncProcessor<PublishPacket>>(1);
 
             TimeSpan? ackTimeout = this.settings.DeviceReceiveAckCanTimeout ? this.settings.DeviceReceiveAckTimeout : (TimeSpan?)null;
             this.publishPubAckProcessor = new RequestAckPairProcessor<AckPendingMessageState, PublishPacket>(this.AcknowledgePublishAsync, this.RetransmitNextPublish, ackTimeout);
@@ -91,36 +102,12 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             this.publishPubRecProcessor.Completion.OnFault(ShutdownOnPubRecFaultAction);
             this.pubRelPubCompProcessor = new RequestAckPairProcessor<CompletionPendingMessageState, PubRelPacket>(this.AcknowledgePublishCompleteAsync, this.RetransmitNextPublishRelease, ackTimeout);
             this.pubRelPubCompProcessor.Completion.OnFault(ShutdownOnPubCompFaultAction);
-        }
 
-        Queue<Packet> SubscriptionChangeQueue => this.subscriptionChangeQueue ?? (this.subscriptionChangeQueue = new Queue<Packet>(4));
-
-        Queue<Packet> ConnectPendingQueue => this.connectPendingQueue ?? (this.connectPendingQueue = new Queue<Packet>(4));
-
-        bool ConnectedToHub => this.messagingServiceClient != null;
-
-        string DeviceId => this.identity.Id;
-
-        int InboundBacklogSize =>
-            this.publishProcessor.BacklogSize
-                + this.publishPubAckProcessor.BacklogSize
-                + this.publishPubRecProcessor.BacklogSize
-                + this.pubRelPubCompProcessor.BacklogSize;
-
-        int MessagePendingAckCount =>
-            this.publishPubAckProcessor.RequestPendingAckCount
-                + this.publishPubRecProcessor.RequestPendingAckCount
-                + this.pubRelPubCompProcessor.RequestPendingAckCount;
-
-        #region IChannelHandler overrides
-
-        public override void ChannelActive(IChannelHandlerContext context)
-        {
             this.stateFlags = StateFlags.WaitingForConnect;
             TimeSpan? timeout = this.settings.ConnectArrivalTimeout;
             if (timeout.HasValue)
             {
-                context.Channel.EventLoop.ScheduleAsync(CheckConnectTimeoutCallback, context, timeout.Value);
+                context.Executor.ScheduleAsync(CheckConnectTimeoutCallback, context, timeout.Value);
             }
             base.ChannelActive(context);
 
@@ -132,7 +119,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             var packet = message as Packet;
             if (packet == null)
             {
-                MqttIotHubAdapterEventSource.Log.Warning($"Unexpected message (only `{typeof(Packet).FullName}` descendants are supported): {message}");
+                CommonEventSource.Log.Warning($"Unexpected message (only `{typeof(Packet).FullName}` descendants are supported): {message}");
                 return;
             }
 
@@ -146,7 +133,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             {
                 if (this.IsInState(StateFlags.ProcessingConnect))
                 {
-                    this.ConnectPendingQueue.Enqueue(packet);
+                    Queue<Packet> queue = this.connectPendingQueue ?? (this.connectPendingQueue = new Queue<Packet>(4));
+                    queue.Enqueue(packet);
                 }
                 else
                 {
@@ -159,18 +147,21 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         public override void ChannelReadComplete(IChannelHandlerContext context)
         {
             base.ChannelReadComplete(context);
-            int inboundBacklogSize = this.InboundBacklogSize;
-            if (inboundBacklogSize < this.settings.MaxPendingInboundMessages)
+            if (!this.IsInState(StateFlags.ReadThrottled))
             {
-                context.Read();
-            }
-            else
-            {
-                if (MqttIotHubAdapterEventSource.Log.IsVerboseEnabled)
+                if (this.IsReadAllowed())
                 {
-                    MqttIotHubAdapterEventSource.Log.Verbose(
-                        "Not reading per full inbound message queue",
-                        $"deviceId: {this.identity}, messages queued: {inboundBacklogSize}, channel: {context.Channel}");
+                    context.Read();
+                }
+                else
+                {
+                    if (CommonEventSource.Log.IsVerboseEnabled)
+                    {
+                        CommonEventSource.Log.Verbose(
+                            "Not reading per full inbound message queue",
+                            $"deviceId: {this.identity}, channel: {context.Channel}");
+                    }
+                    this.stateFlags &= StateFlags.ReadThrottled;
                 }
             }
         }
@@ -192,7 +183,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             var handshakeCompletionEvent = @event as TlsHandshakeCompletionEvent;
             if (handshakeCompletionEvent != null && !handshakeCompletionEvent.IsSuccessful)
             {
-                MqttIotHubAdapterEventSource.Log.Warning("TLS handshake failed.", handshakeCompletionEvent.Exception);
+                CommonEventSource.Log.Warning("TLS handshake failed.", handshakeCompletionEvent.Exception);
             }
         }
 
@@ -202,7 +193,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         {
             if (this.IsInState(StateFlags.Closed))
             {
-                MqttIotHubAdapterEventSource.Log.Warning($"Message was received after channel closure: {packet}");
+                CommonEventSource.Log.Warning($"Message was received after channel closure: {packet}");
                 return;
             }
 
@@ -215,7 +206,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     break;
                 case PacketType.PUBLISH:
                     PerformanceCounters.PublishPacketsReceivedPerSecond.Increment();
-                    this.publishProcessor.Post(context, (PublishPacket)packet);
+                    this.ProcessPublish(context, (PublishPacket)packet);
                     break;
                 case PacketType.PUBACK:
                     this.publishPubAckProcessor.Post(context, (PubAckPacket)packet);
@@ -236,7 +227,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                         .OnFault(ShutdownOnWriteFaultAction, context);
                     break;
                 case PacketType.DISCONNECT:
-                    MqttIotHubAdapterEventSource.Log.Verbose("Disconnecting gracefully.", this.identity.ToString());
+                    CommonEventSource.Log.Verbose("Disconnecting gracefully.", this.identity.ToString());
                     this.Shutdown(context, true);
                     break;
                 default:
@@ -245,11 +236,45 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             }
         }
 
+        void ProcessPublish(IChannelHandlerContext context, PublishPacket packet)
+        {
+            if (!this.ConnectedToHub)
+            {
+                return;
+            }
+
+            IMessagingServiceClient sendingClient = this.ResolveSendingClient(packet.TopicName);
+            MessageAsyncProcessor<PublishPacket> publishProcessor;
+            if (!this.publishProcessors.TryGetValue(sendingClient, out publishProcessor))
+            {
+                publishProcessor = new MessageAsyncProcessor<PublishPacket>((c, p) => this.PublishToServerAsync(c, sendingClient, p, null));
+                publishProcessor.Completion.OnFault(ShutdownOnPublishToServerFaultAction);
+                this.publishProcessors[sendingClient] = publishProcessor;
+            }
+
+            publishProcessor.Post(context, packet);
+        }
+
+        IMessagingServiceClient ResolveSendingClient(string topicName)
+        {
+            IMessagingServiceClient sendingClient;
+            if (!this.messagingBridge.TryResolveClient(topicName, out sendingClient))
+            {
+                throw new InvalidOperationException($"Could not resolve a sending client based on topic name `{topicName}`.");
+            }
+            return sendingClient;
+        }
+
         #region SUBSCRIBE / UNSUBSCRIBE handling
 
         void HandleSubscriptionChange(IChannelHandlerContext context, Packet packet)
         {
-            this.SubscriptionChangeQueue.Enqueue(packet);
+            Queue<Packet> changeQueue = this.subscriptionChangeQueue;
+            if (changeQueue == null)
+            {
+                this.subscriptionChangeQueue = changeQueue = new Queue<Packet>(4);
+            }
+            changeQueue.Enqueue(packet);
 
             if (!this.IsInState(StateFlags.ChangingSubscriptions))
             {
@@ -265,7 +290,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 do
                 {
                     ISessionState newState = this.sessionState.Copy();
-                    Queue<Packet> queue = this.SubscriptionChangeQueue;
+                    Queue<Packet> queue = this.subscriptionChangeQueue;
+                    Contract.Assert(queue != null);
+
                     var acks = new List<Packet>(queue.Count);
                     foreach (Packet packet in queue) // todo: if can queue be null here, don't force creation
                     {
@@ -304,6 +331,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 }
                 while (this.subscriptionChangeQueue.Count > 0);
 
+                this.subscriptionChangeQueue = null;
+
                 this.ResetState(StateFlags.ChangingSubscriptions);
             }
             catch (Exception ex)
@@ -316,12 +345,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
         #region PUBLISH Client -> Server handling
 
-        Task PublishToServerAsync(IChannelHandlerContext context, PublishPacket packet)
-        {
-            return this.PublishToServerAsync(context, packet, null);
-        }
-
-        async Task PublishToServerAsync(IChannelHandlerContext context, PublishPacket packet, string messageType)
+        async Task PublishToServerAsync(IChannelHandlerContext context, IMessagingServiceClient sendingClient, PublishPacket packet, string messageType)
         {
             if (!this.ConnectedToHub)
             {
@@ -332,11 +356,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
             this.ResumeReadingIfNecessary(context);
 
-            using (Stream bodyStream = packet.Payload.IsReadable() ? new ReadOnlyByteBufferStream(packet.Payload, true) : null)
-            using (IMessage message = this.messagingFactory.CreateMessage(bodyStream))
+            using (IMessage message = sendingClient.CreateMessage(packet.TopicName, packet.Payload))
             {
-                this.ApplyRoutingConfiguration(message, packet);
-
                 Util.CompleteMessageFromPacket(message, packet, this.settings);
 
                 if (messageType != null)
@@ -344,10 +365,10 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     message.Properties[this.settings.ServicePropertyPrefix + MessagePropertyNames.MessageType] = messageType;
                 }
 
-                await this.messagingServiceClient.SendAsync(message);
-
-                PerformanceCounters.MessagesSentPerSecond.Increment();
+                await sendingClient.SendAsync(message);
             }
+
+            PerformanceCounters.MessagesSentPerSecond.Increment();
 
             if (!this.IsInState(StateFlags.Closed))
             {
@@ -366,63 +387,24 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                         ShutdownOnError(context, "QoS 2 is not supported.");
                         break;
                     default:
-                        throw new InvalidOperationException("Unexpected QoS level: " + packet.QualityOfService);
+                        throw new InvalidOperationException("Unexpected QoS level: " + packet.QualityOfService.ToString());
                 }
             }
         }
 
         void ResumeReadingIfNecessary(IChannelHandlerContext context)
         {
-            if (this.InboundBacklogSize == this.settings.MaxPendingInboundMessages - 1) // we picked up a packet from full queue - now we have more room so order another read
+            if (this.IsInState(StateFlags.ReadThrottled))
             {
-                if (MqttIotHubAdapterEventSource.Log.IsVerboseEnabled)
+                if (this.IsReadAllowed()) // we picked up a packet from full queue - now we have more room so order another read
                 {
-                    MqttIotHubAdapterEventSource.Log.Verbose("Resuming reading from channel as queue freed up.", $"deviceId: {this.identity}, channel: {context.Channel}");
+                    this.ResetState(StateFlags.ReadThrottled);
+                    if (CommonEventSource.Log.IsVerboseEnabled)
+                    {
+                        CommonEventSource.Log.Verbose("Resuming reading from channel as queue freed up.", $"deviceId: {this.identity}, channel: {context.Channel}");
+                    }
                 }
                 context.Read();
-            }
-        }
-
-        void ApplyRoutingConfiguration(IMessage message, PublishPacket packet)
-        {
-            RouteDestinationType routeType;
-            if (this.messageRouter.TryRouteIncomingMessage(packet.TopicName, message, out routeType))
-            {
-                // successfully matched topic against configured routes -> validate topic name
-                string messageDeviceId;
-                if (message.Properties.TryGetValue(TemplateParameters.DeviceIdTemplateParam, out messageDeviceId))
-                {
-                    if (!this.DeviceId.Equals(messageDeviceId, StringComparison.Ordinal))
-                    {
-                        throw new InvalidOperationException(
-                            $"Device ID provided in topic name ({messageDeviceId}) does not match ID of the device publishing message ({this.DeviceId})");
-                    }
-                    message.Properties.Remove(TemplateParameters.DeviceIdTemplateParam);
-                }
-            }
-            else
-            {
-                if (!this.settings.PassThroughUnmatchedMessages)
-                {
-                    throw new InvalidOperationException($"Topic name `{packet.TopicName}` could not be matched against any of the configured routes.");
-                }
-
-                if (MqttIotHubAdapterEventSource.Log.IsWarningEnabled)
-                {
-                    MqttIotHubAdapterEventSource.Log.Warning("Topic name could not be matched against any of the configured routes. Falling back to default telemetry settings.", packet.ToString());
-                }
-                routeType = RouteDestinationType.Telemetry;
-                message.Properties[this.settings.ServicePropertyPrefix + MessagePropertyNames.Unmatched] = bool.TrueString;
-                message.Properties[this.settings.ServicePropertyPrefix + MessagePropertyNames.Subject] = packet.TopicName;
-            }
-
-            // once we have different routes, this will change to tackle different aspects of route types
-            switch (routeType)
-            {
-                case RouteDestinationType.Telemetry:
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException($"Unexpected route type: {routeType}");
             }
         }
 
@@ -430,23 +412,18 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
         #region PUBLISH Server -> Client handling
 
-        async void Receive(IChannelHandlerContext context)
+        public async void Handle(MessageWithFeedback messageWithFeedback)
         {
+            IChannelHandlerContext context = this.capturedContext;
             try
             {
-                IMessage message = await this.messagingServiceClient.ReceiveAsync();
-                if (message == null)
-                {
-                    // link to IoT Hub has been closed
-                    this.ShutdownOnReceiveError(context, null);
-                    return;
-                }
+                IMessage message = messageWithFeedback.Message;
+                Contract.Assert(message != null);
 
                 PerformanceCounters.MessagesReceivedPerSecond.Increment();
 
-                bool receiving = this.IsInState(StateFlags.Receiving);
                 int processorsInRetransmission = 0;
-                bool messageSent = false;
+                bool sentThroughRetransmission = false;
 
                 if (this.publishPubAckProcessor.Retransmitting)
                 {
@@ -454,63 +431,42 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     AckPendingMessageState pendingPubAck = this.publishPubAckProcessor.FirstRequestPendingAck;
                     if (pendingPubAck.SequenceNumber == message.SequenceNumber)
                     {
-                        this.RetransmitPublishMessage(context, message, pendingPubAck);
-                        messageSent = true;
+                        this.RetransmitPublishMessage(context, messageWithFeedback, pendingPubAck);
+                        sentThroughRetransmission = true;
                     }
                 }
 
                 if (this.publishPubRecProcessor.Retransmitting)
                 {
                     processorsInRetransmission++;
-                    if (!messageSent)
+                    if (!sentThroughRetransmission)
                     {
                         AckPendingMessageState pendingPubRec = this.publishPubRecProcessor.FirstRequestPendingAck;
                         if (pendingPubRec.SequenceNumber == message.SequenceNumber)
                         {
-                            this.RetransmitPublishMessage(context, message, pendingPubRec);
-                            messageSent = true;
+                            this.RetransmitPublishMessage(context, messageWithFeedback, pendingPubRec);
+                            sentThroughRetransmission = true;
                         }
                     }
                 }
 
                 if (processorsInRetransmission == 0)
                 {
-                    this.PublishToClientAsync(context, message).OnFault(ShutdownOnPublishFaultAction, context);
-                    if (!this.IsInState(StateFlags.Closed)
-                        && (this.MessagePendingAckCount < this.settings.MaxPendingOutboundMessages))
-                    {
-                        this.Receive(context); // todo: review for potential stack depth issues
-                    }
-                    else
-                    {
-                        this.ResetState(StateFlags.Receiving);
-                    }
+                    this.PublishToClientAsync(context, messageWithFeedback).OnFault(ShutdownOnPublishFaultAction, context);
                 }
                 else
                 {
-                    if (receiving)
+                    if (!sentThroughRetransmission)
                     {
-                        if (!messageSent)
-                        {
-                            // message id is different - "publish" this message (it actually will be enqueued for future retransmission immediately)
-                            await this.PublishToClientAsync(context, message);
-                        }
-                        this.ResetState(StateFlags.Receiving);
-                        for (int i = processorsInRetransmission - (messageSent ? 1 : 0); i > 0; i--)
-                        {
-                            // fire receive for processors that went into retransmission but held off receiving messages due to ongoing receive call
-                            this.Receive(context); // todo: review for potential stack depth issues
-                        }
-                    }
-                    else if (!messageSent)
-                    {
-                        throw new InvalidOperationException("Received a message that does not match");
+                        // message id is different - "publish" this message (it actually will be enqueued for future retransmission immediately)
+                        await this.PublishToClientAsync(context, messageWithFeedback);
+                        // todo: consider back pressure in a form of explicit retransmission state communication with MSC
                     }
                 }
             }
             catch (MessagingException ex)
             {
-                this.ShutdownOnReceiveError(context, ex.ToString());
+                this.ShutdownOnReceiveError(ex.ToString());
             }
             catch (Exception ex)
             {
@@ -518,30 +474,20 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             }
         }
 
-        async Task PublishToClientAsync(IChannelHandlerContext context, IMessage message)
+        public void Close(Exception exception) => this.ShutdownOnReceiveError(exception?.ToString());
+
+        async Task PublishToClientAsync(IChannelHandlerContext context, MessageWithFeedback messageWithFeedback)
         {
+            PublishPacket packet = null;
             try
             {
-                using (message)
+                using (IMessage message = messageWithFeedback.Message)
                 {
-                    if (this.settings.MaxOutboundRetransmissionEnforced && message.DeliveryCount > this.settings.MaxOutboundRetransmissionCount)
-                    {
-                        await this.RejectMessageAsync(message);
-                        return;
-                    }
-
-                    string topicName;
                     message.Properties[TemplateParameters.DeviceIdTemplateParam] = this.DeviceId;
-                    if (!this.messageRouter.TryRouteOutgoingMessage(RouteSourceType.Notification, message, out topicName))
-                    {
-                        // source is not configured
-                        await this.RejectMessageAsync(message);
-                        return;
-                    }
 
                     QualityOfService qos;
                     QualityOfService maxRequestedQos;
-                    if (this.TryMatchSubscription(topicName, message.CreatedTimeUtc, out maxRequestedQos))
+                    if (this.TryMatchSubscription(message.Address, message.CreatedTimeUtc, out maxRequestedQos))
                     {
                         qos = Util.DeriveQos(message, this.settings);
                         if (maxRequestedQos < qos)
@@ -552,23 +498,23 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     else
                     {
                         // no matching subscription found - complete the message without publishing
-                        await this.RejectMessageAsync(message);
+                        await RejectMessageAsync(messageWithFeedback);
                         return;
                     }
 
-                    PublishPacket packet = await Util.ComposePublishPacketAsync(context, message, qos, topicName, context.Channel.Allocator);
+                    packet = Util.ComposePublishPacket(context, message, qos, context.Channel.Allocator);
                     switch (qos)
                     {
                         case QualityOfService.AtMostOnce:
-                            await this.PublishToClientQos0Async(context, message, packet);
+                            await this.PublishToClientQos0Async(context, messageWithFeedback, packet);
                             break;
                         case QualityOfService.AtLeastOnce:
-                            await this.PublishToClientQos1Async(context, message, packet);
+                            await this.PublishToClientQos1Async(context, messageWithFeedback, packet);
                             break;
                         case QualityOfService.ExactlyOnce:
                             if (this.maxSupportedQosToClient >= QualityOfService.ExactlyOnce)
                             {
-                                await this.PublishToClientQos2Async(context, message, packet);
+                                await this.PublishToClientQos2Async(context, messageWithFeedback, packet);
                             }
                             else
                             {
@@ -582,42 +528,43 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             }
             catch (Exception ex)
             {
-                // todo: log more details
+                ReferenceCountUtil.SafeRelease(packet);
                 ShutdownOnError(context, "<- PUBLISH", ex);
             }
         }
 
-        async Task RejectMessageAsync(IMessage message)
+        static async Task RejectMessageAsync(MessageWithFeedback messageWithFeedback)
         {
-            await this.messagingServiceClient.RejectAsync(message.LockToken); // awaiting guarantees that we won't complete consecutive message before this is completed.
+            await messageWithFeedback.FeedbackChannel.RejectAsync(); // awaiting guarantees that we won't complete consecutive message before this is completed.
             PerformanceCounters.MessagesRejectedPerSecond.Increment();
         }
 
-        Task PublishToClientQos0Async(IChannelHandlerContext context, IMessage message, PublishPacket packet)
+        Task PublishToClientQos0Async(IChannelHandlerContext context, MessageWithFeedback messageWithFeedback, PublishPacket packet)
         {
-            if (message.DeliveryCount == 0)
+            if (messageWithFeedback.Message.DeliveryCount == 0)
             {
                 return Task.WhenAll(
-                    this.messagingServiceClient.CompleteAsync(message.LockToken),
+                    messageWithFeedback.FeedbackChannel.CompleteAsync(),
                     Util.WriteMessageAsync(context, packet));
             }
             else
             {
-                return this.messagingServiceClient.CompleteAsync(message.LockToken);
+                return messageWithFeedback.FeedbackChannel.CompleteAsync();
             }
         }
 
-        Task PublishToClientQos1Async(IChannelHandlerContext context, IMessage message, PublishPacket packet)
+        Task PublishToClientQos1Async(IChannelHandlerContext context, MessageWithFeedback messageWithFeedback, PublishPacket packet)
         {
-            return this.publishPubAckProcessor.SendRequestAsync(context, packet, new AckPendingMessageState(message, packet));
+            return this.publishPubAckProcessor.SendRequestAsync(context, packet,
+                new AckPendingMessageState(messageWithFeedback, packet));
         }
 
-        async Task PublishToClientQos2Async(IChannelHandlerContext context, IMessage message, PublishPacket packet)
+        async Task PublishToClientQos2Async(IChannelHandlerContext context, MessageWithFeedback messageWithFeedback, PublishPacket packet)
         {
             int packetId = packet.PacketId;
             IQos2MessageDeliveryState messageInfo = await this.qos2StateProvider.GetMessageAsync(this.identity, packetId);
 
-            if (messageInfo != null && message.SequenceNumber != messageInfo.SequenceNumber)
+            if (messageInfo != null && messageWithFeedback.Message.SequenceNumber != messageInfo.SequenceNumber)
             {
                 await this.qos2StateProvider.DeleteMessageAsync(this.identity, packetId, messageInfo);
                 messageInfo = null;
@@ -625,23 +572,22 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
             if (messageInfo == null)
             {
-                await this.publishPubRecProcessor.SendRequestAsync(context, packet, new AckPendingMessageState(message, packet));
+                await this.publishPubRecProcessor.SendRequestAsync(context, packet,
+                    new AckPendingMessageState(messageWithFeedback, packet));
             }
             else
             {
-                await this.PublishReleaseToClientAsync(context, packetId, message.LockToken, messageInfo, PreciseTimeSpan.FromStart);
+                await this.PublishReleaseToClientAsync(context, packetId, messageWithFeedback.FeedbackChannel, messageInfo, PreciseTimeSpan.FromStart);
             }
         }
 
-        Task PublishReleaseToClientAsync(IChannelHandlerContext context, int packetId, string lockToken,
+        Task PublishReleaseToClientAsync(IChannelHandlerContext context, int packetId, MessageFeedbackChannel feedbackChannel,
             IQos2MessageDeliveryState messageState, PreciseTimeSpan startTimestamp)
         {
-            var pubRelPacket = new PubRelPacket
-            {
-                PacketId = packetId
-            };
+            var pubRelPacket = new PubRelPacket();
+            pubRelPacket.PacketId = packetId;
             return this.pubRelPubCompProcessor.SendRequestAsync(context, pubRelPacket,
-                new CompletionPendingMessageState(packetId, lockToken, messageState, startTimestamp));
+                new CompletionPendingMessageState(packetId, messageState, startTimestamp, feedbackChannel));
         }
 
         async Task AcknowledgePublishAsync(IChannelHandlerContext context, AckPendingMessageState message)
@@ -651,16 +597,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             // todo: is try-catch needed here?
             try
             {
-                await this.messagingServiceClient.CompleteAsync(message.LockToken);
+                await message.FeedbackChannel.CompleteAsync();
 
                 PerformanceCounters.OutboundMessageProcessingTime.Register(message.StartTimestamp);
 
-                if (this.publishPubAckProcessor.ResumeRetransmission(context))
-                {
-                    return;
-                }
-
-                this.RestartReceiveIfPossible(context);
+                this.publishPubAckProcessor.ResumeRetransmission(context);
             }
             catch (Exception ex)
             {
@@ -678,14 +619,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 IQos2MessageDeliveryState messageInfo = this.qos2StateProvider.Create(message.SequenceNumber);
                 await this.qos2StateProvider.SetMessageAsync(this.identity, message.PacketId, messageInfo);
 
-                await this.PublishReleaseToClientAsync(context, message.PacketId, message.LockToken, messageInfo, message.StartTimestamp);
+                await this.PublishReleaseToClientAsync(context, message.PacketId, message.FeedbackChannel, messageInfo, message.StartTimestamp);
 
-                if (this.publishPubRecProcessor.ResumeRetransmission(context))
-                {
-                    return;
-                }
-
-                this.RestartReceiveIfPossible(context);
+                this.publishPubRecProcessor.ResumeRetransmission(context);
             }
             catch (Exception ex)
             {
@@ -699,18 +635,13 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
             try
             {
-                await this.messagingServiceClient.CompleteAsync(message.LockToken);
+                await message.FeedbackChannel.CompleteAsync();
 
                 await this.qos2StateProvider.DeleteMessageAsync(this.identity, message.PacketId, message.DeliveryState);
 
                 PerformanceCounters.OutboundMessageProcessingTime.Register(message.StartTimestamp);
 
-                if (this.pubRelPubCompProcessor.ResumeRetransmission(context))
-                {
-                    return;
-                }
-
-                this.RestartReceiveIfPossible(context);
+                this.pubRelPubCompProcessor.ResumeRetransmission(context);
             }
             catch (Exception ex)
             {
@@ -718,32 +649,15 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             }
         }
 
-        void RestartReceiveIfPossible(IChannelHandlerContext context)
-        {
-            // restarting receive loop if was stopped due to reaching MaxOutstandingOutboundMessageCount cap
-            if (!this.IsInState(StateFlags.Receiving)
-                && this.MessagePendingAckCount < this.settings.MaxPendingOutboundMessages)
-            {
-                this.StartReceiving(context);
-            }
-        }
-
         async void RetransmitNextPublish(IChannelHandlerContext context, AckPendingMessageState messageInfo)
         {
-            bool wasReceiving = this.IsInState(StateFlags.Receiving);
-
             try
             {
-                await this.messagingServiceClient.AbandonAsync(messageInfo.LockToken);
-
-                if (!wasReceiving)
-                {
-                    this.Receive(context);
-                }
+                await messageInfo.FeedbackChannel.AbandonAsync();
             }
             catch (MessagingException ex)
             {
-                this.ShutdownOnReceiveError(context, ex.ToString());
+                this.ShutdownOnReceiveError(ex.ToString());
             }
             catch (Exception ex)
             {
@@ -751,28 +665,22 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             }
         }
 
-        async void RetransmitPublishMessage(IChannelHandlerContext context, IMessage message, AckPendingMessageState messageInfo)
+        async void RetransmitPublishMessage(IChannelHandlerContext context, MessageWithFeedback messageWithFeedback, AckPendingMessageState messageInfo)
         {
+            PublishPacket packet = null;
             try
             {
-                using (message)
+                using (IMessage message = messageWithFeedback.Message)
                 {
-                    string topicName;
                     message.Properties[TemplateParameters.DeviceIdTemplateParam] = this.DeviceId;
-                    if (!this.messageRouter.TryRouteOutgoingMessage(RouteSourceType.Notification, message, out topicName))
-                    {
-                        throw new InvalidOperationException("Route mapping failed on retransmission.");
-                    }
-
-                    PublishPacket packet = await Util.ComposePublishPacketAsync(context, message, messageInfo.QualityOfService, topicName, context.Channel.Allocator);
-
-                    messageInfo.ResetMessage(message);
+                    packet = Util.ComposePublishPacket(context, message, messageInfo.QualityOfService, context.Channel.Allocator);
+                    messageInfo.ResetMessage(message, messageWithFeedback.FeedbackChannel);
                     await this.publishPubAckProcessor.RetransmitAsync(context, packet, messageInfo);
                 }
             }
             catch (Exception ex)
             {
-                // todo: log more details
+                ReferenceCountUtil.SafeRelease(packet);
                 ShutdownOnError(context, "<- PUBLISH (retransmission)", ex);
             }
         }
@@ -817,27 +725,30 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             return found;
         }
 
-        async void ShutdownOnReceiveError(IChannelHandlerContext context, string exception)
+        async void ShutdownOnReceiveError(string exception)
         {
             this.publishPubAckProcessor.Abort();
-            this.publishProcessor.Abort();
+            foreach (var publishProcessor in this.publishProcessors)
+            {
+                publishProcessor.Value.Abort();
+            }
             this.publishPubRecProcessor.Abort();
             this.pubRelPubCompProcessor.Abort();
 
-            IMessagingServiceClient hub = this.messagingServiceClient;
-            if (hub != null)
+            IMqttMessagingBridge bridge = this.messagingBridge;
+            if (bridge != null)
             {
-                this.messagingServiceClient = null;
+                this.messagingBridge = null;
                 try
                 {
-                    await hub.DisposeAsync();
+                    await bridge.DisposeAsync();
                 }
                 catch (Exception ex)
                 {
-                    MqttIotHubAdapterEventSource.Log.Info("Failed to close IoT Hub Client cleanly.", ex.ToString());
+                    CommonEventSource.Log.Info("Failed to close IoT Hub Client cleanly.", ex.ToString());
                 }
             }
-            ShutdownOnError(context, "Receive", exception);
+            ShutdownOnError(this.capturedContext, "Receive", exception);
         }
 
         #endregion
@@ -845,7 +756,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         #region CONNECT handling and lifecycle management
 
         /// <summary>
-        ///     Performs complete initialization of <see cref="MqttIotHubAdapter" /> based on received CONNECT packet.
+        ///     Performs complete initialization of <see cref="MqttAdapter" /> based on received CONNECT packet.
         /// </summary>
         /// <param name="context"><see cref="IChannelHandlerContext" /> instance.</param>
         /// <param name="packet">CONNECT packet.</param>
@@ -877,7 +788,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     return;
                 }
 
-                this.messagingServiceClient = await this.messagingFactory.CreateIotHubClientAsync(this.identity);
+                this.messagingBridge = await this.messagingBridgeFactory(this.identity);
 
                 bool sessionPresent = await this.EstablishSessionStateAsync(packet.CleanSession);
 
@@ -918,9 +829,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     }
                     catch (Exception ex)
                     {
-                        if (MqttIotHubAdapterEventSource.Log.IsVerboseEnabled)
+                        if (CommonEventSource.Log.IsVerboseEnabled)
                         {
-                            MqttIotHubAdapterEventSource.Log.Verbose("Error sending 'Server Unavailable' CONNACK.", ex.ToString());
+                            CommonEventSource.Log.Verbose("Error sending 'Server Unavailable' CONNACK.", ex.ToString());
                         }
                     }
                 }
@@ -969,9 +880,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             TimeSpan? maxTimeout = this.settings.MaxKeepAliveTimeout;
             if (maxTimeout.HasValue && (timeout > maxTimeout.Value || timeout == TimeSpan.Zero))
             {
-                if (MqttIotHubAdapterEventSource.Log.IsVerboseEnabled)
+                if (CommonEventSource.Log.IsVerboseEnabled)
                 {
-                    MqttIotHubAdapterEventSource.Log.Verbose($"Requested Keep Alive timeout is longer than the max allowed. Limiting to max value of {maxTimeout.Value}.", null);
+                    CommonEventSource.Log.Verbose($"Requested Keep Alive timeout is longer than the max allowed. Limiting to max value of {maxTimeout.Value}.", null);
                 }
                 return maxTimeout.Value;
             }
@@ -986,7 +897,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         /// <param name="context"><see cref="IChannelHandlerContext" /> instance.</param>
         void CompleteConnect(IChannelHandlerContext context)
         {
-            MqttIotHubAdapterEventSource.Log.Verbose("Connection established.", this.identity.ToString());
+            CommonEventSource.Log.Verbose("Connection established.", this.identity.ToString());
 
             if (this.keepAliveTimeout > TimeSpan.Zero)
             {
@@ -995,7 +906,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
             this.stateFlags = StateFlags.Connected;
 
-            this.StartReceiving(context);
+            this.messagingBridge.BindMessagingChannel(this);
 
             PerformanceCounters.ConnectionsEstablishedTotal.Increment();
             PerformanceCounters.ConnectionsCurrent.Increment();
@@ -1015,7 +926,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         static void CheckConnectionTimeout(object state)
         {
             var context = (IChannelHandlerContext)state;
-            var handler = (MqttIotHubAdapter)context.Handler;
+            var handler = (MqttAdapter)context.Handler;
             if (handler.IsInState(StateFlags.WaitingForConnect))
             {
                 ShutdownOnError(context, "Connection timed out on waiting for CONNECT packet from client.");
@@ -1025,7 +936,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         static void CheckKeepAlive(object ctx)
         {
             var context = (IChannelHandlerContext)ctx;
-            var self = (MqttIotHubAdapter)context.Handler;
+            var self = (MqttAdapter)context.Handler;
             TimeSpan elapsedSinceLastActive = DateTime.UtcNow - self.lastClientActivityTime;
             if (elapsedSinceLastActive > self.keepAliveTimeout)
             {
@@ -1036,15 +947,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             context.Channel.EventLoop.ScheduleAsync(CheckKeepAliveCallback, context, self.keepAliveTimeout - elapsedSinceLastActive);
         }
 
-        static void ShutdownOnError(IChannelHandlerContext context, string scope, Exception exception)
-        {
-            ShutdownOnError(context, scope, exception.ToString());
-        }
+        static void ShutdownOnError(IChannelHandlerContext context, string scope, Exception exception) => ShutdownOnError(context, scope, exception.ToString());
 
-        static void ShutdownOnError(IChannelHandlerContext context, string scope, string exception)
-        {
-            ShutdownOnError(context, $"Exception occured ({scope}): {exception}");
-        }
+        static void ShutdownOnError(IChannelHandlerContext context, string scope, string exception) => ShutdownOnError(context, $"Exception occured ({scope}): {exception}");
 
         /// <summary>
         ///     Logs error and initiates closure of both channel and hub connection.
@@ -1055,11 +960,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         {
             Contract.Requires(!string.IsNullOrEmpty(reason));
 
-            var self = (MqttIotHubAdapter)context.Handler;
+            var self = (MqttAdapter)context.Handler;
             if (!self.IsInState(StateFlags.Closed))
             {
                 PerformanceCounters.ConnectionFailedOperationalPerSecond.Increment();
-                MqttIotHubAdapterEventSource.Log.Warning($"Closing connection: {self.identity}", reason);
+                CommonEventSource.Log.Warning($"Closing connection: {self.identity}", reason);
                 self.Shutdown(context, false);
             }
         }
@@ -1099,7 +1004,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             }
             catch (Exception ex)
             {
-                MqttIotHubAdapterEventSource.Log.Warning("Error occurred while shutting down the channel.", ex);
+                CommonEventSource.Log.Warning("Error occurred while shutting down the channel.", ex);
             }
         }
 
@@ -1113,7 +1018,10 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
             try
             {
-                this.publishProcessor.Complete();
+                foreach (var publishProcessor in this.publishProcessors)
+                {
+                    publishProcessor.Value.Complete();
+                }
                 this.publishPubAckProcessor.Complete();
                 this.publishPubRecProcessor.Complete();
                 this.pubRelPubCompProcessor.Complete();
@@ -1123,38 +1031,62 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     this.publishPubRecProcessor.Completion,
                     this.pubRelPubCompProcessor.Completion);
 
-                IMessagingServiceClient hub = this.messagingServiceClient;
-                this.messagingServiceClient = null;
+                IMqttMessagingBridge hub = this.messagingBridge;
+                this.messagingBridge = null;
                 await hub.DisposeAsync();
             }
             catch (Exception ex)
             {
-                MqttIotHubAdapterEventSource.Log.Info("Failed to close IoT Hub Client cleanly.", ex.ToString());
+                CommonEventSource.Log.Info("Failed to close IoT Hub Client cleanly.", ex.ToString());
             }
         }
 
         async Task CompletePublishAsync(IChannelHandlerContext context, PublishPacket will)
         {
-            await this.publishProcessor.Completion;
-
             if (will == null)
             {
                 return;
             }
 
+            var sendingClient = this.ResolveSendingClient(will.TopicName);
+
+            MessageAsyncProcessor<PublishPacket> publishProcessor;
+            if (this.publishProcessors.TryGetValue(sendingClient, out publishProcessor))
+            {
+                await publishProcessor.Completion;
+            }
+
             try
             {
-                await this.PublishToServerAsync(context, will, MessageTypes.Will);
+                await this.PublishToServerAsync(context, sendingClient, will, MessageTypes.Will);
             }
             catch (Exception ex)
             {
-                MqttIotHubAdapterEventSource.Log.Warning("Failed sending Will Message.", ex);
+                CommonEventSource.Log.Warning("Failed sending Will Message.", ex);
             }
         }
 
         #endregion
 
         #region helper methods
+
+        bool IsReadAllowed()
+        {
+            if (this.InboundBacklogSize >= this.settings.MaxPendingInboundAcknowledgements)
+            {
+                return false;
+            }
+
+            foreach (var pair in this.publishProcessors)
+            {
+                if (pair.Value.BacklogSize >= pair.Key.MaxPendingMessages)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
 
         static Action<Task> CreateScopedFaultAction(string scope)
         {
@@ -1168,25 +1100,18 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 }
                 else
                 {
-                    MqttIotHubAdapterEventSource.Log.Error($"{scope}: exception occurred", task.Exception);
+                    CommonEventSource.Log.Error($"{scope}: exception occurred", task.Exception);
                 }
             };
         }
 
-        void StartReceiving(IChannelHandlerContext context)
-        {
-            this.stateFlags |= StateFlags.Receiving;
-            this.Receive(context);
-        }
+        bool IsInState(StateFlags stateFlagsToCheck) => (this.stateFlags & stateFlagsToCheck) == stateFlagsToCheck;
 
-        bool IsInState(StateFlags stateFlagsToCheck)
+        bool ResetState(StateFlags stateFlagsToReset)
         {
-            return (this.stateFlags & stateFlagsToCheck) == stateFlagsToCheck;
-        }
-
-        void ResetState(StateFlags stateFlagsToReset)
-        {
-            this.stateFlags &= ~stateFlagsToReset;
+            StateFlags flags = this.stateFlags;
+            this.stateFlags = flags & ~stateFlagsToReset;
+            return (flags & stateFlagsToReset) != 0;
         }
 
         #endregion
@@ -1198,8 +1123,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             ProcessingConnect = 1 << 1,
             Connected = 1 << 2,
             ChangingSubscriptions = 1 << 3,
-            Receiving = 1 << 4,
-            Closed = 1 << 5
+            Closed = 1 << 4,
+            ReadThrottled = 1 << 5
         }
     }
 }

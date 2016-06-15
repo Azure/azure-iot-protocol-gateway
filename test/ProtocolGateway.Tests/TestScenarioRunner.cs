@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace Microsoft.Azure.Devices.Gateway.Tests
+namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
 {
     using System;
     using System.Collections.Generic;
@@ -40,10 +40,7 @@ namespace Microsoft.Azure.Devices.Gateway.Tests
         public override void ChannelRead(IChannelHandlerContext context, object message)
         {
             CancellationTokenSource cts = this.responseTimeoutCts;
-            if (cts != null)
-            {
-                cts.Cancel();
-            }
+            cts?.Cancel();
             this.lastReceivedMessage = message;
             this.ContinueScenarioExecution(context);
         }
@@ -100,7 +97,7 @@ namespace Microsoft.Azure.Devices.Gateway.Tests
                 Task task = context.WriteAsync(message);
                 object timeoutExcMessage = message;
                 context.Channel.EventLoop.ScheduleAsync(
-                    () => this.completion.TrySetException(new TimeoutException(string.Format("Sending of message did not complete in time: {0}", timeoutExcMessage))),
+                    () => this.completion.TrySetException(new TimeoutException($"Sending of message did not complete in time: {timeoutExcMessage}")),
                     this.sendTimeout,
                     writeTimeoutCts.Token);
                 task.ContinueWith(
@@ -142,7 +139,7 @@ namespace Microsoft.Azure.Devices.Gateway.Tests
         void ScheduleReadTimeoutCheck(IChannelHandlerContext context, object lastMessage)
         {
             context.Channel.EventLoop.ScheduleAsync(
-                () => this.completion.TrySetException(new TimeoutException(string.Format("Timed out waiting for response to {0} message.", lastMessage))),
+                () => this.completion.TrySetException(new TimeoutException($"Timed out waiting for response to {lastMessage} message.")),
                 this.responseTimeout,
                 this.responseTimeoutCts.Token);
         }

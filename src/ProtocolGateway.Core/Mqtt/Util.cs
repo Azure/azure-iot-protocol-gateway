@@ -5,8 +5,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
-    using System.IO;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Mqtt.Packets;
@@ -82,36 +80,34 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
         public static QualityOfService DeriveQos(IMessage message, Settings config)
         {
-            QualityOfService qos;
             string qosValue;
-            if (message.Properties.TryGetValue(config.QoSPropertyName, out qosValue))
+            if (!message.Properties.TryGetValue(config.QoSPropertyName, out qosValue))
             {
-                int qosAsInt;
-                if (int.TryParse(qosValue, out qosAsInt))
-                {
-                    qos = (QualityOfService)qosAsInt;
-                    if (qos > QualityOfService.ExactlyOnce)
-                    {
-                        MqttIotHubAdapterEventSource.Log.Warning($"Message defined QoS '{qos}' is not supported. Downgrading to default value of '{config.DefaultPublishToClientQoS}'");
-                        qos = config.DefaultPublishToClientQoS;
-                    }
-                }
-                else
-                {
-                    MqttIotHubAdapterEventSource.Log.Warning($"Message defined QoS '{qosValue}' could not be parsed. Resorting to default value of '{config.DefaultPublishToClientQoS}'");
-                    qos = config.DefaultPublishToClientQoS;
-                }
+                return config.DefaultPublishToClientQoS;
             }
-            else
+
+            if (qosValue.Length > 1)
             {
-                qos = config.DefaultPublishToClientQoS;
+                CommonEventSource.Log.Warning($"Message defined QoS '{qosValue}' is not supported. Downgrading to default value of '{config.DefaultPublishToClientQoS}'");
+                return config.DefaultPublishToClientQoS;
             }
-            return qos;
+
+            switch (qosValue[0])
+            {
+                case '0':
+                    return QualityOfService.AtMostOnce;
+                case '1':
+                    return QualityOfService.AtLeastOnce;
+                case '2':
+                    return QualityOfService.ExactlyOnce;
+                default:
+                    CommonEventSource.Log.Warning($"Message defined QoS '{qosValue}' is not supported. Downgrading to default value of '{config.DefaultPublishToClientQoS}'");
+                    return config.DefaultPublishToClientQoS;
+            }
         }
 
         public static IMessage CompleteMessageFromPacket(IMessage message, PublishPacket packet, Settings settings)
         {
-            message.MessageId = Guid.NewGuid().ToString("N");
             if (packet.RetainRequested)
             {
                 message.Properties[settings.RetainPropertyName] = IotHubTrueString;
@@ -124,13 +120,13 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             return message;
         }
 
-        public static async Task<PublishPacket> ComposePublishPacketAsync(IChannelHandlerContext context, IMessage message,
-            QualityOfService qos, string topicName, IByteBufferAllocator allocator)
+        public static PublishPacket ComposePublishPacket(IChannelHandlerContext context, IMessage message,
+            QualityOfService qos, IByteBufferAllocator allocator)
         {
             bool duplicate = message.DeliveryCount > 0;
 
             var packet = new PublishPacket(qos, duplicate, false);
-            packet.TopicName = topicName;
+            packet.TopicName = message.Address;
             if (qos > QualityOfService.AtMostOnce)
             {
                 int packetId = unchecked((int)message.SequenceNumber) & 0x3FFF; // clear bits #14 and #15
@@ -146,21 +142,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 }
                 packet.PacketId = packetId + 1;
             }
-            using (Stream payloadStream = message.Payload)
-            {
-                long streamLength = payloadStream.Length;
-                if (streamLength > int.MaxValue)
-                {
-                    throw new InvalidOperationException($"Message size ({streamLength} bytes) is too big to process.");
-                }
-
-                int length = (int)streamLength;
-                IByteBuffer buffer = allocator.Buffer(length, length);
-                await buffer.WriteBytesAsync(payloadStream, length);
-                Contract.Assert(buffer.ReadableBytes == length);
-
-                packet.Payload = buffer;
-            }
+            message.Payload.Retain();
+            packet.Payload = message.Payload;
             return packet;
         }
 

@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace Gateway.Tests.Load
+namespace Microsoft.Azure.Devices.ProtocolGateway.Tests.Load
 {
     using System;
     using System.Collections.Generic;
@@ -10,7 +10,6 @@ namespace Gateway.Tests.Load
     using System.Threading.Tasks;
     using DotNetty.Codecs.Mqtt.Packets;
     using DotNetty.Transport.Channels;
-    using Microsoft.Azure.Devices.Gateway.Tests;
 
     class OccasionalTelemetryRunner : DeviceRunner
     {
@@ -19,10 +18,7 @@ namespace Gateway.Tests.Load
         {
         }
 
-        protected override string Name
-        {
-            get { return "occasional"; }
-        }
+        protected override string Name => "occasional";
 
         protected override IEnumerable<IEnumerable<TestScenarioStep>> GetScenarioNested(Func<object> currentMessageFunc, string clientId,
             CancellationToken cancellationToken)

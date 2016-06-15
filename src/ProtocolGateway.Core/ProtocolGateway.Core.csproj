@@ -101,13 +101,16 @@
     <Compile Include="..\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="Messaging\IMessagingFactory.cs" />
+    <Compile Include="Messaging\IMessagingChannel.cs" />
     <Compile Include="Messaging\IMessage.cs" />
     <Compile Include="Instrumentation\AveragePerformanceCounter.cs" />
-    <Compile Include="Instrumentation\MqttIotHubAdapterEventSource.cs" />
+    <Compile Include="Instrumentation\CommonEventSource.cs" />
     <Compile Include="Extensions\TaskExtensions.cs" />
+    <Compile Include="Messaging\IMqttMessagingBridge.cs" />
+    <Compile Include="Messaging\MessageFeedbackChannel.cs" />
     <Compile Include="Messaging\MessagingException.cs" />
-    <Compile Include="Messaging\StubMessagingServiceClient.cs" />
+    <Compile Include="Messaging\SingleClientMqttMessagingBridge.cs" />
+    <Compile Include="Messaging\MessageWithFeedback.cs" />
     <Compile Include="Mqtt\AckPendingMessageState.cs" />
     <Compile Include="Identity\IDeviceIdentity.cs" />
     <Compile Include="Mqtt\MessagePropertyNames.cs" />
@@ -118,6 +121,7 @@
     <Compile Include="Mqtt\CompletionPendingMessageState.cs" />
     <Compile Include="Messaging\IMessagingServiceClient.cs" />
     <Compile Include="Mqtt\ISupportRetransmission.cs" />
+    <Compile Include="Mqtt\MqttBridgeFactoryFunc.cs" />
     <Compile Include="Mqtt\Persistence\ISubscription.cs" />
     <Compile Include="Mqtt\Persistence\TransientSessionState.cs" />
     <Compile Include="Mqtt\Persistence\TransientSessionStatePersistenceProvider.cs" />
@@ -128,14 +132,6 @@
     <Compile Include="Instrumentation\PerformanceCounterCategoryInfo.cs" />
     <Compile Include="Instrumentation\PerformanceCounterManager.cs" />
     <Compile Include="Instrumentation\PerformanceCounters.cs" />
-    <Compile Include="Mqtt\Routing\ConfigurableMessageRouter.cs" />
-    <Compile Include="Routing\IMessageRouter.cs" />
-    <Compile Include="Mqtt\Routing\InboundRouteDefinition.cs" />
-    <Compile Include="Mqtt\Routing\OutboundRouteDefinition.cs" />
-    <Compile Include="Routing\RouteDestinationType.cs" />
-    <Compile Include="Routing\RouteSourceType.cs" />
-    <Compile Include="Mqtt\Routing\RoutingConfiguration.cs" />
-    <Compile Include="Mqtt\Routing\RoutingConfigurationHandler.cs" />
     <Compile Include="Mqtt\TemplateParameters.cs" />
     <Compile Include="Mqtt\Persistence\TransientSubscription.cs" />
     <Compile Include="ReadOnlyByteBufferStream.cs" />
@@ -143,7 +139,7 @@
     <Compile Include="Properties\Friends.cs" />
     <Compile Include="ISettingsProvider.cs" />
     <Compile Include="Identity\UnauthenticatedDeviceIdentity.cs" />
-    <Compile Include="Mqtt\MqttIotHubAdapter.cs" />
+    <Compile Include="Mqtt\MqttAdapter.cs" />
     <Compile Include="Identity\IDeviceIdentityProvider.cs" />
     <Compile Include="Mqtt\Persistence\ISessionState.cs" />
     <Compile Include="Mqtt\Persistence\ISessionStatePersistenceProvider.cs" />
@@ -155,6 +151,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="ProtocolGateway.Core.nuspec" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

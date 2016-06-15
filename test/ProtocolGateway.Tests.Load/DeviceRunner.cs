@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace Gateway.Tests.Load
+namespace Microsoft.Azure.Devices.ProtocolGateway.Tests.Load
 {
     using System;
     using System.Collections.Generic;
@@ -18,9 +18,7 @@ namespace Gateway.Tests.Load
     using DotNetty.Transport.Bootstrapping;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Sockets;
-    using Microsoft.Azure.Devices;
     using Microsoft.Azure.Devices.Common.Security;
-    using Microsoft.Azure.Devices.Gateway.Tests;
 
     abstract class DeviceRunner
     {
@@ -53,13 +51,13 @@ namespace Gateway.Tests.Load
                 new SharedAccessSignatureBuilder
                 {
                     Key = this.deviceKey,
-                    Target = string.Format("{0}/devices/{1}", this.connectionStringBuilder.HostName, deviceId),
+                    Target = $"{this.connectionStringBuilder.HostName}/devices/{deviceId}",
                     TimeToLive = TimeSpan.FromDays(3)
                 }
                     .ToSignature();
 
             var taskCompletionSource = new TaskCompletionSource();
-            var b = (Bootstrap)this.bootstrap.Clone();
+            Bootstrap b = this.bootstrap.Clone();
             b.Handler(new ActionChannelInitializer<ISocketChannel>(
                 ch =>
                 {
@@ -80,7 +78,7 @@ namespace Gateway.Tests.Load
             return taskCompletionSource.Task;
         }
 
-        public async virtual Task<bool> OnClosedAsync(string deviceId, Exception exception, bool onStart)
+        public virtual async Task<bool> OnClosedAsync(string deviceId, Exception exception, bool onStart)
         {
             Console.WriteLine("Error running client: id: {0}, onStart: {1}, exception({2}): {3}", deviceId, onStart, exception.GetType().Name, exception.Message);
             await Task.Delay(TimeSpan.FromSeconds(60));
@@ -138,12 +136,9 @@ namespace Gateway.Tests.Load
         #region scenario composition utils
 
         /// <summary>
-        /// Thread local Random object.
+        ///     Thread local Random object.
         /// </summary>
-        protected static Random Random
-        {
-            get { return ThreadLocalRandom.Value; }
-        }
+        protected static Random Random => ThreadLocalRandom.Value;
 
         static byte[][] GeneratePayloads(int maxSize)
         {
@@ -184,8 +179,7 @@ namespace Gateway.Tests.Load
             }
             else if (subackPacket.PacketId == subscribePacketId && subackPacket.ReturnCodes[0] > QualityOfService.ExactlyOnce)
             {
-                throw new InvalidOperationException(string.Format("{3}: Expected successful SUBACK({0}), received SUBACK({1}) with QoS={2}",
-                    subscribePacketId, subackPacket.PacketId, subackPacket.ReturnCodes[0], clientId));
+                throw new InvalidOperationException($"{clientId}: Expected successful SUBACK({subscribePacketId.ToString()}), received SUBACK({subackPacket.PacketId.ToString()}) with QoS={subackPacket.ReturnCodes[0].ToString()}");
             }
         }
 
@@ -202,7 +196,7 @@ namespace Gateway.Tests.Load
                     PacketId = Random.Next(1, ushort.MaxValue),
                     Payload = GetPayloadBuffer(Random.Next(minPayloadSize, maxPayloadSize))
                 })
-                .ToArray(); 
+                .ToArray();
             yield return TestScenarioStep.Write(qos > QualityOfService.AtMostOnce, publishPackets);
 
             if (qos == QualityOfService.AtMostOnce)
@@ -217,8 +211,7 @@ namespace Gateway.Tests.Load
                 var pubackPacket = receivedMessage as PubAckPacket;
                 if (pubackPacket == null || pubackPacket.PacketId != publishPackets[acked].PacketId)
                 {
-                    throw new InvalidOperationException(string.Format("{0}: Expected PUBACK({1}), received {2}",
-                        clientId, publishPackets[acked].PacketId, receivedMessage));
+                    throw new InvalidOperationException($"{clientId}: Expected PUBACK({publishPackets[acked].PacketId.ToString()}), received {receivedMessage}");
                 }
 
                 if (acked < count - 1)

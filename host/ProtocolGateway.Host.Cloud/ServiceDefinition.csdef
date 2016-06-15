@@ -2,18 +2,19 @@
 <ServiceDefinition name="Contoso.ProtocolGateway" xmlns="http://schemas.microsoft.com/ServiceHosting/2008/10/ServiceDefinition" schemaVersion="2015-04.2.6">
   <WorkerRole name="ProtocolGateway.Host.Cloud.Service" vmsize="Standard_D3">
     <ConfigurationSettings>
-      <Setting name="IoTHubConnectionString" />
-      <Setting name="MaxPendingInboundMessages" />
-      <Setting name="MaxPendingOutboundMessages" />
+      <Setting name="MaxPendingInboundAcknowledgements" />
       <Setting name="DeviceReceiveAckTimeout" />
-      <Setting name="MaxOutboundRetransmissionCount" />
       <Setting name="MaxInboundMessageSize" />
       <Setting name="ConnectArrivalTimeout" />
       <Setting name="MaxKeepAliveTimeout" />
-      <Setting name="DefaultPublishToClientQoS" />
       <Setting name="RetainPropertyName" />
       <Setting name="DupPropertyName" />
       <Setting name="QoSPropertyName" />
+      <Setting name="IotHubClient.ConnectionString" />
+      <Setting name="IotHubClient.MaxPendingInboundMessages" />
+      <Setting name="IotHubClient.MaxPendingOutboundMessages" />
+      <Setting name="IotHubClient.DefaultPublishToClientQoS" />
+      <Setting name="IotHubClient.MaxOutboundRetransmissionCount" />
       <Setting name="IotHubClient.ConnectionPoolSize" />
       <Setting name="IotHubClient.ConnectionIdleTimeout" />
       <Setting name="BlobSessionStatePersistenceProvider.StorageConnectionString" />

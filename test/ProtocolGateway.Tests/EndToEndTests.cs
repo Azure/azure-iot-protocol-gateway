@@ -26,11 +26,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
     using global::ProtocolGateway.Host.Common;
     using Microsoft.Azure.Devices.Client;
     using Microsoft.Azure.Devices.Common.Security;
-    using Microsoft.Azure.Devices.Gateway.Tests;
     using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
     using Microsoft.Azure.Devices.ProtocolGateway.IotHubClient;
+    using Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Addressing;
+    using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt;
-    using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Routing;
     using Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage;
     using Microsoft.Azure.Devices.ProtocolGateway.Tests.Extensions;
     using Microsoft.Practices.EnterpriseLibrary.SemanticLogging;
@@ -56,7 +56,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
         string deviceId;
         string deviceSas;
         readonly X509Certificate2 tlsCertificate;
-        static readonly TimeSpan CommunicationTimeout = TimeSpan.FromSeconds(15);
+        static readonly TimeSpan CommunicationTimeout = TimeSpan.FromSeconds(150);
         static readonly TimeSpan TestTimeout = TimeSpan.FromMinutes(5); //TimeSpan.FromMinutes(1);
 
         public EndToEndTests(ITestOutputHelper output)
@@ -64,7 +64,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
             this.output = output;
             this.eventListener = new ObservableEventListener();
             this.eventListener.LogToTestOutput(output);
-            this.eventListener.EnableEvents(MqttIotHubAdapterEventSource.Log, EventLevel.Verbose);
+            this.eventListener.EnableEvents(CommonEventSource.Log, EventLevel.Verbose);
             this.eventListener.EnableEvents(DefaultEventSource.Log, EventLevel.Verbose);
             this.eventListener.EnableEvents(BootstrapperEventSource.Log, EventLevel.Verbose);
 
@@ -98,11 +98,13 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
                 this.settingsProvider.GetSetting("TableQos2StatePersistenceProvider.StorageConnectionString"),
                 this.settingsProvider.GetSetting("TableQos2StatePersistenceProvider.StorageTableName"));
             var settings = new Settings(this.settingsProvider);
+            var iotHubClientSettings = new IotHubClientSettings(this.settingsProvider);
             var authProvider = new SasTokenDeviceIdentityProvider();
-            var topicNameRouter = new ConfigurableMessageRouter();
+            var topicNameRouter = new ConfigurableMessageAddressConverter();
 
-            IotHubClientFactoryFunc iotHubClientFactoryMethod = IotHubClient.PreparePoolFactory(settings.IotHubConnectionString + ";DeviceId=stub", "a", 400, TimeSpan.FromMinutes(5));
-            var iotHubFactory = new IotHubCommunicationFactory(iotHubClientFactoryMethod);
+            var iotHubClientFactory = IotHubClient.PreparePoolFactory(iotHubClientSettings.IotHubConnectionString, 400, TimeSpan.FromMinutes(5),
+                iotHubClientSettings, PooledByteBufferAllocator.Default, topicNameRouter);
+            MqttBridgeFactoryFunc bridgeFactory = async identity => new SingleClientMqttMessagingBridge(await iotHubClientFactory(identity));
 
             ServerBootstrap server = new ServerBootstrap()
                 .Group(executorGroup)
@@ -115,14 +117,13 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
                     ch.Pipeline.AddLast(
                         MqttEncoder.Instance,
                         new MqttDecoder(true, 256 * 1024),
-                        new LoggingHandler(),
-                        new MqttIotHubAdapter(
+                        new LoggingHandler("SERVER"),
+                        new MqttAdapter(
                             settings,
                             sessionStateProvider,
                             authProvider,
                             qos2StateProvider,
-                            iotHubFactory,
-                            topicNameRouter),
+                            bridgeFactory),
                         new XUnitLoggingHandler(this.output));
                 }));
 
@@ -181,7 +182,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
 
             int protocolGatewayPort = this.ProtocolGatewayPort;
 
-            string iotHubConnectionString = ConfigurationManager.AppSettings["IoTHubConnectionString"];
+            string iotHubConnectionString = ConfigurationManager.AppSettings["IotHubClient.ConnectionString"];
             IotHubConnectionStringBuilder hubConnectionStringBuilder = IotHubConnectionStringBuilder.Create(iotHubConnectionString);
             bool deviceNameProvided;
             this.deviceId = ConfigurationManager.AppSettings["End2End.DeviceName"];
@@ -227,7 +228,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
 
             Stopwatch sw = Stopwatch.StartNew();
 
-            await CleanupDeviceQueueAsync(hubConnectionStringBuilder.HostName, device);
+            await this.CleanupDeviceQueueAsync(hubConnectionStringBuilder.HostName, device);
 
             var clientScenarios = new ClientScenarios(hubConnectionStringBuilder.HostName, this.deviceId, this.deviceSas);
 
@@ -364,13 +365,14 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
             }
         }
 
-        ActionChannelInitializer<ISocketChannel> ComposeClientChannelInitializer(string targetHost, Func<Func<object>, IEnumerable<TestScenarioStep>> testScenarioProvider, TaskCompletionSource testPromise)
+        ActionChannelInitializer<ISocketChannel> ComposeClientChannelInitializer(string targetHost, Func<Func<object>,
+            IEnumerable<TestScenarioStep>> testScenarioProvider, TaskCompletionSource testPromise)
         {
             return new ActionChannelInitializer<ISocketChannel>(ch => ch.Pipeline.AddLast(
                 TlsHandler.Client(targetHost, null, (sender, certificate, chain, errors) => true),
                 MqttEncoder.Instance,
                 new MqttDecoder(false, 256 * 1024),
-                new LoggingHandler(),
+                new LoggingHandler("CLIENT"),
                 new TestScenarioRunner(testScenarioProvider, testPromise, CommunicationTimeout, CommunicationTimeout),
                 new XUnitLoggingHandler(this.output)));
         }

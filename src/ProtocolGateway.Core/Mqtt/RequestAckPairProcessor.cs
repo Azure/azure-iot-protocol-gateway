@@ -34,27 +34,15 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             this.ackTimeout = ackTimeout ?? TimeSpan.Zero;
         }
 
-        public TAckState FirstRequestPendingAck
-        {
-            get { return this.RequestPendingAckCount == 0 ? default(TAckState) : this.pendingAckQueue.Peek(); }
-        }
+        public TAckState FirstRequestPendingAck => this.RequestPendingAckCount == 0 ? default(TAckState) : this.pendingAckQueue.Peek();
 
-        public int RequestPendingAckCount
-        {
-            get { return this.pendingAckQueue == null ? 0 : this.pendingAckQueue.Count; }
-        }
+        public int RequestPendingAckCount => this.pendingAckQueue?.Count ?? 0;
 
         public bool Retransmitting { get; set; }
 
-        Queue<TAckState> PendingAckQueue
-        {
-            get { return this.pendingAckQueue ?? (this.pendingAckQueue = new Queue<TAckState>(4)); }
-        }
+        Queue<TAckState> PendingAckQueue => this.pendingAckQueue ?? (this.pendingAckQueue = new Queue<TAckState>(4));
 
-        bool AckCanTimeout
-        {
-            get { return this.ackTimeout > TimeSpan.Zero; }
-        }
+        bool AckCanTimeout => this.ackTimeout > TimeSpan.Zero;
 
         public Task SendRequestAsync(IChannelHandlerContext context, TRequest requestMessage, TAckState ackState)
         {
@@ -118,10 +106,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             }
         }
 
-        static void StartRetransmissionIfNeeded(object ctx, object s)
+        static void StartRetransmissionIfNeeded(object ctx, object state)
         {
-            var context = (IChannelHandlerContext)ctx;
-            var self = (RequestAckPairProcessor<TAckState, TRequest>)s;
+            var self = (RequestAckPairProcessor<TAckState, TRequest>)state;
 
             self.retransmissionCheckScheduled = false;
 
@@ -129,6 +116,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             if (messageState != null)
             {
                 TimeSpan timeoutLeft = self.ackTimeout - (DateTime.UtcNow - messageState.SentTime);
+                var context = (IChannelHandlerContext)ctx;
                 if (timeoutLeft.Ticks <= 0)
                 {
                     // entering retransmission mode
@@ -148,10 +136,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             TAckState firstRequest = this.FirstRequestPendingAck;
             if (firstRequest == null)
             {
-                if (MqttIotHubAdapterEventSource.Log.IsWarningEnabled)
+                if (CommonEventSource.Log.IsWarningEnabled)
                 {
-                    MqttIotHubAdapterEventSource.Log.Warning(string.Format("{0} #{1} was received while not expected.",
-                        packet.PacketType, packet.PacketId));
+                    CommonEventSource.Log.Warning($"{packet.PacketType.ToString()} #{packet.PacketId.ToString()} was received while not expected.");
                 }
                 message = default(TAckState);
                 return false;
@@ -159,16 +146,16 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
             if (packet.PacketId != firstRequest.PacketId)
             {
-                if (MqttIotHubAdapterEventSource.Log.IsWarningEnabled)
+                if (CommonEventSource.Log.IsWarningEnabled)
                 {
-                    MqttIotHubAdapterEventSource.Log.Warning(string.Format("{0} #{1} was received while #{2} was expected.",
-                        packet.PacketType, packet.PacketId, firstRequest.PacketId));
+                    CommonEventSource.Log.Warning($"{packet.PacketType.ToString()} #{packet.PacketId.ToString()} was received while #{firstRequest.PacketId.ToString()} was expected.");
                 }
                 message = default(TAckState);
                 return false;
             }
 
             TAckState dequeued = this.pendingAckQueue.Dequeue();
+
             Contract.Assert(ReferenceEquals(dequeued, firstRequest));
 
             if (this.pendingAckQueue.Count == 0)
