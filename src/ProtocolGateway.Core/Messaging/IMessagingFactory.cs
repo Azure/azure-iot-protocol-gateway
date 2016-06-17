@@ -5,7 +5,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Messaging
 {
     using System.IO;
     using System.Threading.Tasks;
-    using Microsoft.Azure.Devices.ProtocolGateway.Identity;
+    using Microsoft.Azure.Devices.ProtocolGateway.Security;
 
     /// <summary>
     /// Abstract factory of IotHub-related objects

@@ -4,8 +4,8 @@
 namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
 {
     using System.Threading.Tasks;
-    using Microsoft.Azure.Devices.ProtocolGateway.Identity;
     using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
+    using Microsoft.Azure.Devices.ProtocolGateway.Security;
 
     public delegate Task<IMessagingServiceClient> IotHubClientFactoryFunc(IDeviceIdentity deviceIdentity);
 }
