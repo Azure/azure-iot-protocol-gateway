@@ -94,7 +94,6 @@
     <Compile Include="AuthenticationScope.cs" />
     <Compile Include="DeviceClientMessage.cs" />
     <Compile Include="IotHubClientFactoryFunc.cs" />
-    <Compile Include="KeyDeviceIdentityProvider.cs" />
     <Compile Include="IotHubClient.cs" />
     <Compile Include="IotHubCommunicationFactory.cs" />
     <Compile Include="IotHubDeviceIdentity.cs" />

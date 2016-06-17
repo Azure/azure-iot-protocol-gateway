@@ -109,7 +109,7 @@
     <Compile Include="Messaging\MessagingException.cs" />
     <Compile Include="Messaging\StubMessagingServiceClient.cs" />
     <Compile Include="Mqtt\AckPendingMessageState.cs" />
-    <Compile Include="Identity\IDeviceIdentity.cs" />
+    <Compile Include="Security\IDeviceIdentity.cs" />
     <Compile Include="Mqtt\MessagePropertyNames.cs" />
     <Compile Include="Mqtt\MessageTypes.cs" />
     <Compile Include="Mqtt\MessageAsyncProcessorBase.cs" />
@@ -142,9 +142,10 @@
     <Compile Include="AppConfigSettingsProvider.cs" />
     <Compile Include="Properties\Friends.cs" />
     <Compile Include="ISettingsProvider.cs" />
-    <Compile Include="Identity\UnauthenticatedDeviceIdentity.cs" />
+    <Compile Include="Security\IRemoteCertificateProvider.cs" />
+    <Compile Include="Security\UnauthenticatedDeviceIdentity.cs" />
     <Compile Include="Mqtt\MqttIotHubAdapter.cs" />
-    <Compile Include="Identity\IDeviceIdentityProvider.cs" />
+    <Compile Include="Security\IDeviceIdentityProvider.cs" />
     <Compile Include="Mqtt\Persistence\ISessionState.cs" />
     <Compile Include="Mqtt\Persistence\ISessionStatePersistenceProvider.cs" />
     <Compile Include="Mqtt\Settings.cs" />

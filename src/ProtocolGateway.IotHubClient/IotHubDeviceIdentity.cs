@@ -3,7 +3,7 @@
 
 namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
 {
-    using Microsoft.Azure.Devices.ProtocolGateway.Identity;
+    using Microsoft.Azure.Devices.ProtocolGateway.Security;
 
     public sealed class IotHubDeviceIdentity : IDeviceIdentity
     {
@@ -41,19 +41,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
         {
             this.Scope = AuthenticationScope.SasToken;
             this.Secret = token;
-        }
-
-        public void WithHubKey(string keyName, string keyValue)
-        {
-            this.Scope = AuthenticationScope.HubKey;
-            this.PolicyName = keyName;
-            this.Secret = keyValue;
-        }
-
-        public void WithDeviceKey(string keyValue)
-        {
-            this.Scope = AuthenticationScope.DeviceKey;
-            this.Secret = keyValue;
         }
     }
 }

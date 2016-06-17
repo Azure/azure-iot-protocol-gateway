@@ -4,7 +4,7 @@
 namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence
 {
     using System.Threading.Tasks;
-    using Microsoft.Azure.Devices.ProtocolGateway.Identity;
+    using Microsoft.Azure.Devices.ProtocolGateway.Security;
 
     public interface ISessionStatePersistenceProvider
     {

@@ -7,6 +7,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
     using System.Collections.Generic;
     using System.Diagnostics.Contracts;
     using System.IO;
+    using System.Security.Cryptography.X509Certificates;
     using System.Threading.Tasks;
     using DotNetty.Codecs.Mqtt.Packets;
     using DotNetty.Common;
@@ -14,11 +15,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
     using DotNetty.Handlers.Tls;
     using DotNetty.Transport.Channels;
     using Microsoft.Azure.Devices.ProtocolGateway.Extensions;
-    using Microsoft.Azure.Devices.ProtocolGateway.Identity;
     using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
     using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence;
     using Microsoft.Azure.Devices.ProtocolGateway.Routing;
+    using Microsoft.Azure.Devices.ProtocolGateway.Security;
 
     public sealed class MqttIotHubAdapter : ChannelHandlerAdapter
     {
@@ -41,6 +42,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         readonly RequestAckPairProcessor<AckPendingMessageState, PublishPacket> publishPubRecProcessor;
         readonly RequestAckPairProcessor<CompletionPendingMessageState, PubRelPacket> pubRelPubCompProcessor;
         readonly IMessageRouter messageRouter;
+        readonly IRemoteCertificateProvider remoteCertificateProvider;
         readonly IMessagingFactory messagingFactory;
         IDeviceIdentity identity;
         readonly IQos2StatePersistenceProvider qos2StateProvider;
@@ -59,6 +61,18 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             IQos2StatePersistenceProvider qos2StateProvider,
             IMessagingFactory messagingFactory,
             IMessageRouter messageRouter)
+            : this(settings, sessionStateManager, authProvider, qos2StateProvider, messagingFactory, messageRouter, null)
+        {
+        }
+
+        public MqttIotHubAdapter(
+            Settings settings,
+            ISessionStatePersistenceProvider sessionStateManager,
+            IDeviceIdentityProvider authProvider,
+            IQos2StatePersistenceProvider qos2StateProvider,
+            IMessagingFactory messagingFactory,
+            IMessageRouter messageRouter,
+            IRemoteCertificateProvider remoteCertificateProvider)
         {
             Contract.Requires(settings != null);
             Contract.Requires(sessionStateManager != null);
@@ -80,6 +94,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             this.authProvider = authProvider;
             this.messagingFactory = messagingFactory;
             this.messageRouter = messageRouter;
+            this.remoteCertificateProvider = remoteCertificateProvider;
 
             this.publishProcessor = new MessageAsyncProcessor<PublishPacket>(this.PublishToServerAsync);
             this.publishProcessor.Completion.OnFault(ShutdownOnPublishToServerFaultAction);
@@ -863,8 +878,16 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 }
 
                 this.stateFlags = StateFlags.ProcessingConnect;
-                this.identity = await this.authProvider.GetAsync(packet.ClientId,
-                    packet.Username, packet.Password, context.Channel.RemoteAddress);
+                if (packet.HasUsername)
+                {
+                    this.identity = await this.authProvider.AuthenticateAsync(packet.ClientId,
+                        packet.Username, packet.Password, context.Channel.RemoteAddress);
+                }
+                else if (this.remoteCertificateProvider != null)
+                {
+                    this.identity = await this.authProvider.AuthenticateAsync(packet.ClientId, this.remoteCertificateProvider.GetRemoteCertificate());
+                }
+
                 if (!this.identity.IsAuthenticated)
                 {
                     connAckSent = true;
