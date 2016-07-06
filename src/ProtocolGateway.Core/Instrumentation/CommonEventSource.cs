@@ -1,24 +1,24 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace ProtocolGateway.Host.Common
+namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
 {
     using System;
     using System.Diagnostics.Tracing;
 
     [EventSource(
-        Name = "IoT-ProtocolGateway-Bootstrapper",
-        Guid = "e29735c9-6796-4228-ac96-9db40faB697a")]
-    public class BootstrapperEventSource : EventSource
+        Name = "IoT-ProtocolGateway-Common",
+        Guid = "06d7118e-3a71-4143-8aab-ed8cedf69e1c")]
+    public class CommonEventSource : EventSource
     {
         const int VerboseEventId = 1;
         const int InfoEventId = 2;
         const int WarningEventId = 3;
         const int ErrorEventId = 4;
 
-        public static readonly BootstrapperEventSource Log = new BootstrapperEventSource();
+        public static readonly CommonEventSource Log = new CommonEventSource();
 
-        BootstrapperEventSource()
+        CommonEventSource()
         {
         }
 

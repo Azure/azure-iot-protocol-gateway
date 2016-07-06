@@ -4,23 +4,43 @@
 namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
 {
     using System;
+    using System.Diagnostics.Contracts;
+    using System.IO;
     using System.Threading.Tasks;
+    using DotNetty.Buffers;
     using Microsoft.Azure.Devices.Client;
     using Microsoft.Azure.Devices.Client.Exceptions;
+    using Microsoft.Azure.Devices.ProtocolGateway.Identity;
+    using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
+    using Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Addressing;
     using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
+    using Microsoft.Azure.Devices.ProtocolGateway.Mqtt;
 
     public class IotHubClient : IMessagingServiceClient
     {
         readonly DeviceClient deviceClient;
+        readonly string deviceId;
+        readonly IotHubClientSettings settings;
+        readonly IByteBufferAllocator allocator;
+        readonly IMessageAddressConverter messageAddressConverter;
+        IMessagingChannel<IMessage> messagingChannel;
 
-        public IotHubClient(DeviceClient deviceClient)
+        IotHubClient(DeviceClient deviceClient, string deviceId, IotHubClientSettings settings, IByteBufferAllocator allocator, IMessageAddressConverter messageAddressConverter)
         {
             this.deviceClient = deviceClient;
+            this.deviceId = deviceId;
+            this.settings = settings;
+            this.allocator = allocator;
+            this.messageAddressConverter = messageAddressConverter;
         }
 
-        public static async Task<IMessagingServiceClient> CreateFromConnectionStringAsync(string connectionString, int connectionPoolSize, TimeSpan? connectionIdleTimeout)
+        public static async Task<IMessagingServiceClient> CreateFromConnectionStringAsync(string deviceId, string connectionString,
+            int connectionPoolSize, TimeSpan? connectionIdleTimeout, IotHubClientSettings settings, IByteBufferAllocator allocator, IMessageAddressConverter messageAddressConverter)
         {
-            DeviceClient client;
+            int maxPendingOutboundMessages = settings.MaxPendingOutboundMessages;
+            var tcpSettings = new AmqpTransportSettings(TransportType.Amqp_Tcp_Only);
+            var webSocketSettings = new AmqpTransportSettings(TransportType.Amqp_WebSocket_Only);
+            webSocketSettings.PrefetchCount = tcpSettings.PrefetchCount = (uint)maxPendingOutboundMessages;
             if (connectionPoolSize > 0)
             {
                 var amqpConnectionPoolSettings = new AmqpConnectionPoolSettings
@@ -32,23 +52,14 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
                 {
                     amqpConnectionPoolSettings.ConnectionIdleTimeout = connectionIdleTimeout.Value;
                 }
-                var transportSettings = new ITransportSettings[]
-                {
-                    new AmqpTransportSettings(TransportType.Amqp_Tcp_Only)
-                    {
-                        AmqpConnectionPoolSettings = amqpConnectionPoolSettings
-                    },
-                    new AmqpTransportSettings(TransportType.Amqp_WebSocket_Only)
-                    {
-                        AmqpConnectionPoolSettings = amqpConnectionPoolSettings
-                    }
-                };
-                client = DeviceClient.CreateFromConnectionString(connectionString, transportSettings);
+                tcpSettings.AmqpConnectionPoolSettings = amqpConnectionPoolSettings;
+                webSocketSettings.AmqpConnectionPoolSettings = amqpConnectionPoolSettings;
             }
-            else
+            DeviceClient client = DeviceClient.CreateFromConnectionString(connectionString, new ITransportSettings[]
             {
-                client = DeviceClient.CreateFromConnectionString(connectionString);
-            }
+                tcpSettings,
+                webSocketSettings
+            });
             try
             {
                 await client.OpenAsync();
@@ -57,33 +68,71 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             {
                 throw ComposeIotHubCommunicationException(ex);
             }
-            return new IotHubClient(client);
+            return new IotHubClient(client, deviceId, settings, allocator, messageAddressConverter);
         }
 
-        public static IotHubClientFactoryFunc PreparePoolFactory(string baseConnectionString, string poolId)
-        {
-            return PreparePoolFactory(baseConnectionString, poolId, 0, null);
-        }
-
-        public static IotHubClientFactoryFunc PreparePoolFactory(string baseConnectionString, string poolId, int connectionPoolSize, TimeSpan? connectionIdleTimeout)
+        public static Func<IDeviceIdentity, Task<IMessagingServiceClient>> PreparePoolFactory(string baseConnectionString, int connectionPoolSize,
+            TimeSpan? connectionIdleTimeout, IotHubClientSettings settings, IByteBufferAllocator allocator, IMessageAddressConverter messageAddressConverter)
         {
             IotHubConnectionStringBuilder csb = IotHubConnectionStringBuilder.Create(baseConnectionString);
-            IotHubClientFactoryFunc iotHubClientFactory = deviceIdentity =>
+            Func<IDeviceIdentity, Task<IMessagingServiceClient>> mqttCommunicatorFactory = deviceIdentity =>
             {
                 var identity = (IotHubDeviceIdentity)deviceIdentity;
                 csb.AuthenticationMethod = DeriveAuthenticationMethod(csb.AuthenticationMethod, identity);
                 csb.HostName = identity.IotHubHostName;
                 string connectionString = csb.ToString();
-                return CreateFromConnectionStringAsync(connectionString, connectionPoolSize, connectionIdleTimeout);
+                return CreateFromConnectionStringAsync(identity.Id, connectionString, connectionPoolSize, connectionIdleTimeout, settings, allocator, messageAddressConverter);
             };
-            return iotHubClientFactory;
+            return mqttCommunicatorFactory;
+        }
+
+        public int MaxPendingMessages => this.settings.MaxPendingInboundMessages;
+
+        public IMessage CreateMessage(string address, IByteBuffer payload) => new IotHubClientMessage(address, new Message(payload.IsReadable() ? new ReadOnlyByteBufferStream(payload, true) : null));
+
+        public void BindMessagingChannel(IMessagingChannel<IMessage> channel)
+        {
+            Contract.Requires(channel != null);
+
+            Contract.Assert(this.messagingChannel == null);
+
+            this.messagingChannel = channel;
+            this.Receive();
         }
 
         public async Task SendAsync(IMessage message)
         {
             try
             {
-                await this.deviceClient.SendEventAsync(((DeviceClientMessage)message).ToMessage());
+                string address = message.Address;
+                if (this.messageAddressConverter.TryParseAddressIntoMessageProperties(address, message))
+                {
+                    string messageDeviceId;
+                    if (message.Properties.TryGetValue(TemplateParameters.DeviceIdTemplateParam, out messageDeviceId))
+                    {
+                        if (!this.deviceId.Equals(messageDeviceId, StringComparison.Ordinal))
+                        {
+                            throw new InvalidOperationException(
+                                $"Device ID provided in topic name ({messageDeviceId}) does not match ID of the device publishing message ({this.deviceId})");
+                        }
+                        message.Properties.Remove(TemplateParameters.DeviceIdTemplateParam);
+                    }
+                }
+                else
+                {
+                    if (!this.settings.PassThroughUnmatchedMessages)
+                    {
+                        throw new InvalidOperationException($"Topic name `{address}` could not be matched against any of the configured routes.");
+                    }
+
+                    if (CommonEventSource.Log.IsWarningEnabled)
+                    {
+                        CommonEventSource.Log.Warning("Topic name could not be matched against any of the configured routes. Falling back to default telemetry settings.", address);
+                    }
+                    message.Properties[this.settings.ServicePropertyPrefix + MessagePropertyNames.Unmatched] = bool.TrueString;
+                    message.Properties[this.settings.ServicePropertyPrefix + MessagePropertyNames.Subject] = address;
+                }
+                await this.deviceClient.SendEventAsync(((IotHubClientMessage)message).ToMessage());
             }
             catch (IotHubException ex)
             {
@@ -91,24 +140,69 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             }
         }
 
-        public async Task<IMessage> ReceiveAsync()
+        async void Receive()
         {
             try
             {
-                Message message = await this.deviceClient.ReceiveAsync(TimeSpan.MaxValue);
-                return message == null ? null : new DeviceClientMessage(message);
+                while (true)
+                {
+                    Message message = await this.deviceClient.ReceiveAsync(TimeSpan.MaxValue);
+                    if (message == null)
+                    {
+                        this.messagingChannel.Close(null);
+                        return;
+                    }
+
+                    if (this.settings.MaxOutboundRetransmissionEnforced && message.DeliveryCount > this.settings.MaxOutboundRetransmissionCount)
+                    {
+                        await this.RejectAsync(message.LockToken);
+                        continue;
+                    }
+
+                    IByteBuffer messagePayload;
+                    using (Stream payloadStream = message.GetBodyStream())
+                    {
+                        long streamLength = payloadStream.Length;
+                        if (streamLength > int.MaxValue)
+                        {
+                            throw new InvalidOperationException($"Message size ({streamLength.ToString()} bytes) is too big to process.");
+                        }
+
+                        int length = (int)streamLength;
+                        messagePayload = this.allocator.Buffer(length, length);
+                        await messagePayload.WriteBytesAsync(payloadStream, length);
+
+                        Contract.Assert(messagePayload.ReadableBytes == length);
+                    }
+
+                    var msg = new IotHubClientMessage(message, messagePayload);
+                    msg.Properties[TemplateParameters.DeviceIdTemplateParam] = this.deviceId;
+                    string address;
+                    if (!this.messageAddressConverter.TryDeriveAddress(msg, out address))
+                    {
+                        await this.RejectAsync(message.LockToken); // todo: fork await
+                        continue;
+                    }
+                    msg.Address = address;
+
+                    this.messagingChannel.Handle(msg);
+                }
             }
             catch (IotHubException ex)
             {
-                throw new MessagingException(ex.Message, ex.InnerException, ex.IsTransient, ex.TrackingId);
+                this.messagingChannel.Close(new MessagingException(ex.Message, ex.InnerException, ex.IsTransient, ex.TrackingId));
+            }
+            catch (Exception ex)
+            {
+                this.messagingChannel.Close(ex);
             }
         }
 
-        public async Task AbandonAsync(string lockToken)
+        public async Task AbandonAsync(string messageId)
         {
             try
             {
-                await this.deviceClient.AbandonAsync(lockToken);
+                await this.deviceClient.AbandonAsync(messageId);
             }
             catch (IotHubException ex)
             {
@@ -116,11 +210,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             }
         }
 
-        public async Task CompleteAsync(string lockToken)
+        public async Task CompleteAsync(string messageId)
         {
             try
             {
-                await this.deviceClient.CompleteAsync(lockToken);
+                await this.deviceClient.CompleteAsync(messageId);
             }
             catch (IotHubException ex)
             {
@@ -128,11 +222,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             }
         }
 
-        public async Task RejectAsync(string lockToken)
+        public async Task RejectAsync(string messageId)
         {
             try
             {
-                await this.deviceClient.RejectAsync(lockToken);
+                await this.deviceClient.RejectAsync(messageId);
             }
             catch (IotHubException ex)
             {

@@ -13,7 +13,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
         [Fact]
         public void VerifyEventSources()
         {
-            EventSourceAnalyzer.InspectAll(MqttIotHubAdapterEventSource.Log);
+            EventSourceAnalyzer.InspectAll(CommonEventSource.Log);
             EventSourceAnalyzer.InspectAll(BootstrapperEventSource.Log);
         }
     }

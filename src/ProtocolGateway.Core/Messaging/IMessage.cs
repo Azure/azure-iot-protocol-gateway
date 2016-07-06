@@ -5,15 +5,15 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Messaging
 {
     using System;
     using System.Collections.Generic;
-    using System.IO;
+    using DotNetty.Buffers;
 
-    public interface IMessage: IDisposable
+    public interface IMessage : IDisposable
     {
-        Stream Payload { get; }
+        string Address { get; }
 
-        string MessageId { get; set; }
+        IByteBuffer Payload { get; }
 
-        string LockToken { get; }
+        string Id { get; }
 
         IDictionary<string, string> Properties { get; }
 

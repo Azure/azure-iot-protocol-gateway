@@ -29,7 +29,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
             }
             catch (Exception ex)
             {
-                MqttIotHubAdapterEventSource.Log.Verbose("Failed to increment perf counter", ex.ToString());
+                CommonEventSource.Log.Verbose("Failed to increment perf counter", ex.ToString());
             }
         }
 
@@ -41,7 +41,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
             }
             catch (Exception ex)
             {
-                MqttIotHubAdapterEventSource.Log.Verbose("Failed to increment perf counter", ex.ToString());
+                CommonEventSource.Log.Verbose("Failed to increment perf counter", ex.ToString());
             }
         }
 
@@ -53,7 +53,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
             }
             catch (Exception ex)
             {
-                MqttIotHubAdapterEventSource.Log.Verbose("Failed to decrement perf counter", ex.ToString());
+                CommonEventSource.Log.Verbose("Failed to decrement perf counter", ex.ToString());
             }
         }
     }

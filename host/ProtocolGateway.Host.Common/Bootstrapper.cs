@@ -19,11 +19,11 @@ namespace ProtocolGateway.Host.Common
     using Microsoft.Azure.Devices.ProtocolGateway;
     using Microsoft.Azure.Devices.ProtocolGateway.Identity;
     using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
-    using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Routing;
     using Microsoft.Azure.Devices.ProtocolGateway.IotHubClient;
+    using Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Addressing;
+    using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence;
-    using Microsoft.Azure.Devices.ProtocolGateway.Routing;
 
     public class Bootstrapper
     {
@@ -38,11 +38,12 @@ namespace ProtocolGateway.Host.Common
         readonly ISessionStatePersistenceProvider sessionStateManager;
         readonly IQos2StatePersistenceProvider qos2StateProvider;
         readonly IDeviceIdentityProvider authProvider;
-        readonly IMessageRouter iotHubMessageRouter;
         X509Certificate2 tlsCertificate;
         IEventLoopGroup parentEventLoopGroup;
         IEventLoopGroup eventLoopGroup;
         IChannel serverChannel;
+        readonly IotHubClientSettings iotHubClientSettings;
+        readonly IMessageAddressConverter topicNameConverter;
 
         public Bootstrapper(ISettingsProvider settingsProvider, ISessionStatePersistenceProvider sessionStateManager, IQos2StatePersistenceProvider qos2StateProvider)
         {
@@ -53,16 +54,14 @@ namespace ProtocolGateway.Host.Common
 
             this.settingsProvider = settingsProvider;
             this.settings = new Settings(this.settingsProvider);
+            this.iotHubClientSettings = new IotHubClientSettings(this.settingsProvider);
             this.sessionStateManager = sessionStateManager;
             this.qos2StateProvider = qos2StateProvider;
             this.authProvider = new SasTokenDeviceIdentityProvider();
-            this.iotHubMessageRouter = new ConfigurableMessageRouter();
+            this.topicNameConverter = new ConfigurableMessageAddressConverter();
         }
 
-        public Task CloseCompletion
-        {
-            get { return this.closeCompletionSource.Task; }
-        }
+        public Task CloseCompletion => this.closeCompletionSource.Task;
 
         public async Task RunAsync(X509Certificate2 certificate, int threadCount, CancellationToken cancellationToken)
         {
@@ -81,7 +80,7 @@ namespace ProtocolGateway.Host.Common
                 this.eventLoopGroup = new MultithreadEventLoopGroup(threadCount);
 
                 ServerBootstrap bootstrap = this.SetupBootstrap();
-                BootstrapperEventSource.Log.Info(string.Format("Initializing TLS endpoint on port {0} with certificate {1}.", MqttsPort, this.tlsCertificate.Thumbprint), null);
+                BootstrapperEventSource.Log.Info($"Initializing TLS endpoint on port {MqttsPort.ToString()} with certificate {this.tlsCertificate.Thumbprint}.", null);
                 this.serverChannel = await bootstrap.BindAsync(IPAddress.Any, MqttsPort);
 
                 cancellationToken.Register(this.CloseAsync);
@@ -124,32 +123,19 @@ namespace ProtocolGateway.Host.Common
 
         ServerBootstrap SetupBootstrap()
         {
+            if (this.settings.DeviceReceiveAckCanTimeout && this.iotHubClientSettings.MaxPendingOutboundMessages > 1)
+            {
+                throw new InvalidOperationException("Cannot maintain ordering on retransmission with more than 1 allowed pending outbound message.");
+            }
+
             int maxInboundMessageSize = this.settingsProvider.GetIntegerSetting("MaxInboundMessageSize", 256 * 1024);
-            int connectionPoolSize;
-            if (!this.settingsProvider.TryGetIntegerSetting("IotHubClient.ConnectionPoolSize", out connectionPoolSize))
-            {
-                connectionPoolSize = DefaultConnectionPoolSize;
-            }
+            int connectionPoolSize = this.settingsProvider.GetIntegerSetting("IotHubClient.ConnectionPoolSize", DefaultConnectionPoolSize);
+            TimeSpan connectionIdleTimeout = this.settingsProvider.GetTimeSpanSetting("IotHubClient.ConnectionIdleTimeout", DefaultConnectionIdleTimeout);
+            string connectionString = this.iotHubClientSettings.IotHubConnectionString;
 
-            TimeSpan connectionIdleTimeout;
-            if (!this.settingsProvider.TryGetTimeSpanSetting("IotHubClient.ConnectionIdleTimeout", out connectionIdleTimeout))
-            {
-                connectionIdleTimeout = DefaultConnectionIdleTimeout;
-            }
-            
-            string connectionString = this.settings.IotHubConnectionString;
-            if (connectionString.IndexOf("DeviceId=", StringComparison.OrdinalIgnoreCase) == -1)
-            {
-                connectionString += ";DeviceId=stub";
-            }
-
-            var deviceClientFactory = new ThreadLocal<IotHubClientFactoryFunc>(() =>
-            {
-                string poolId = Guid.NewGuid().ToString("N");
-                return IotHubClient.PreparePoolFactory(connectionString, poolId, connectionPoolSize, connectionIdleTimeout);
-            });
-
-            var iotHubCommunicationFactory = new IotHubCommunicationFactory(deviceClientFactory.Value);
+            Func<IDeviceIdentity, Task<IMessagingServiceClient>> deviceClientFactory = IotHubClient.PreparePoolFactory(connectionString, connectionPoolSize,
+                connectionIdleTimeout, this.iotHubClientSettings, PooledByteBufferAllocator.Default, this.topicNameConverter);
+            MqttBridgeFactoryFunc bridgeFactory = async deviceIdentity => new SingleClientMqttMessagingBridge(await deviceClientFactory(deviceIdentity));
 
             return new ServerBootstrap()
                 .Group(this.parentEventLoopGroup, this.eventLoopGroup)
@@ -163,13 +149,12 @@ namespace ProtocolGateway.Host.Common
                     channel.Pipeline.AddLast(
                         MqttEncoder.Instance,
                         new MqttDecoder(true, maxInboundMessageSize),
-                        new MqttIotHubAdapter(
+                        new MqttAdapter(
                             this.settings,
                             this.sessionStateManager,
                             this.authProvider,
                             this.qos2StateProvider,
-                            iotHubCommunicationFactory,
-                            this.iotHubMessageRouter));
+                            bridgeFactory));
                 }));
         }
     }

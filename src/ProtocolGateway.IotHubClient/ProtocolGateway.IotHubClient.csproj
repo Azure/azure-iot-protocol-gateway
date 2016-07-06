@@ -81,7 +81,10 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Xml" />
     <Reference Include="Validation, Version=2.0.0.0, Culture=neutral, PublicKeyToken=2fc06f0d701809a7, processorArchitecture=MSIL">
       <HintPath>$(SolutionDir)\packages\Validation.2.0.6.15003\lib\portable-net40+sl50+win+wpa81+wp80+Xamarin.iOS10+MonoAndroid10+MonoTouch10\Validation.dll</HintPath>
       <Private>True</Private>
@@ -92,15 +95,18 @@
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="AuthenticationScope.cs" />
-    <Compile Include="DeviceClientMessage.cs" />
-    <Compile Include="IotHubClientFactoryFunc.cs" />
+    <Compile Include="IotHubClientMessage.cs" />
+    <Compile Include="Addressing\IMessageAddressConverter.cs" />
     <Compile Include="KeyDeviceIdentityProvider.cs" />
     <Compile Include="IotHubClient.cs" />
-    <Compile Include="IotHubCommunicationFactory.cs" />
     <Compile Include="IotHubDeviceIdentity.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Friends.cs" />
+    <Compile Include="Addressing\ConfigurableMessageAddressConverter.cs" />
+    <Compile Include="Addressing\MessageAddressConversionConfiguration.cs" />
+    <Compile Include="Addressing\MessageAddressConversionConfigurationHandler.cs" />
     <Compile Include="SasTokenDeviceIdentityProvider.cs" />
+    <Compile Include="IotHubClientSettings.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config">

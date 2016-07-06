@@ -3,18 +3,19 @@
   <Role name="ProtocolGateway.Host.Cloud.Service">
     <Instances count="1" />
     <ConfigurationSettings>
-      <Setting name="IoTHubConnectionString" value="TODO: IoT Hub connection string to connect to" />
-      <Setting name="MaxPendingInboundMessages" value="10" />
-      <Setting name="MaxPendingOutboundMessages" value="10" />
+      <Setting name="MaxPendingInboundAcknowledgements" value="10" />
       <Setting name="DeviceReceiveAckTimeout" value="00:01:00" />
-      <Setting name="MaxOutboundRetransmissionCount" value="2" />
       <Setting name="MaxInboundMessageSize" value="262144" />
       <Setting name="ConnectArrivalTimeout" value="00:01:00" />
       <Setting name="MaxKeepAliveTimeout" value="00:10:00" />
-      <Setting name="DefaultPublishToClientQoS" value="1" />
       <Setting name="RetainPropertyName" value="mqtt-retain" />
       <Setting name="DupPropertyName" value="mqtt-dup" />
       <Setting name="QoSPropertyName" value="mqtt-qos" />
+      <Setting name="IotHubClient.ConnectionString" value="TODO: IoT Hub connection string to connect to" />
+      <Setting name="IotHubClient.MaxPendingInboundMessages" value="10" />
+      <Setting name="IotHubClient.MaxPendingOutboundMessages" value="10" />
+      <Setting name="IotHubClient.DefaultPublishToClientQoS" value="1" />
+      <Setting name="IotHubClient.MaxOutboundRetransmissionCount" value="2" />
       <Setting name="IotHubClient.ConnectionPoolSize" value="400" />
       <Setting name="IotHubClient.ConnectionIdleTimeout" value="00:03:30" />
       <Setting name="BlobSessionStatePersistenceProvider.StorageConnectionString" value="UseDevelopmentStorage=true" />

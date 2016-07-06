@@ -4,18 +4,23 @@
 namespace Microsoft.Azure.Devices.ProtocolGateway.Messaging
 {
     using System.Threading.Tasks;
+    using DotNetty.Buffers;
 
     public interface IMessagingServiceClient
     {
+        int MaxPendingMessages { get; }
+
+        IMessage CreateMessage(string address, IByteBuffer payload);
+
+        void BindMessagingChannel(IMessagingChannel<IMessage> channel);
+
         Task SendAsync(IMessage message);
 
-        Task<IMessage> ReceiveAsync();
+        Task AbandonAsync(string messageId);
 
-        Task AbandonAsync(string lockToken);
+        Task CompleteAsync(string messageId);
 
-        Task CompleteAsync(string lockToken);
-
-        Task RejectAsync(string lockToken);
+        Task RejectAsync(string messageId);
 
         Task DisposeAsync();
     }

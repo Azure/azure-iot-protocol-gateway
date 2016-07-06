@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace Gateway.Tests.Load
+namespace Microsoft.Azure.Devices.ProtocolGateway.Tests.Load
 {
     using System;
     using System.Collections.Generic;
@@ -11,7 +11,6 @@ namespace Gateway.Tests.Load
     using System.Threading.Tasks;
     using CommandLine;
     using DotNetty.Transport.Channels;
-    using Microsoft.Azure.Devices;
 
     class Program
     {
@@ -49,12 +48,12 @@ namespace Gateway.Tests.Load
                 {
                     case "stable":
                         var stableRunner = new StableTelemetryRunner(group, options.DeviceKey, options.IotHubConnectionString,
-                                new IPEndPoint(IPAddress.Parse(options.Address), options.Port), options.HostName);
+                            new IPEndPoint(IPAddress.Parse(options.Address), options.Port), options.HostName);
                         config = stableRunner.CreateConfiguration(count, TimeSpan.FromSeconds(count / startFrequency));
                         break;
                     case "occasional":
                         var occasionalRunner = new OccasionalTelemetryRunner(group, options.DeviceKey, options.IotHubConnectionString,
-                                new IPEndPoint(IPAddress.Parse(options.Address), options.Port), options.HostName);
+                            new IPEndPoint(IPAddress.Parse(options.Address), options.Port), options.HostName);
                         config = occasionalRunner.CreateConfiguration(count, TimeSpan.FromSeconds(count / startFrequency));
                         break;
                     default:

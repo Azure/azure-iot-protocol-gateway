@@ -34,7 +34,7 @@ namespace ProtocolGateway.Host.Console
             var eventListener = new ObservableEventListener();
             eventListener.LogToConsole();
             eventListener.EnableEvents(BootstrapperEventSource.Log, EventLevel.Verbose);
-            eventListener.EnableEvents(MqttIotHubAdapterEventSource.Log, EventLevel.Verbose);
+            eventListener.EnableEvents(CommonEventSource.Log, EventLevel.Verbose);
             eventListener.EnableEvents(DefaultEventSource.Log, EventLevel.Verbose);
             
             try
