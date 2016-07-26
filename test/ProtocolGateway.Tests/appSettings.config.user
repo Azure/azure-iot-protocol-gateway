@@ -6,7 +6,7 @@
   <!--<add key="End2End.DeviceName" value="TODO: test device name" />-->
 
   <!-- IoT Hub Client settings -->
-  <add key="IotHubClient.ConnectionString" value="TODO: IoT Hub connection string to connect to" />
+  <add key="IotHubClient.ConnectionString" value="TODO: iot hub connection string" />
   <add key="IotHubClient.MaxPendingInboundMessages" value="16" />
   <add key="IotHubClient.MaxPendingOutboundMessages" value="10" />
   <add key="IotHubClient.DefaultPublishToClientQoS" value="1" />
@@ -26,3 +26,4 @@
   <add key="TableQos2StatePersistenceProvider.StorageConnectionString" value="UseDevelopmentStorage=true" />
   <add key="TableQos2StatePersistenceProvider.StorageTableName" value="mqttqos2" />
 </appSettings>
+

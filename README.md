@@ -60,6 +60,36 @@ Please follow these steps to deploy the cloud sample in Azure Cloud Services wor
 6. Wait for the script execution to complete. 
 7. To verify the successful deployment, perform an end-to-end test as described in [Running End-to-End Test](#running-end-to-end-test). Please note that you need to supply the public IP address of the Cloud Service in the `End2End.ServerAddress` setting.
 
+### Deploying Service Fabric Sample
+The Service Fabric hosts a protocol gateway that runs in a Service Fabric Cluster using standard logging and configuration techniques for that style of deployment. The following deployment is perfomed on the local Service Fabric cluster but may be adjusted to deploy to production / remote clusters.
+	
+1. Update the IoT Hub client configuration file (`ProtocolGateway.Host.Fabric.FrontEnd\PackageRoot\Config\FrontEnd.IoTHubClient.json`) by providing the following settings:
+	 - `ConnectionString` - connection string for your IoT hub that will be used for the test. For this test specifically you need to provide the connection string for the device policy in the `Shared access policies` settings of the IoT hub.
+		Note: It is recommended to use an IoT hub instance specifically created for the tests. The test will register a device in the IoT hub and will use it for to exchange messages between the device and the simulated app back end.
+2. Update the Azure Storage configuration file (`ProtocolGateway.Host.Fabric.FrontEnd\PackageRoot\Config\FrontEnd.AzureState.json`) by providing the following settings:
+ - `BlobConnectionString` - connection string for your Azure Storage that will be used for persisting the BLOB based MQTT session state. 
+		Note: The storage emulator can be used for local development cluster deployment.
+ - `TableConnectionString` - connection string for your Azure Storage that will be used for persisting the Table based MQTT session state. 
+		Note: The storage emulator can be used for local development cluster deployment.
+2. Open the solution in Visual Studio.
+3. Right-click on **host/ProtocolGateway.Host.Fabric** project and choose **Package**.
+4. Open PowerShell and set current directory to `<repo root>\host\ProtocolGateway.Host.Fabric\Scripts`.
+5. Execute the following commands
+ 	
+
+----------
+`Import-Module "$ModuleFolderPath\ServiceFabricSdk.psm1"` 
+	`Connect-ServiceFabricCluster -ConnectEndpoint 'localhost:19000'`
+	`Test-ServiceFabricClusterConnection`
+	`./Deploy-FabricApplication.ps1 -ApplicationPackagePath '..\pkg\Release' -UseExistingClusterConnection` 
+
+
+----------
+6. You can see the deployed service through the Service Fabric Local Cluster Manager.
+
+
+ 
+
 ### Diagnostics and Monitoring
 #### Logging
 The protocol gateway uses EventSource and Semantic Logging Application Block for logging (see https://msdn.microsoft.com/en-us/library/dn440729(v=pandp.60).aspx for details). By default, diagnostic events of all levels (including verbose) are logged to the console output in the Console sample and to `SLABLogsTable` Azure Storage Table in the Cloud sample.

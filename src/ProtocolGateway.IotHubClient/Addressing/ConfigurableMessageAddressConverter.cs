@@ -52,6 +52,12 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Addressing
             this.InitializeFromConfiguration(configuration);
         }
 
+        public ConfigurableMessageAddressConverter(List<string> inboundTemplates, List<string> outboundTemplates)
+        {
+            var configuration = new MessageAddressConversionConfiguration(inboundTemplates, outboundTemplates);
+            this.InitializeFromConfiguration(configuration);
+        }
+
         void InitializeFromConfiguration(MessageAddressConversionConfiguration configuration)
         {
             Contract.Requires(configuration != null);
