@@ -1,7 +1,7 @@
 <appSettings>
   <!-- general protocol gateway settings -->
   <add key="MaxPendingInboundAcknowledgements" value="16" /> <!-- default: 16 -->
-  <add key="DeviceReceiveAckTimeout" value="00:01:00" /> <!-- default: no timeout -->
+  <add key="DeviceReceiveAckTimeout" value="00:00:00" /> <!-- default: no timeout -->
   <add key="MaxInboundMessageSize" value="262144" /> <!-- 256KB -->
   <add key="ConnectArrivalTimeout" value="00:01:00" /> <!-- default: no timeout -->
   <add key="MaxKeepAliveTimeout" value="00:10:00" /> <!-- default: no limit -->

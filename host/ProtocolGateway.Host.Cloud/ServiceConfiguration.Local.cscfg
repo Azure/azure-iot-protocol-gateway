@@ -4,7 +4,7 @@
     <Instances count="1" />
     <ConfigurationSettings>
       <Setting name="MaxPendingInboundAcknowledgements" value="10" />
-      <Setting name="DeviceReceiveAckTimeout" value="00:01:00" />
+      <Setting name="DeviceReceiveAckTimeout" value="00:00:00" />
       <Setting name="MaxInboundMessageSize" value="262144" />
       <Setting name="ConnectArrivalTimeout" value="00:01:00" />
       <Setting name="MaxKeepAliveTimeout" value="00:10:00" />
