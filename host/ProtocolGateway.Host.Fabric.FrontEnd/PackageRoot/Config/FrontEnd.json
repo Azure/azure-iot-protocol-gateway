@@ -1,0 +1,8 @@
+﻿{
+  "X509Identifier": "protocol-gateway.contoso.com.pfx",
+  "X509Credential": "password",
+  "X509Location": "Data",
+  "EndPointName": "ServiceEndpoint",
+  "HealthReportInterval": "00:00:15",
+  "MetricsReportInterval": "00:00:15"
+}

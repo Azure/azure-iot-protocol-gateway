@@ -50,6 +50,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
             ManagerInstance.GetCounter(CategoryName, InboundMessageProcessingTimeCounterName),
             ManagerInstance.GetCounter(CategoryName, InboundMessageProcessingTimeBaseCounterName));
 
+        public static void RegisterCountersIfRequired()
+        {
+            var manager = new Manager();
+        }
+
         class Manager : PerformanceCounterManager
         {
             public Manager()

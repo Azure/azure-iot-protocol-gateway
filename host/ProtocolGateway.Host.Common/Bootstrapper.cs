@@ -4,6 +4,7 @@
 namespace ProtocolGateway.Host.Common
 {
     using System;
+    using System.Collections.Generic;
     using System.Diagnostics.Contracts;
     using System.Net;
     using System.Security.Cryptography.X509Certificates;
@@ -45,7 +46,17 @@ namespace ProtocolGateway.Host.Common
         readonly IotHubClientSettings iotHubClientSettings;
         readonly IMessageAddressConverter topicNameConverter;
 
-        public Bootstrapper(ISettingsProvider settingsProvider, ISessionStatePersistenceProvider sessionStateManager, IQos2StatePersistenceProvider qos2StateProvider)
+        public Bootstrapper(ISettingsProvider settingsProvider, ISessionStatePersistenceProvider sessionStateManager, IQos2StatePersistenceProvider qos2StateProvider) : 
+            this(settingsProvider, sessionStateManager, qos2StateProvider, new ConfigurableMessageAddressConverter())
+        {
+        }
+
+        public Bootstrapper(ISettingsProvider settingsProvider, ISessionStatePersistenceProvider sessionStateManager, IQos2StatePersistenceProvider qos2StateProvider, List<string> inboundTemplates, List<string> outboundTemplates) : 
+            this(settingsProvider, sessionStateManager, qos2StateProvider, new ConfigurableMessageAddressConverter(inboundTemplates ?? new List<string>(), outboundTemplates ?? new List<string>()))
+        {
+        }
+
+        Bootstrapper(ISettingsProvider settingsProvider, ISessionStatePersistenceProvider sessionStateManager, IQos2StatePersistenceProvider qos2StateProvider, IMessageAddressConverter addressConverter)
         {
             Contract.Requires(settingsProvider != null);
             Contract.Requires(sessionStateManager != null);
@@ -58,7 +69,7 @@ namespace ProtocolGateway.Host.Common
             this.sessionStateManager = sessionStateManager;
             this.qos2StateProvider = qos2StateProvider;
             this.authProvider = new SasTokenDeviceIdentityProvider();
-            this.topicNameConverter = new ConfigurableMessageAddressConverter();
+            this.topicNameConverter = addressConverter;
         }
 
         public Task CloseCompletion => this.closeCompletionSource.Task;

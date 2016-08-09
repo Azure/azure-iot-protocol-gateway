@@ -356,6 +356,10 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
                     }
                 }
             }
+            catch (Exception e)
+            {
+                string test = e.Message;
+            }
             finally
             {
                 if (deviceClient != null)

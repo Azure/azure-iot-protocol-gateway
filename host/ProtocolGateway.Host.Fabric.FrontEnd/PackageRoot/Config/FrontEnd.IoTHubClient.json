@@ -1,0 +1,9 @@
+﻿{
+  "ConnectionString": "TODO: IoT Hub connection string to connect to",
+  "DefaultPublishToClientQoS": "1",
+  "MaxPendingInboundMessages": "16",
+  "MaxPendingOutboundMessages": "10",
+  "MaxOutboundRetransmissionCount": "-1",
+  "ConnectionPoolSize": "400",
+  "ConnectionIdleTimeout": "00:03:30"
+}

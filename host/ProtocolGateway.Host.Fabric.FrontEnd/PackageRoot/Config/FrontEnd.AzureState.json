@@ -1,0 +1,6 @@
+﻿{
+  "BlobConnectionString": "UseDevelopmentStorage=true;",
+  "ContainerName": "mqtt-sessions",
+  "TableConnectionString": "UseDevelopmentStorage=true;",
+  "TableName": "mqttqos2"
+}

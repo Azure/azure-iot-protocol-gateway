@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ServiceManifest Name="ProtocolGateway.Host.Fabric.FrontEndPkg"
+                 Version="1.0.0"
+                 xmlns="http://schemas.microsoft.com/2011/01/fabric"
+                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <ServiceTypes>
+    <!-- This is the name of your ServiceType. 
+         This name must match the string used in RegisterServiceType call in Program.cs. -->
+    <StatelessServiceType ServiceTypeName="FrontEndType">
+      <LoadMetrics>
+        <LoadMetric Name="ConnectionsCurrent" DefaultLoad="0" PrimaryDefaultLoad="0" SecondaryDefaultLoad="0" Weight="High" />
+        <LoadMetric Name="MessagesReceivedPerSecond" DefaultLoad="0" PrimaryDefaultLoad="0" SecondaryDefaultLoad="0" Weight="Medium" />
+        <LoadMetric Name="MessagesSentPerSecond" DefaultLoad="0" PrimaryDefaultLoad="0" SecondaryDefaultLoad="0" Weight="Low" />
+      </LoadMetrics>
+    </StatelessServiceType>
+  </ServiceTypes>
+
+  <!-- Code package is your service executable. -->
+  <CodePackage Name="Code" Version="1.0.0">
+    <SetupEntryPoint>
+      <ExeHost>
+        <Program>ProtocolGateway.Host.FabricSetup.CounterSetup.exe</Program>
+      </ExeHost>
+    </SetupEntryPoint>
+    <EntryPoint>
+      <ExeHost>
+        <Program>ProtocolGateway.Host.Fabric.FrontEnd.exe</Program>
+      </ExeHost>
+    </EntryPoint>
+  </CodePackage>
+  <!-- Config package is the contents of the Config directoy under PackageRoot that contains an 
+       independently-updateable and versioned set of custom configuration settings for your service. -->
+  <ConfigPackage Name="Config" Version="1.0.0" />
+  <DataPackage Name="Data" Version="1.0.0" />
+ 
+  
+  <Resources>
+    <Endpoints>
+      <!-- This endpoint is used by the communication listener to obtain the port on which to 
+           listen. Please note that if your service is partitioned, this port is shared with 
+           replicas of different partitions that are placed in your code. -->
+      <Endpoint Name="ServiceEndpoint" Port="8883" Protocol="tcp" />
+    </Endpoints>
+  </Resources>
+</ServiceManifest>
