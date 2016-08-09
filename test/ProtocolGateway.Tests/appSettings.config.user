@@ -14,7 +14,7 @@
 
   <!-- Protocol Gateway settings -->
   <add key="MaxPendingInboundAcknowledgements" value="16" />
-  <add key="DeviceReceiveAckTimeout" value="00:01:00" />
+  <add key="DeviceReceiveAckTimeout" value="00:00:00" />
   <add key="MaxInboundMessageSize" value="262144" />
   <add key="ConnectArrivalTimeout" value="00:01:00" />
   <add key="MaxKeepAliveTimeout" value="00:10:00" />
