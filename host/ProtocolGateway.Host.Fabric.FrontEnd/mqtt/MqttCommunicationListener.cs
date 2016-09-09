@@ -191,7 +191,7 @@
 
                 var settingsProvider = new ServiceFabricConfigurationProvider(traceId, this.componentName, this.logger, configuration, iotHubConfiguration, mqttConfiguration);
                 this.bootStrapper = new Bootstrapper(settingsProvider, qosSessionProvider, qos2SessionProvider, mqttInboundTemplates, mqttOutboundTemplates);
-                this.runTask = this.bootStrapper.RunAsync(certificate, threadCount, cancellationToken);
+                this.runTask = this.bootStrapper.RunAsync(certificate, threadCount, this.serverControl.Token);
 
                 publishAddress = this.BuildPublishAddress(configuration);
 
