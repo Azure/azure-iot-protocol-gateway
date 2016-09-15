@@ -21,6 +21,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
             set { this.counter.RawValue = value; }
         }
 
+        public float NextValue
+        {
+            get { return this.counter.NextValue(); }
+        }
+
         public void Increment()
         {
             try
