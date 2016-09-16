@@ -200,8 +200,8 @@
             return new[]
             {
                 new KeyValuePair<string, int>("ConnectionsCurrent", Convert.ToInt32(PerformanceCounters.ConnectionsCurrent.RawValue)),
-                new KeyValuePair<string, int>("MessagesReceivedPerSecond", Convert.ToInt32(PerformanceCounters.MessagesReceivedPerSecond.RawValue)),
-                new KeyValuePair<string, int>("MessagesSentPerSecond", Convert.ToInt32(PerformanceCounters.MessagesSentPerSecond.RawValue))
+                new KeyValuePair<string, int>("MessagesReceivedPerSecond", Convert.ToInt32(PerformanceCounters.MessagesReceivedPerSecond.NextValue)),
+                new KeyValuePair<string, int>("MessagesSentPerSecond", Convert.ToInt32(PerformanceCounters.MessagesSentPerSecond.NextValue))
             };
         }
 
@@ -229,7 +229,7 @@
 
             if ((reportType & HealthReporter.ReportTypes.Instance) == HealthReporter.ReportTypes.Instance)
             {
-                int connectionsFailedPerSecond = Convert.ToInt32(PerformanceCounters.ConnectionFailedOperationalPerSecond.RawValue);
+                int connectionsFailedPerSecond = Convert.ToInt32(PerformanceCounters.ConnectionFailedOperationalPerSecond.NextValue);
                 HealthState connectionFailedState;
 
                 if (connectionsFailedPerSecond < 50)
