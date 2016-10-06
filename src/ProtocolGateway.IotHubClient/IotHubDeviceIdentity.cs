@@ -7,6 +7,10 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
 
     public sealed class IotHubDeviceIdentity : IDeviceIdentity
     {
+        string asString;
+        string policyName;
+        AuthenticationScope scope;
+
         public IotHubDeviceIdentity(string iotHubHostName, string deviceId)
         {
             this.IotHubHostName = iotHubHostName;
@@ -17,13 +21,29 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
 
         public bool IsAuthenticated => true;
 
-        public string IotHubHostName { get; private set; }
+        public string IotHubHostName { get; }
 
-        public string PolicyName { get; private set; }
+        public string PolicyName
+        {
+            get { return this.policyName; }
+            private set
+            {
+                this.policyName = value;
+                this.asString = null;
+            }
+        }
 
         public string Secret { get; private set; }
 
-        public AuthenticationScope Scope { get; private set; }
+        public AuthenticationScope Scope
+        {
+            get { return this.scope; }
+            private set
+            {
+                this.scope = value;
+                this.asString = null;
+            }
+        }
 
         public static bool TryParse(string value, out IotHubDeviceIdentity identity)
         {
@@ -54,6 +74,16 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
         {
             this.Scope = AuthenticationScope.DeviceKey;
             this.Secret = keyValue;
+        }
+
+        public override string ToString()
+        {
+            if (this.asString == null)
+            {
+                string policy = string.IsNullOrEmpty(this.PolicyName) ? "<none>" : this.PolicyName;
+                this.asString = $"{this.Id} [IotHubHostName: {this.IotHubHostName}; PolicyName: {policy}; Scope: {this.Scope}]";
+            }
+            return this.asString;
         }
     }
 }

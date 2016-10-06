@@ -25,7 +25,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         readonly TimeSpan ackTimeout;
 
         public RequestAckPairProcessor(Func<IChannelHandlerContext, TAckState, Task> processAckFunc,
-            Action<IChannelHandlerContext, TAckState> triggerRetransmissionAction, TimeSpan? ackTimeout)
+            Action<IChannelHandlerContext, TAckState> triggerRetransmissionAction, TimeSpan? ackTimeout, string scope)
+            : base(scope)
         {
             Contract.Requires(!ackTimeout.HasValue || ackTimeout.Value > TimeSpan.Zero);
 
@@ -131,14 +132,14 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             }
         }
 
-        bool TryDequeueMessage(PacketWithId packet, out TAckState message)
+        bool TryDequeueMessage(PacketWithId packet, out TAckState message, string scope)
         {
             TAckState firstRequest = this.FirstRequestPendingAck;
             if (firstRequest == null)
             {
                 if (CommonEventSource.Log.IsWarningEnabled)
                 {
-                    CommonEventSource.Log.Warning($"{packet.PacketType.ToString()} #{packet.PacketId.ToString()} was received while not expected.");
+                    CommonEventSource.Log.Warning($"{packet.PacketType.ToString()} #{packet.PacketId.ToString()} was received while not expected.", scope);
                 }
                 message = default(TAckState);
                 return false;
@@ -148,7 +149,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             {
                 if (CommonEventSource.Log.IsWarningEnabled)
                 {
-                    CommonEventSource.Log.Warning($"{packet.PacketType.ToString()} #{packet.PacketId.ToString()} was received while #{firstRequest.PacketId.ToString()} was expected.");
+                    CommonEventSource.Log.Warning($"{packet.PacketType.ToString()} #{packet.PacketId.ToString()} was received while #{firstRequest.PacketId.ToString()} was expected.", scope);
                 }
                 message = default(TAckState);
                 return false;
@@ -167,10 +168,10 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             return true;
         }
 
-        protected override Task ProcessAsync(IChannelHandlerContext context, PacketWithId packet)
+        protected override Task ProcessAsync(IChannelHandlerContext context, PacketWithId packet, string scope)
         {
             TAckState message;
-            return this.TryDequeueMessage(packet, out message) ? this.processAckFunc(context, message) : TaskEx.Completed;
+            return this.TryDequeueMessage(packet, out message, scope) ? this.processAckFunc(context, message) : TaskEx.Completed;
         }
     }
 }

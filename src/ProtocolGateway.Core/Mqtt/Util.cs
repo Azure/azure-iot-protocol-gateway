@@ -78,7 +78,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             return topicFilterIndex == topicFilter.Length && topicNameIndex == topicName.Length;
         }
 
-        public static QualityOfService DeriveQos(IMessage message, Settings config)
+        public static QualityOfService DeriveQos(IMessage message, Settings config, string scope)
         {
             string qosValue;
             if (!message.Properties.TryGetValue(config.QoSPropertyName, out qosValue))
@@ -88,7 +88,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
             if (qosValue.Length > 1)
             {
-                CommonEventSource.Log.Warning($"Message defined QoS '{qosValue}' is not supported. Downgrading to default value of '{config.DefaultPublishToClientQoS}'");
+                CommonEventSource.Log.Warning($"Message defined QoS '{qosValue}' is not supported. Downgrading to default value of '{config.DefaultPublishToClientQoS}'", scope);
                 return config.DefaultPublishToClientQoS;
             }
 
@@ -101,7 +101,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 case '2':
                     return QualityOfService.ExactlyOnce;
                 default:
-                    CommonEventSource.Log.Warning($"Message defined QoS '{qosValue}' is not supported. Downgrading to default value of '{config.DefaultPublishToClientQoS}'");
+                    CommonEventSource.Log.Warning($"Message defined QoS '{qosValue}' is not supported. Downgrading to default value of '{config.DefaultPublishToClientQoS}'", scope);
                     return config.DefaultPublishToClientQoS;
             }
         }
