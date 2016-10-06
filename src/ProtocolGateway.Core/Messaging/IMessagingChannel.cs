@@ -9,6 +9,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Messaging
     {
         void Handle(TMessage message);
 
-        void Close(Exception exception);
+        void Close(Exception cause);
+
+        event EventHandler CapabilitiesChanged;
     }
 }

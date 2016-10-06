@@ -234,7 +234,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             }
         }
 
-        public async Task DisposeAsync()
+        public async Task DisposeAsync(Exception cause)
         {
             try
             {
