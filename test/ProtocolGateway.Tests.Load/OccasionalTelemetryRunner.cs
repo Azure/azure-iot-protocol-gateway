@@ -4,7 +4,6 @@
 namespace Microsoft.Azure.Devices.ProtocolGateway.Tests.Load
 {
     using System;
-    using System.Collections.Generic;
     using System.Net;
     using System.Threading;
     using System.Threading.Tasks;
@@ -20,12 +19,12 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests.Load
 
         protected override string Name => "occasional";
 
-        protected override IEnumerable<IEnumerable<TestScenarioStep>> GetScenarioNested(Func<object> currentMessageFunc, string clientId,
+        protected override async Task GetScenario(IChannel channel, ReadListeningHandler readHandler, string clientId,
             CancellationToken cancellationToken)
         {
-            yield return GetSubscribeSteps(currentMessageFunc, clientId);
+            await GetSubscribeSteps(channel, readHandler, clientId);
 
-            yield return GetPublishSteps(currentMessageFunc, clientId, QualityOfService.AtLeastOnce, "devices/{0}/messages/events", 10, 138, 353);
+            await GetPublishSteps(channel, readHandler, clientId, QualityOfService.AtLeastOnce, "devices/{0}/messages/events", 10, 138, 353);
         }
 
         public override async Task<bool> OnClosedAsync(string deviceId, Exception exception, bool onStart)
