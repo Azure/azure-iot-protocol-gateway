@@ -3,7 +3,6 @@
 
 namespace Microsoft.Azure.Devices.ProtocolGateway.Messaging
 {
-    using System.Diagnostics.Contracts;
     using System.Threading.Tasks;
 
     public struct MessageFeedbackChannel
@@ -17,13 +16,10 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Messaging
             this.client = client;
         }
 
-        [Pure]
         public Task AbandonAsync() => this.client.AbandonAsync(this.messageId);
 
-        [Pure]
         public Task CompleteAsync() => this.client.CompleteAsync(this.messageId);
 
-        [Pure]
         public Task RejectAsync() => this.client.RejectAsync(this.messageId);
     }
 }

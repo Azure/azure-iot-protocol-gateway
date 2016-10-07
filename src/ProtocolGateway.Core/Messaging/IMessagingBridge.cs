@@ -3,14 +3,15 @@
 
 namespace Microsoft.Azure.Devices.ProtocolGateway.Messaging
 {
+    using System;
     using System.Threading.Tasks;
 
-    public interface IMqttMessagingBridge
+    public interface IMessagingBridge
     {
         void BindMessagingChannel(IMessagingChannel<MessageWithFeedback> channel);
-
+    
         bool TryResolveClient(string topicName, out IMessagingServiceClient sendingClient);
 
-        Task DisposeAsync();
+        Task DisposeAsync(Exception cause);
     }
 }

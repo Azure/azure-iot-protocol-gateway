@@ -8,6 +8,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests.Load
     using System.Diagnostics.Contracts;
     using System.Linq;
     using System.Net;
+    using System.Net.Security;
     using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
@@ -62,7 +63,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests.Load
                 ch =>
                 {
                     ch.Pipeline.AddLast(
-                        TlsHandler.Client(this.tlsHostName, null, (sender, certificate, chain, errors) => true),
+                        new TlsHandler(stream => new SslStream(stream, true, (sender, certificate, chain, errors) => true), new ClientTlsSettings(this.tlsHostName)),
                         MqttEncoder.Instance,
                         new MqttDecoder(false, 256 * 1024),
                         new TestScenarioRunner(

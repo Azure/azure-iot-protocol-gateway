@@ -8,8 +8,10 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
     using System.Configuration;
     using System.Diagnostics;
     using System.Diagnostics.Tracing;
+    using System.IO;
     using System.Linq;
     using System.Net;
+    using System.Net.Security;
     using System.Security.Cryptography.X509Certificates;
     using System.Text;
     using System.Threading.Tasks;
@@ -56,8 +58,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
         string deviceId;
         string deviceSas;
         readonly X509Certificate2 tlsCertificate;
-        static readonly TimeSpan CommunicationTimeout = TimeSpan.FromSeconds(150);
-        static readonly TimeSpan TestTimeout = TimeSpan.FromMinutes(5); //TimeSpan.FromMinutes(1);
+        static readonly TimeSpan CommunicationTimeout = TimeSpan.FromSeconds(20);
+        static readonly TimeSpan TestTimeout = TimeSpan.FromMinutes(2);
 
         public EndToEndTests(ITestOutputHelper output)
         {
@@ -104,7 +106,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
 
             var iotHubClientFactory = IotHubClient.PreparePoolFactory(iotHubClientSettings.IotHubConnectionString, 400, TimeSpan.FromMinutes(5),
                 iotHubClientSettings, PooledByteBufferAllocator.Default, topicNameRouter);
-            MqttBridgeFactoryFunc bridgeFactory = async identity => new SingleClientMqttMessagingBridge(await iotHubClientFactory(identity));
+            MessagingBridgeFactoryFunc bridgeFactory = async identity => new SingleClientMessagingBridge(identity, await iotHubClientFactory(identity));
 
             ServerBootstrap server = new ServerBootstrap()
                 .Group(executorGroup)
@@ -235,12 +237,12 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
             var group = new MultithreadEventLoopGroup();
             string targetHost = this.tlsCertificate.GetNameInfo(X509NameType.DnsName, false);
 
-            var testPart1Promise = new TaskCompletionSource();
+            var readHandler1 = new ReadListeningHandler(CommunicationTimeout);
             Bootstrap bootstrap = new Bootstrap()
                 .Group(group)
                 .Channel<TcpSocketChannel>()
                 .Option(ChannelOption.TcpNodelay, true)
-                .Handler(this.ComposeClientChannelInitializer(targetHost, clientScenarios.GetPart1Steps, testPart1Promise));
+                .Handler(this.ComposeClientChannelInitializer(targetHost, readHandler1));
             IChannel clientChannel = await bootstrap.ConnectAsync(this.ServerAddress, protocolGatewayPort);
             this.ScheduleCleanup(() => clientChannel.CloseAsync());
 
@@ -271,7 +273,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
                 await serviceClient.SendAsync(this.deviceId, qos2Notification2);
             });
 
-            await Task.WhenAll(testPart1Promise.Task, testWorkTask).WithTimeout(TestTimeout);
+            await clientScenarios.RunPart1StepsAsync(clientChannel, readHandler1).WithTimeout(TestTimeout);
+            await testWorkTask.WithTimeout(TestTimeout);
 
             this.output.WriteLine($"part 1 completed in {sw.Elapsed}");
             await this.EnsureDeviceQueueLengthAsync(hubConnectionStringBuilder.HostName, device, 1);
@@ -280,9 +283,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
             string part2Payload = Guid.NewGuid().ToString("N");
             await serviceClient.SendAsync(this.deviceId, new Message(Encoding.ASCII.GetBytes(part2Payload)));
 
-            var testPart2Promise = new TaskCompletionSource();
+            var readHandler2 = new ReadListeningHandler(CommunicationTimeout);
             IChannel clientChannelPart2 = await bootstrap
-                .Handler(this.ComposeClientChannelInitializer(targetHost, func => clientScenarios.GetPart2Steps(func, part2Payload), testPart2Promise))
+                .Handler(this.ComposeClientChannelInitializer(targetHost, readHandler2))
                 .ConnectAsync(this.ServerAddress, protocolGatewayPort);
             this.ScheduleCleanup(async () =>
             {
@@ -290,7 +293,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
                 await group.ShutdownGracefullyAsync();
             });
 
-            await testPart2Promise.Task.WithTimeout(TestTimeout);
+            await clientScenarios.RunPart2StepsAsync(clientChannelPart2, readHandler2).WithTimeout(TestTimeout);
 
             this.output.WriteLine($"Core test completed in {sw.Elapsed}");
 
@@ -369,15 +372,15 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
             }
         }
 
-        ActionChannelInitializer<ISocketChannel> ComposeClientChannelInitializer(string targetHost, Func<Func<object>,
-            IEnumerable<TestScenarioStep>> testScenarioProvider, TaskCompletionSource testPromise)
+        ActionChannelInitializer<ISocketChannel> ComposeClientChannelInitializer(string targetHost, ReadListeningHandler readHandler)
         {
+            Func<Stream, SslStream> sslStreamFactoryFunc = stream => new SslStream(stream, true, (sender, certificate, chain, errors) => true);
             return new ActionChannelInitializer<ISocketChannel>(ch => ch.Pipeline.AddLast(
-                TlsHandler.Client(targetHost, null, (sender, certificate, chain, errors) => true),
+                new TlsHandler(sslStreamFactoryFunc,  new ClientTlsSettings(targetHost)),
                 MqttEncoder.Instance,
                 new MqttDecoder(false, 256 * 1024),
                 new LoggingHandler("CLIENT"),
-                new TestScenarioRunner(testScenarioProvider, testPromise, CommunicationTimeout, CommunicationTimeout),
+                readHandler,
                 new XUnitLoggingHandler(this.output)));
         }
 
@@ -418,19 +421,17 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
                 this.password = password;
             }
 
-            public IEnumerable<TestScenarioStep> GetPart1Steps(Func<object> currentMessageFunc) => Flatten(this.GetPart1StepsInternal(currentMessageFunc));
-
-            IEnumerable<IEnumerable<TestScenarioStep>> GetPart1StepsInternal(Func<object> currentMessageFunc)
+            public async Task RunPart1StepsAsync(IChannel channel, ReadListeningHandler readHandler)
             {
-                yield return this.GetConnectSteps(currentMessageFunc);
-                yield return this.GetSubscriptionSteps(currentMessageFunc);
-                yield return this.GetPart1SpecificSteps(currentMessageFunc);
+                await this.ConnectAsync(channel, readHandler);
+                await this.SubscribeAsync(channel, readHandler);
+                await this.GetPart1SpecificSteps(channel, readHandler);
             }
 
-            IEnumerable<TestScenarioStep> GetPart1SpecificSteps(Func<object> currentMessageFunc)
+            async Task GetPart1SpecificSteps(IChannel channel, ReadListeningHandler readHandler)
             {
                 int publishQoS1PacketId = GetRandomPacketId();
-                yield return TestScenarioStep.Write(
+                await channel.WriteAndFlushManyAsync(
                     new PublishPacket(QualityOfService.AtMostOnce, false, false)
                     {
                         //TopicName = string.Format("devices/{0}/messages/log/verbose/", clientId),
@@ -447,11 +448,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
                 var packets = new Packet[5];
                 for (int i = packets.Length - 1; i >= 0; i--)
                 {
-                    packets[i] = Assert.IsAssignableFrom<Packet>(currentMessageFunc());
-                    if (i > 0)
-                    {
-                        yield return TestScenarioStep.ReadMore();
-                    }
+                    packets[i] = Assert.IsAssignableFrom<Packet>(await readHandler.ReceiveAsync());
                 }
 
                 PubAckPacket pubAckPacket = Assert.Single(packets.OfType<PubAckPacket>());
@@ -470,47 +467,36 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
                 PublishPacket publishQoS2Packet2 = publishQoS2Packets[1];
                 this.AssertPacketCoreValue(publishQoS2Packet2, NotificationQoS2Content2);
 
-                yield return TestScenarioStep.Write(
+                await channel.WriteAndFlushManyAsync(
                     PubAckPacket.InResponseTo(publishQoS1Packet),
                     PubRecPacket.InResponseTo(publishQoS2Packet1),
                     PubRecPacket.InResponseTo(publishQoS2Packet2));
 
-                var pubRelQoS2Packet1 = Assert.IsAssignableFrom<PubRelPacket>(currentMessageFunc());
+                var pubRelQoS2Packet1 = Assert.IsAssignableFrom<PubRelPacket>(await readHandler.ReceiveAsync());
                 Assert.Equal(publishQoS2Packet1.PacketId, pubRelQoS2Packet1.PacketId);
 
-                yield return TestScenarioStep.ReadMore();
-
-                var pubRelQoS2Packet2 = Assert.IsAssignableFrom<PubRelPacket>(currentMessageFunc());
+                var pubRelQoS2Packet2 = Assert.IsAssignableFrom<PubRelPacket>(await readHandler.ReceiveAsync());
                 Assert.Equal(publishQoS2Packet2.PacketId, pubRelQoS2Packet2.PacketId);
 
-                yield return TestScenarioStep.Write(
-                    false, // it is a final step and we do not expect response
+                await channel.WriteAndFlushManyAsync(
                     PubCompPacket.InResponseTo(pubRelQoS2Packet1),
                     DisconnectPacket.Instance);
 
                 // device queue still contains QoS 2 packet 2 which was PUBRECed but not PUBCOMPed.
             }
 
-            public IEnumerable<TestScenarioStep> GetPart2Steps(Func<object> currentMessageFunc, string expectedPayload) => Flatten(this.GetPart2StepsInternal(currentMessageFunc));
-
-            IEnumerable<IEnumerable<TestScenarioStep>> GetPart2StepsInternal(Func<object> currentMessageFunc)
+            public async Task RunPart2StepsAsync(IChannel channel, ReadListeningHandler readHandler)
             {
-                yield return this.GetConnectSteps(currentMessageFunc);
-                yield return this.GetPart2SpecificSteps(currentMessageFunc);
+                await this.ConnectAsync(channel, readHandler);
+                await this.GetPart2SpecificSteps(channel, readHandler);
             }
 
-            IEnumerable<TestScenarioStep> GetPart2SpecificSteps(Func<object> currentMessageFunc)
+            async Task GetPart2SpecificSteps(IChannel channel, ReadListeningHandler readHandler)
             {
-                yield return TestScenarioStep.ReadMore();
-
                 var packets = new Packet[2];
                 for (int i = packets.Length - 1; i >= 0; i--)
                 {
-                    packets[i] = Assert.IsAssignableFrom<Packet>(currentMessageFunc());
-                    if (i > 0)
-                    {
-                        yield return TestScenarioStep.ReadMore();
-                    }
+                    packets[i] = Assert.IsAssignableFrom<Packet>(await readHandler.ReceiveAsync());
                 }
 
                 PublishPacket qos1Packet = Assert.Single(packets.OfType<PublishPacket>());
@@ -520,8 +506,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
 
                 PubRelPacket pubRelQos2Packet = Assert.Single(packets.OfType<PubRelPacket>());
 
-                yield return TestScenarioStep.Write(
-                    false,
+                await channel.WriteAndFlushManyAsync(
                     PubAckPacket.InResponseTo(qos1Packet),
                     PubCompPacket.InResponseTo(pubRelQos2Packet),
                     DisconnectPacket.Instance);
@@ -533,9 +518,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
                 Assert.Equal(expectedPayload, Encoding.UTF8.GetString(packet.Payload.ToArray()));
             }
 
-            IEnumerable<TestScenarioStep> GetConnectSteps(Func<object> currentMessageFunc)
+            async Task ConnectAsync(IChannel channel, ReadListeningHandler readHandler)
             {
-                yield return TestScenarioStep.Write(new ConnectPacket
+                await channel.WriteAndFlushAsync(new ConnectPacket
                 {
                     ClientId = this.clientId,
                     HasUsername = true,
@@ -548,26 +533,24 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
                     WillMessage = Unpooled.WrappedBuffer(Encoding.UTF8.GetBytes("oops"))
                 });
 
-                var connAckPacket = Assert.IsType<ConnAckPacket>(currentMessageFunc());
+                var connAckPacket = Assert.IsType<ConnAckPacket>(await readHandler.ReceiveAsync());
                 Assert.Equal(ConnectReturnCode.Accepted, connAckPacket.ReturnCode);
             }
 
-            IEnumerable<TestScenarioStep> GetSubscriptionSteps(Func<object> currentMessageFunc)
+            async Task SubscribeAsync(IChannel channel, ReadListeningHandler readHandler)
             {
                 int subscribePacket1Id = GetRandomPacketId();
                 int subscribePacket2Id = GetRandomPacketId();
-                yield return TestScenarioStep.Write(
+                await channel.WriteAndFlushManyAsync(
                     new SubscribePacket(subscribePacket1Id, new SubscriptionRequest($"devices/{this.clientId}/messages/devicebound/#", QualityOfService.ExactlyOnce)),
                     new SubscribePacket(subscribePacket2Id, new SubscriptionRequest("multi/subscribe/check", QualityOfService.AtMostOnce)));
 
-                var subAck1Packet = Assert.IsType<SubAckPacket>(currentMessageFunc());
+                var subAck1Packet = Assert.IsType<SubAckPacket>(await readHandler.ReceiveAsync());
                 Assert.Equal(subscribePacket1Id, subAck1Packet.PacketId);
                 Assert.Equal(1, subAck1Packet.ReturnCodes.Count);
                 Assert.Equal(QualityOfService.ExactlyOnce, subAck1Packet.ReturnCodes[0]);
 
-                yield return TestScenarioStep.ReadMore();
-
-                var subAck2Packet = Assert.IsType<SubAckPacket>(currentMessageFunc());
+                var subAck2Packet = Assert.IsType<SubAckPacket>(await readHandler.ReceiveAsync());
                 Assert.Equal(subscribePacket2Id, subAck2Packet.PacketId);
                 Assert.Equal(1, subAck2Packet.ReturnCodes.Count);
                 Assert.Equal(QualityOfService.AtMostOnce, subAck2Packet.ReturnCodes[0]);

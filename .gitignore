@@ -3,6 +3,7 @@
 TestResults/
 .nuget/
 _ReSharper.*/
+*.exe
 packages/
 artifacts/
 PublishProfiles/

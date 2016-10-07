@@ -3,6 +3,7 @@
 
 namespace Microsoft.Azure.Devices.ProtocolGateway.Messaging
 {
+    using System;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
 
@@ -22,6 +23,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Messaging
 
         Task RejectAsync(string messageId);
 
-        Task DisposeAsync();
+        Task DisposeAsync(Exception cause);
     }
 }

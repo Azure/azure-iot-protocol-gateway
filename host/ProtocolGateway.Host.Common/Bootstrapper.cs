@@ -146,7 +146,7 @@ namespace ProtocolGateway.Host.Common
 
             Func<IDeviceIdentity, Task<IMessagingServiceClient>> deviceClientFactory = IotHubClient.PreparePoolFactory(connectionString, connectionPoolSize,
                 connectionIdleTimeout, this.iotHubClientSettings, PooledByteBufferAllocator.Default, this.topicNameConverter);
-            MqttBridgeFactoryFunc bridgeFactory = async deviceIdentity => new SingleClientMqttMessagingBridge(await deviceClientFactory(deviceIdentity));
+            MessagingBridgeFactoryFunc bridgeFactory = async deviceIdentity => new SingleClientMessagingBridge(deviceIdentity, await deviceClientFactory(deviceIdentity));
 
             return new ServerBootstrap()
                 .Group(this.parentEventLoopGroup, this.eventLoopGroup)
