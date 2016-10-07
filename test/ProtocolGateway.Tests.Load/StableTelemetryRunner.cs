@@ -4,9 +4,9 @@
 namespace Microsoft.Azure.Devices.ProtocolGateway.Tests.Load
 {
     using System;
-    using System.Collections.Generic;
     using System.Net;
     using System.Threading;
+    using System.Threading.Tasks;
     using DotNetty.Codecs.Mqtt.Packets;
     using DotNetty.Transport.Channels;
 
@@ -19,16 +19,16 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests.Load
 
         protected override string Name => "stable";
 
-        protected override IEnumerable<IEnumerable<TestScenarioStep>> GetScenarioNested(Func<object> currentMessageFunc, string clientId,
+        protected override async Task GetScenario(IChannel channel, ReadListeningHandler readHandler, string clientId,
             CancellationToken cancellationToken)
         {
-            yield return GetSubscribeSteps(currentMessageFunc, clientId);
+            await GetSubscribeSteps(channel, readHandler, clientId);
 
             while (!cancellationToken.IsCancellationRequested)
             {
-                yield return GetPublishSteps(currentMessageFunc, clientId, QualityOfService.AtLeastOnce, "devices/{0}/messages/events", 1, 138, 353);
+                await GetPublishSteps(channel, readHandler, clientId, QualityOfService.AtLeastOnce, "devices/{0}/messages/events", 1, 138, 353);
 
-                yield return new[] { TestScenarioStep.Wait(TimeSpan.FromMinutes(1)) };
+                await channel.EventLoop.ScheduleAsync(() => { }, TimeSpan.FromMinutes(1), cancellationToken);
             }
         }
     }
