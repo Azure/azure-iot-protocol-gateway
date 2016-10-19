@@ -43,12 +43,13 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Messaging
         {
             if (cause == null)
             {
-                CommonEventSource.Log.Info($"Closing connection for device: {this.deviceIdentity}", string.Empty);
+                CommonEventSource.Log.Info($"Closing connection for device: {this.deviceIdentity}", string.Empty, string.Empty);
             }
             else
             {
-                string scope = cause.Data[MqttAdapter.ScopeExceptionDataKey]?.ToString();
-                CommonEventSource.Log.Warning($"Closing connection for device: {this.deviceIdentity}" + (scope == null ? null : ", scope: " + scope), cause);
+                string operationScope = cause.Data[MqttAdapter.OperationScopeExceptionDataKey]?.ToString();
+                string connectionScope = cause.Data[MqttAdapter.ConnectionScopeExceptionDataKey]?.ToString();
+                CommonEventSource.Log.Warning($"Closing connection for device: {this.deviceIdentity}" + (operationScope == null ? null : ", scope: " + operationScope), cause, connectionScope);
             }
 
             if (this.messagingChannel != null)

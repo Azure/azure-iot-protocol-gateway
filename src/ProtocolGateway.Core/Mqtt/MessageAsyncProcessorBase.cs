@@ -12,12 +12,14 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
     public abstract class MessageAsyncProcessorBase<T>
     {
+        readonly string scope;
         readonly Queue<T> backlogQueue;
         State state;
         readonly TaskCompletionSource completionSource;
 
-        protected MessageAsyncProcessorBase()
+        protected MessageAsyncProcessorBase(string scope)
         {
+            this.scope = scope;
             this.backlogQueue = new Queue<T>();
             this.completionSource = new TaskCompletionSource();
         }
@@ -102,7 +104,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 while (queue.Count > 0 && this.state != State.Aborted)
                 {
                     T message = queue.Dequeue();
-                    await this.ProcessAsync(context, message);
+                    await this.ProcessAsync(context, message, this.scope);
                 }
 
                 switch (this.state)
@@ -125,7 +127,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             }
         }
 
-        protected abstract Task ProcessAsync(IChannelHandlerContext context, T packet);
+        protected abstract Task ProcessAsync(IChannelHandlerContext context, T packet, string scope);
 
         enum State
         {
