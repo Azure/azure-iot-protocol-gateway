@@ -11,6 +11,7 @@
       <Setting name="RetainPropertyName" value="mqtt-retain" />
       <Setting name="DupPropertyName" value="mqtt-dup" />
       <Setting name="QoSPropertyName" value="mqtt-qos" />
+      <Setting name="SubscriptionCreationTimeCheckThreshold" value="00:00:30"/>
       <Setting name="IotHubClient.ConnectionString" value="TODO: IoT Hub connection string to connect to" />
       <Setting name="IotHubClient.MaxPendingInboundMessages" value="10" />
       <Setting name="IotHubClient.MaxPendingOutboundMessages" value="10" />

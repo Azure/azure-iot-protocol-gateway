@@ -10,6 +10,7 @@
       <Setting name="RetainPropertyName" />
       <Setting name="DupPropertyName" />
       <Setting name="QoSPropertyName" />
+      <Setting name="SubscriptionCreationTimeCheckThreshold" />
       <Setting name="IotHubClient.ConnectionString" />
       <Setting name="IotHubClient.MaxPendingInboundMessages" />
       <Setting name="IotHubClient.MaxPendingOutboundMessages" />

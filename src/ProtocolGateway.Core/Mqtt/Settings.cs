@@ -18,7 +18,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         const string DeviceReceiveAckTimeoutSetting = "DeviceReceiveAckTimeout";
         const string MaxOutboundRetransmissionCountSetting = "MaxOutboundRetransmissionCount";
         const string ServicePropertyPrefixSetting = "ServicePropertyPrefix";
-
+        const string SubscriptionCreationTimeCheckThresholdSetting = "SubscriptionCreationTimeCheckThreshold"; //Threshold of time difference between message IoT Hub enqueued time and subscription creation time
         const string RetainPropertyNameDefaultValue = "mqtt-retain";
         const string DupPropertyNameDefaultValue = "mqtt-dup";
         const string QoSPropertyNameDefaultValue = "mqtt-qos";
@@ -64,6 +64,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             this.MaxOutboundRetransmissionCount = retransmissionCount;
 
             this.ServicePropertyPrefix = settingsProvider.GetSetting(ServicePropertyPrefixSetting, string.Empty);
+
+            TimeSpan threshold;
+            this.SubscriptionCreationTimeCheckThreshold = settingsProvider.TryGetTimeSpanSetting(SubscriptionCreationTimeCheckThresholdSetting, out threshold)
+                ? threshold
+                : (TimeSpan?)null;
         }
 
         public int MaxPendingInboundAcknowledgements { get; private set; }
@@ -92,5 +97,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         public int MaxOutboundRetransmissionCount { get; }
 
         public string ServicePropertyPrefix { get; private set; }
+
+        /// <summary>
+        ///     The Protocol Gateway and IoT Hub reside on different servers which can result in a time variance. This threshold can be set to help reduce the restriction
+        ///     on the time difference between subscription creation time (Protocol Gateway) and message enqueued time (IoT Hub).
+        /// </summary>
+        public TimeSpan? SubscriptionCreationTimeCheckThreshold { get; }
     }
 }
