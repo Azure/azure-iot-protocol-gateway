@@ -16,7 +16,7 @@ The protocol gateway requires an Azure IoT hub to connect to and an Azure Storag
 
 To build the protocol gateway you need Microsoft Visual Studio 2013 (or later) and Microsoft Azure SDK 2.6 installed on your development machine. For deployment of the protocol gateway you need Microsoft Azure PowerShell installed.
 
-### Running the Console Sample
+### Running the Console Host
 The Azure IoT protocol gateway repository contains reference implementations of hosts in the ‘/host’ folder. The console app in this folder hosts a protocol gateway that connects to IoT Hub and starts listening for devices to connect (Note: by default the gateway listens on port 8883 for MQTTS and uses port 5671 for AMQPS traffic).
 In order to run the console sample please follow these steps:
 
@@ -31,7 +31,7 @@ In order to run the console sample please follow these steps:
 ### Running an End-to-End Test
 There is also an end-to-end test which exercises the following:
 
-- the test creates an instance of the protocol gateway or alternatively it can use an existing one
+- the test creates an instance of the protocol gateway or alternatively, it can use an existing one
 - the test simulates a device that connects to the protocol gateway (which is connected to an IoT hub)
 - an app backend is simulated by using an Event Hub receiver to read messages from IoT Hub, and an IoT Hub service client to send messages to the device
 - the device sends two messages to IoT Hub (one with QoS 0 and one with QoS 1) and those are received by the app backend (through the Event Hub receiver) and verified
@@ -47,8 +47,8 @@ Please follow these steps in order to run the end-to-end test for the protocol g
 	(Note: by default, the gateway listens on port 8883 for MQTTS and uses port 5671 for AMQPS traffic).
 2. In Visual Studio, run the unit test `EndToEndTests.BasicFunctionalityTest` in the ProtocolGateway.Tests project. This test is expected to pass if the setup has been successful.
 
-### Deploying Cloud Sample
-Please follow these steps to deploy the cloud sample in Azure Cloud Services worker roles:
+### Deploying a Cloud Services Host
+Please follow these steps to deploy the Cloud Services host in Azure Cloud Services worker roles:
 	
 1. Open the solution in Visual Studio.
 2. Right-click on **host/ProtocolGateway.Host.Cloud** project and choose **Package**.
@@ -58,14 +58,14 @@ Please follow these steps to deploy the cloud sample in Azure Cloud Services wor
 	- Please note that based on your local configuration you might need to change the PowerShell execution policy if you are receiving an execution error.  
 5. You will be prompted to sign-in to your Azure account. Your account will be used for the deployment session.
 6. Wait for the script execution to complete. 
-7. To verify the successful deployment, perform an end-to-end test as described in [Running End-to-End Test](#running-end-to-end-test). Please note that you need to supply the public IP address of the Cloud Service in the `End2End.ServerAddress` setting.
+7. To verify the successful deployment, perform an end-to-end test as described in [Running an End-to-End Test](#running-end-to-end-test). Please note that you need to supply the public IP address of the Cloud Service in the `End2End.ServerAddress` setting.
 
-### Deploying Service Fabric Sample
-The Service Fabric hosts a protocol gateway that runs in a Service Fabric Cluster using standard logging and configuration techniques for that style of deployment. The following deployment is perfomed on the local Service Fabric cluster but may be adjusted to deploy to production / remote clusters.
+### Deploying a Service Fabric Host
+The Service Fabric host runs the protocol gateway in a Service Fabric Cluster using standard logging and configuration techniques for that style of deployment. The following deployment is perfomed on a local Service Fabric cluster but may be adjusted to deploy to production / remote clusters.
 	
 1. Update the IoT Hub client configuration file (`ProtocolGateway.Host.Fabric.FrontEnd\PackageRoot\Config\FrontEnd.IoTHubClient.json`) by providing the following settings:
 	 - `ConnectionString` - connection string for your IoT hub that will be used for the test. For this test specifically you need to provide the connection string for the device policy in the `Shared access policies` settings of the IoT hub.
-		Note: It is recommended to use an IoT hub instance specifically created for the tests. The test will register a device in the IoT hub and will use it for to exchange messages between the device and the simulated app back end.
+		Note: It is recommended to use an IoT Hub instance specifically created for the tests. The test will register a device in the IoT hub and will use it to exchange messages between the device and the simulated app back end.
 2. Update the Azure Storage configuration file (`ProtocolGateway.Host.Fabric.FrontEnd\PackageRoot\Config\FrontEnd.AzureState.json`) by providing the following settings:
  - `BlobConnectionString` - connection string for your Azure Storage that will be used for persisting the BLOB based MQTT session state. 
 		Note: The storage emulator can be used for local development cluster deployment.
@@ -87,12 +87,9 @@ The Service Fabric hosts a protocol gateway that runs in a Service Fabric Cluste
 ----------
 6. You can see the deployed service through the Service Fabric Local Cluster Manager.
 
-
- 
-
 ### Diagnostics and Monitoring
 #### Logging
-The protocol gateway uses EventSource and Semantic Logging Application Block for logging (see https://msdn.microsoft.com/en-us/library/dn440729(v=pandp.60).aspx for details). By default, diagnostic events of all levels (including verbose) are logged to the console output in the Console sample and to `SLABLogsTable` Azure Storage Table in the Cloud sample.
+The protocol gateway uses EventSource and Semantic Logging Application Block for logging (see https://msdn.microsoft.com/en-us/library/dn440729(v=pandp.60).aspx for details). By default, diagnostic events of all levels (including verbose) are logged to the console output in the Console host and to `SLABLogsTable` Azure Storage Table in the Cloud hosts.
 
 In addition, the Cloud sample is also configured to collect Windows Event Log events and crash dumps. Please see https://msdn.microsoft.com/en-us/library/azure/dn186185.aspx for details on configuring Windows Azure Diagnostics.
 
