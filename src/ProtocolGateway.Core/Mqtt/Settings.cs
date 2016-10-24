@@ -99,8 +99,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         public string ServicePropertyPrefix { get; private set; }
 
         /// <summary>
-        ///     The Protocol Gateway and IoT Hub reside on different servers which can result in a time variance. This threshold can be set to help reduce the restriction
-        ///     on the time difference between subscription creation time (Protocol Gateway) and message enqueued time (IoT Hub).
+        ///     If specified, the time period threshold for time variances between the Protocol Gateway server and the IoT Hub server when checking if a subscription existed when C2D messages were enqueued on the IoT Hub. Default value: 00:00:00
         /// </summary>
         public TimeSpan? SubscriptionCreationTimeCheckThreshold { get; }
     }
