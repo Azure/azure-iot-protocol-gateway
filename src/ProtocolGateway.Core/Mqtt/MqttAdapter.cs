@@ -173,7 +173,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                             $"deviceId: {this.identity}", 
                             this.ChannelId);
                     }
-                    this.stateFlags &= StateFlags.ReadThrottled;
+                    this.stateFlags |= StateFlags.ReadThrottled;
                 }
             }
         }
