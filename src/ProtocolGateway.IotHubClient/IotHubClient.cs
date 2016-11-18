@@ -8,6 +8,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
     using System.IO;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
+    using DotNetty.Common.Utilities;
     using Microsoft.Azure.Devices.Client;
     using Microsoft.Azure.Devices.Client.Exceptions;
     using Microsoft.Azure.Devices.ProtocolGateway.Identity;
@@ -88,7 +89,12 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
 
         public int MaxPendingMessages => this.settings.MaxPendingInboundMessages;
 
-        public IMessage CreateMessage(string address, IByteBuffer payload) => new IotHubClientMessage(address, new Message(payload.IsReadable() ? new ReadOnlyByteBufferStream(payload, true) : null));
+        public IMessage CreateMessage(string address, IByteBuffer payload)
+        {
+            var message = new IotHubClientMessage(new Message(payload.IsReadable() ? new ReadOnlyByteBufferStream(payload, false) : null), payload);
+            message.Address = address;
+            return message;
+        }
 
         public void BindMessagingChannel(IMessagingChannel<IMessage> channel)
         {
@@ -102,6 +108,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
 
         public async Task SendAsync(IMessage message)
         {
+            var clientMessage = (IotHubClientMessage)message;
             try
             {
                 string address = message.Address;
@@ -132,21 +139,29 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
                     message.Properties[this.settings.ServicePropertyPrefix + MessagePropertyNames.Unmatched] = bool.TrueString;
                     message.Properties[this.settings.ServicePropertyPrefix + MessagePropertyNames.Subject] = address;
                 }
-                await this.deviceClient.SendEventAsync(((IotHubClientMessage)message).ToMessage());
+                Message iotHubMessage = clientMessage.ToMessage();
+                
+                await this.deviceClient.SendEventAsync(iotHubMessage);
             }
             catch (IotHubException ex)
             {
                 throw ComposeIotHubCommunicationException(ex);
             }
+            finally
+            {
+                clientMessage.Dispose();
+            }
         }
 
         async void Receive()
         {
+            Message message = null;
+            IByteBuffer messagePayload = null;
             try
             {
                 while (true)
                 {
-                    Message message = await this.deviceClient.ReceiveAsync(TimeSpan.MaxValue);
+                    message = await this.deviceClient.ReceiveAsync(TimeSpan.MaxValue);
                     if (message == null)
                     {
                         this.messagingChannel.Close(null);
@@ -156,10 +171,10 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
                     if (this.settings.MaxOutboundRetransmissionEnforced && message.DeliveryCount > this.settings.MaxOutboundRetransmissionCount)
                     {
                         await this.RejectAsync(message.LockToken);
+                        message.Dispose();
                         continue;
                     }
 
-                    IByteBuffer messagePayload;
                     using (Stream payloadStream = message.GetBodyStream())
                     {
                         long streamLength = payloadStream.Length;
@@ -180,12 +195,17 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
                     string address;
                     if (!this.messageAddressConverter.TryDeriveAddress(msg, out address))
                     {
+                        messagePayload.Release();
                         await this.RejectAsync(message.LockToken); // todo: fork await
+                        message.Dispose();
                         continue;
                     }
                     msg.Address = address;
 
                     this.messagingChannel.Handle(msg);
+
+                    message = null; // ownership has been transferred to messagingChannel
+                    messagePayload = null;
                 }
             }
             catch (IotHubException ex)
@@ -195,6 +215,14 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             catch (Exception ex)
             {
                 this.messagingChannel.Close(ex);
+            }
+            finally
+            {
+                message?.Dispose();
+                if (messagePayload != null)
+                {
+                    ReferenceCountUtil.SafeRelease(messagePayload);
+                }
             }
         }
 

@@ -6,6 +6,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
     using System;
     using System.Collections.Generic;
     using DotNetty.Buffers;
+    using DotNetty.Common.Utilities;
     using Microsoft.Azure.Devices.Client;
     using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
 
@@ -17,12 +18,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
         {
             this.message = message;
             this.Payload = payload;
-        }
-
-        public IotHubClientMessage(string address, Message message)
-            : this(message, null)
-        {
-            this.Address = address;
         }
 
         public IDictionary<string, string> Properties => this.message.Properties;
@@ -42,12 +37,12 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
         public void Dispose()
         {
             this.message.Dispose();
-            this.message.BodyStream?.Dispose();
+            if (this.Payload != null)
+            {
+                ReferenceCountUtil.SafeRelease(this.Payload);
+            }
         }
 
-        internal Message ToMessage()
-        {
-            return this.message;
-        }
+        internal Message ToMessage() => this.message;
     }
 }
