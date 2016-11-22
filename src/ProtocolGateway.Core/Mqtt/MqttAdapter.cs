@@ -1054,10 +1054,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
             try
             {
-                foreach (var publishProcessor in this.publishProcessors)
-                {
-                    publishProcessor.Value.Complete();
-                }
                 this.publishPubAckProcessor.Complete();
                 this.publishPubRecProcessor.Complete();
                 this.pubRelPubCompProcessor.Complete();
@@ -1068,8 +1064,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     this.pubRelPubCompProcessor.Completion);
 
                 IMessagingBridge bridge = this.messagingBridge;
-                this.messagingBridge = null;
-                await bridge.DisposeAsync(cause);
+                if (this.messagingBridge != null)
+                {
+                    this.messagingBridge = null;
+                    await bridge.DisposeAsync(cause);
+                }
             }
             catch (Exception ex)
             {
@@ -1079,27 +1078,30 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
         async Task CompletePublishAsync(IChannelHandlerContext context, PublishPacket will)
         {
-            if (will == null)
+            IMessagingServiceClient sendingClient = null;
+            if (will != null)
             {
-                return;
+                sendingClient = this.ResolveSendingClient(will.TopicName);
             }
 
-            IMessagingServiceClient sendingClient = this.ResolveSendingClient(will.TopicName);
-
-            MessageAsyncProcessor<PublishPacket> publishProcessor;
-            if (this.publishProcessors.TryGetValue(sendingClient, out publishProcessor))
+            var completionTasks = new List<Task>();
+            foreach (var publishProcessorRecord in this.publishProcessors)
             {
-                await publishProcessor.Completion;
+                publishProcessorRecord.Value.Complete();
+                if (publishProcessorRecord.Key == sendingClient)
+                {
+                    try
+                    {
+                        await this.PublishToServerAsync(context, sendingClient, will, MessageTypes.Will);
+                    }
+                    catch (Exception ex)
+                    {
+                        CommonEventSource.Log.Warning("Failed sending Will Message.", ex, this.ChannelId);
+                    }
+                }
+                completionTasks.Add(publishProcessorRecord.Value.Completion);
             }
-
-            try
-            {
-                await this.PublishToServerAsync(context, sendingClient, will, MessageTypes.Will);
-            }
-            catch (Exception ex)
-            {
-                CommonEventSource.Log.Warning("Failed sending Will Message.", ex, this.ChannelId);
-            }
+            await Task.WhenAll(completionTasks);
         }
 
         #endregion
