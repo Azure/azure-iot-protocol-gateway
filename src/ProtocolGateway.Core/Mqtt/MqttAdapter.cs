@@ -362,6 +362,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         {
             if (!this.ConnectedToService)
             {
+                packet.Release();
                 return;
             }
 
@@ -369,8 +370,10 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
             this.ResumeReadingIfNecessary(context);
 
-            using (IMessage message = sendingClient.CreateMessage(packet.TopicName, packet.Payload))
+            IMessage message = null;
+            try
             {
+                message = sendingClient.CreateMessage(packet.TopicName, packet.Payload);
                 Util.CompleteMessageFromPacket(message, packet, this.settings);
 
                 if (messageType != null)
@@ -379,29 +382,34 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 }
 
                 await sendingClient.SendAsync(message);
-            }
 
-            PerformanceCounters.MessagesSentPerSecond.Increment();
+                PerformanceCounters.MessagesSentPerSecond.Increment();
 
-            if (!this.IsInState(StateFlags.Closed))
-            {
-                switch (packet.QualityOfService)
+                if (!this.IsInState(StateFlags.Closed))
                 {
-                    case QualityOfService.AtMostOnce:
-                        // no response necessary
-                        PerformanceCounters.InboundMessageProcessingTime.Register(startedTimestamp);
-                        break;
-                    case QualityOfService.AtLeastOnce:
-                        Util.WriteMessageAsync(context, PubAckPacket.InResponseTo(packet))
-                            .OnFault(ShutdownOnWriteFaultAction, context);
-                        PerformanceCounters.InboundMessageProcessingTime.Register(startedTimestamp); // todo: assumes PUBACK is written out sync
-                        break;
-                    case QualityOfService.ExactlyOnce:
-                        ShutdownOnError(context, InboundPublishProcessingScope, new NotSupportedException("QoS 2 is not supported."));
-                        break;
-                    default:
-                        throw new InvalidOperationException("Unexpected QoS level: " + packet.QualityOfService.ToString());
+                    switch (packet.QualityOfService)
+                    {
+                        case QualityOfService.AtMostOnce:
+                            // no response necessary
+                            PerformanceCounters.InboundMessageProcessingTime.Register(startedTimestamp);
+                            break;
+                        case QualityOfService.AtLeastOnce:
+                            Util.WriteMessageAsync(context, PubAckPacket.InResponseTo(packet))
+                                .OnFault(ShutdownOnWriteFaultAction, context);
+                            PerformanceCounters.InboundMessageProcessingTime.Register(startedTimestamp); // todo: assumes PUBACK is written out sync
+                            break;
+                        case QualityOfService.ExactlyOnce:
+                            ShutdownOnError(context, InboundPublishProcessingScope, new NotSupportedException("QoS 2 is not supported."));
+                            break;
+                        default:
+                            throw new InvalidOperationException("Unexpected QoS level: " + packet.QualityOfService.ToString());
+                    }
                 }
+                message = null;
+            }
+            finally
+            {
+                message?.Dispose();
             }
         }
 
@@ -428,9 +436,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         public async void Handle(MessageWithFeedback messageWithFeedback)
         {
             IChannelHandlerContext context = this.capturedContext;
+            IMessage message = messageWithFeedback.Message;
             try
             {
-                IMessage message = messageWithFeedback.Message;
                 Contract.Assert(message != null);
 
                 PerformanceCounters.MessagesReceivedPerSecond.Increment();
@@ -476,6 +484,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                         // todo: consider back pressure in a form of explicit retransmission state communication with MSC
                     }
                 }
+
+                message = null;
             }
             catch (MessagingException ex)
             {
@@ -484,6 +494,13 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             catch (Exception ex)
             {
                 ShutdownOnError(context, ReceiveProcessingScope, ex);
+            }
+            finally
+            {
+                if (message != null)
+                {
+                    ReferenceCountUtil.SafeRelease(message.Payload);
+                }
             }
         }
 

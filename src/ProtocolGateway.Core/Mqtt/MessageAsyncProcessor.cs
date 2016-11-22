@@ -17,9 +17,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             this.processFunc = processFunc;
         }
 
-        protected override Task ProcessAsync(IChannelHandlerContext context, T packet, string scope)
-        {
-            return this.processFunc(context, packet);
-        }
+        protected override Task ProcessAsync(IChannelHandlerContext context, T packet, string scope) => this.processFunc(context, packet);
     }
 }
