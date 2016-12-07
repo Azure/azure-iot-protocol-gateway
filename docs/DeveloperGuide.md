@@ -142,7 +142,7 @@ The handler lets through all messages except for PUBLISH packets that have a top
 Common tasks that can be addressed through custom handlers are compression, encryption, and other types of payload transformation. The protocol gateway includes a sample of a [compression handler](../host/ProtocolGateway.Host.Common/MqttPacketPayloadCompressionHandler.cs).
 
 ## Component Structure
-The protocol gateway is built on top of [DotNetty](https://github.org/Azure/DotNetty/), an asynchronous event-driven network application framework.
+The protocol gateway is built on top of [DotNetty](https://github.com/Azure/DotNetty/), an asynchronous event-driven network application framework.
 The gateway uses DotNetty's components and extends the network communication over DotNetty's channels by adding message routing to and from Azure Iot Hub.
 
 The protocol gateway is composed from the following components:
