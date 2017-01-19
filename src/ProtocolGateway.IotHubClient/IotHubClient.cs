@@ -132,10 +132,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
                         throw new InvalidOperationException($"Topic name `{address}` could not be matched against any of the configured routes.");
                     }
 
-                    if (CommonEventSource.Log.IsWarningEnabled)
-                    {
-                        CommonEventSource.Log.Warning("Topic name could not be matched against any of the configured routes. Falling back to default telemetry settings.", address);
-                    }
+                    CommonEventSource.Log.Warning("Topic name could not be matched against any of the configured routes. Falling back to default telemetry settings.", address);
                     message.Properties[this.settings.ServicePropertyPrefix + MessagePropertyNames.Unmatched] = bool.TrueString;
                     message.Properties[this.settings.ServicePropertyPrefix + MessagePropertyNames.Subject] = address;
                 }
