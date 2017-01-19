@@ -137,20 +137,14 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             TAckState firstRequest = this.FirstRequestPendingAck;
             if (firstRequest == null)
             {
-                if (CommonEventSource.Log.IsWarningEnabled)
-                {
-                    CommonEventSource.Log.Warning($"{packet.PacketType.ToString()} #{packet.PacketId.ToString()} was received while not expected.", scope);
-                }
+                CommonEventSource.Log.Warning($"{packet.PacketType.ToString()} #{packet.PacketId.ToString()} was received while not expected.", scope);
                 message = default(TAckState);
                 return false;
             }
 
             if (packet.PacketId != firstRequest.PacketId)
             {
-                if (CommonEventSource.Log.IsWarningEnabled)
-                {
-                    CommonEventSource.Log.Warning($"{packet.PacketType.ToString()} #{packet.PacketId.ToString()} was received while #{firstRequest.PacketId.ToString()} was expected.", scope);
-                }
+                CommonEventSource.Log.Warning($"{packet.PacketType.ToString()} #{packet.PacketId.ToString()} was received while #{firstRequest.PacketId.ToString()} was expected.", scope);
                 message = default(TAckState);
                 return false;
             }
