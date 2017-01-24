@@ -738,11 +738,12 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             bool found = false;
             qos = QualityOfService.AtMostOnce;
             IReadOnlyList<ISubscription> subscriptions = this.sessionState.Subscriptions;
+            TimeSpan threshold = this.settings.SubscriptionCreationTimeCheckThreshold ?? TimeSpan.Zero; 
             for (int i = 0; i < subscriptions.Count; i++)
             {
                 ISubscription subscription = subscriptions[i];
                 if ((!found || subscription.QualityOfService > qos)
-                    && subscription.CreationTime < messageTime
+                    && (subscription.CreationTime < messageTime || subscription.CreationTime.Subtract(messageTime) <= threshold)
                     && Util.CheckTopicFilterMatch(topicName, subscription.TopicFilter))
                 {
                     found = true;

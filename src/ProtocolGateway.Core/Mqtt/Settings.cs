@@ -18,7 +18,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         const string DeviceReceiveAckTimeoutSetting = "DeviceReceiveAckTimeout";
         const string MaxOutboundRetransmissionCountSetting = "MaxOutboundRetransmissionCount";
         const string ServicePropertyPrefixSetting = "ServicePropertyPrefix";
-
+        const string SubscriptionCreationTimeCheckThresholdSetting = "SubscriptionCreationTimeCheckThreshold"; //Threshold of time difference between message IoT Hub enqueued time and subscription creation time
         const string RetainPropertyNameDefaultValue = "mqtt-retain";
         const string DupPropertyNameDefaultValue = "mqtt-dup";
         const string QoSPropertyNameDefaultValue = "mqtt-qos";
@@ -64,6 +64,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             this.MaxOutboundRetransmissionCount = retransmissionCount;
 
             this.ServicePropertyPrefix = settingsProvider.GetSetting(ServicePropertyPrefixSetting, string.Empty);
+
+            TimeSpan threshold;
+            this.SubscriptionCreationTimeCheckThreshold = settingsProvider.TryGetTimeSpanSetting(SubscriptionCreationTimeCheckThresholdSetting, out threshold)
+                ? threshold
+                : (TimeSpan?)null;
         }
 
         public int MaxPendingInboundAcknowledgements { get; private set; }
@@ -92,5 +97,10 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         public int MaxOutboundRetransmissionCount { get; }
 
         public string ServicePropertyPrefix { get; private set; }
+
+        /// <summary>
+        ///     If specified, the time period threshold for time variances between the Protocol Gateway server and the IoT Hub server when checking if a subscription existed when C2D messages were enqueued on the IoT Hub. Default value: 00:00:00
+        /// </summary>
+        public TimeSpan? SubscriptionCreationTimeCheckThreshold { get; }
     }
 }
