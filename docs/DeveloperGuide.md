@@ -17,7 +17,7 @@ The terms ‘device’ or ‘devices’ are used in this guide as a generic way 
 The MQTT Protocol Adapter is implemented in the class MqttIotHubAdapter. The adapter is the channel handler that bridges the communication with IoT Hub. This component is responsible for the translation of the MQTT protocol to IoT Hub expected syntax and semantics. The implementation is based on the MQTT 3.1.1 protocol version. The following topics describe implementation specific details related to the MQTT protocol features.
 
 ### Authentication
-The default implementation relies on authentication through IoT Hub. The user name and password fields from the MQTT CONNECT packet are passed through to IoT Hub for authentication. The expected values for those fields are the device identifier (deviceId) in the User Name and the device Shared-Access-Signature (SAS) token in the Password field of the MQTT packet. This behavior can be changed by providing a custom implementation of the IAuthenticationProvider interface.
+The default implementation relies on authentication through IoT Hub. The user name and password fields from the MQTT CONNECT packet are passed through to IoT Hub for authentication. The expected values for those fields are the device identifier (deviceId) in the User Name and the device Shared-Access-Signature (SAS) token in the Password field of the MQTT packet. This behavior can be changed by providing a custom implementation of the IDeviceIdentityProvider interface.
 
 ### Connecting to the Gateway
 As specified by the MQTT standard, only one connection can be established from each device. The detection of available connections from a particular device is implemented in IoT Hub. Note that because the protocol gateway will typically run on multiple nodes in a scale-out configuration, a device might have an open connection with IoT Hub established through a different protocol gateway node. Since IoT Hub supports multiple links per device, this detection is specifically performed when the protocol gateway opens a receive link to IoT Hub. In case IoT Hub detects an existing receiving link for the device, it will close the existing link and then accept the new link. This also means that when a receiving link is closed by IoT Hub, the protocol gateway closes the sending link to IoT Hub and then closes the MQTT network connection.
@@ -58,7 +58,7 @@ The default implementation of the gateway uses `SasTokenAuthenticationProvider` 
 
 If you require custom authentication (for example, to lookup the device in a custom registry), you need to:
 
-1. Implement the [`IAuthenticationProvider` interface](../src/ProtocolGateway.Core/Mqtt/Auth/IAuthenticationProvider.cs).
+1. Implement the [`IDeviceIdentityProvider` interface](../src/ProtocolGateway.Core/Identity/IDeviceIdentityProvider.cs).
 See [SasTokenAuthenticationProvider](../src/ProtocolGateway.Core/Mqtt/Auth/SasTokenAuthenticationProvider.cs) for a reference implementation.
 2. Change `Bootstrapper`'s constructor to use your custom Authentication Provider implementation:
 ```
@@ -199,7 +199,7 @@ This section outlines the interactions between components of the protocol gatewa
 10. `MqttDecoder` receives the decrypted data in the Byte Buffer and attempts to parse an MQTT packet. If there is not enough data in the Byte Buffer it received, it requests that the previous channel handler read more data. Once the MQTT packet is fully available for parsing, `MqttDecoder` creates an instance of an MQTT packet object, completes it with the parsed data, and passes it to the next channel handler in the pipeline. Per MQTT specification, a client is required to send a CONNECT packet first. We assume that `MqttDecoder` has parsed a CONNECT packet.
 11. `MqttIotHubAdapter` receives a CONNECT packet.
 12. `MqttIotHubAdapter` initiates a connection:
-    - `MqttIotHubAdapter` calls `IAuthenticationProvider` to authenticate the device using the client ID, user name, and password from the CONNECT packet. `IAuthenticationProvider` also returns device information for establishing the connection to IoT Hub.
+    - `MqttIotHubAdapter` calls `IDeviceIdentityProvider` to authenticate the device using the client ID, user name, and password from the CONNECT packet. `IDeviceIdentityProvider` also returns device information for establishing the connection to IoT Hub.
     - `MqttIotHubAdapter` initiates a connection to IoT Hub. As a result of a successful connection, an `IDeviceClient` instance is returned for future communication with IoT Hub on behalf of the device.
     - `MqttIotHubAdapter` calls `ISessionStateManager` to lookup the session state for the device. If the CleanSession flag is set to 1 in the CONNECT packet, `MqttIotHubAdapter` will also delete any existing session state.
     - `MqttIotHubAdapter` begins receiving messages from IoT Hub.
