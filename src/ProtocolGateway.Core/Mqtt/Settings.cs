@@ -18,6 +18,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         const string DeviceReceiveAckTimeoutSetting = "DeviceReceiveAckTimeout";
         const string MaxOutboundRetransmissionCountSetting = "MaxOutboundRetransmissionCount";
         const string ServicePropertyPrefixSetting = "ServicePropertyPrefix";
+        const string AbortOnOutOfOrderPubAckSetting = "AbortOnOutOfOrderPubAck";
 
         const string RetainPropertyNameDefaultValue = "mqtt-retain";
         const string DupPropertyNameDefaultValue = "mqtt-dup";
@@ -64,6 +65,10 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             this.MaxOutboundRetransmissionCount = retransmissionCount;
 
             this.ServicePropertyPrefix = settingsProvider.GetSetting(ServicePropertyPrefixSetting, string.Empty);
+
+            bool abortOnOutOfOrderPubAck;
+            settingsProvider.TryGetBooleanSetting(AbortOnOutOfOrderPubAckSetting, out abortOnOutOfOrderPubAck);
+            this.AbortOnOutOfOrderPubAck = abortOnOutOfOrderPubAck;
         }
 
         public int MaxPendingInboundAcknowledgements { get; private set; }
@@ -79,6 +84,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         public string DupPropertyName { get; }
 
         public string QoSPropertyName { get; }
+
+        public bool AbortOnOutOfOrderPubAck { get; }
 
         /// <summary>
         ///     When null, there is no limit on delay between sending PUBLISH to client and receiving PUBACK from the client

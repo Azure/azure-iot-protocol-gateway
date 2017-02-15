@@ -118,6 +118,7 @@
     <Compile Include="..\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="ErrorCode.cs" />
     <Compile Include="Messaging\IMessagingChannel.cs" />
     <Compile Include="Messaging\IMessage.cs" />
     <Compile Include="Instrumentation\AveragePerformanceCounter.cs" />
@@ -151,6 +152,7 @@
     <Compile Include="Instrumentation\PerformanceCounters.cs" />
     <Compile Include="Mqtt\TemplateParameters.cs" />
     <Compile Include="Mqtt\Persistence\TransientSubscription.cs" />
+    <Compile Include="ProtocolGatewayException.cs" />
     <Compile Include="ReadOnlyByteBufferStream.cs" />
     <Compile Include="AppConfigSettingsProvider.cs" />
     <Compile Include="Properties\Friends.cs" />
