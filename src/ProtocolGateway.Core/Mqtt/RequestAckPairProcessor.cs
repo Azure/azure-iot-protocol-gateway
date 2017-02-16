@@ -23,9 +23,10 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         readonly Action<IChannelHandlerContext, TAckState> triggerRetransmissionAction;
         bool retransmissionCheckScheduled;
         readonly TimeSpan ackTimeout;
+        readonly bool abortOnOutOfOrderAck;
 
         public RequestAckPairProcessor(Func<IChannelHandlerContext, TAckState, Task> processAckFunc,
-            Action<IChannelHandlerContext, TAckState> triggerRetransmissionAction, TimeSpan? ackTimeout, string scope)
+            Action<IChannelHandlerContext, TAckState> triggerRetransmissionAction, TimeSpan? ackTimeout, bool abortOnOutOfOrderAck, string scope)
             : base(scope)
         {
             Contract.Requires(!ackTimeout.HasValue || ackTimeout.Value > TimeSpan.Zero);
@@ -33,6 +34,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             this.processAckFunc = processAckFunc;
             this.triggerRetransmissionAction = triggerRetransmissionAction;
             this.ackTimeout = ackTimeout ?? TimeSpan.Zero;
+            this.abortOnOutOfOrderAck = abortOnOutOfOrderAck;
         }
 
         public TAckState FirstRequestPendingAck => this.RequestPendingAckCount == 0 ? default(TAckState) : this.pendingAckQueue.Peek();
@@ -165,7 +167,16 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         protected override Task ProcessAsync(IChannelHandlerContext context, PacketWithId packet, string scope)
         {
             TAckState message;
-            return this.TryDequeueMessage(packet, out message, scope) ? this.processAckFunc(context, message) : TaskEx.Completed;
+            if (this.TryDequeueMessage(packet, out message, scope))
+            {
+                return this.processAckFunc(context, message);
+            }
+            else if (this.abortOnOutOfOrderAck)
+            {
+                return TaskEx.FromException(new ProtocolGatewayException(ErrorCode.InvalidPubAckOrder, "Client MUST send PUBACK packets in the order in which the corresponding PUBLISH packets were received"));
+            }
+
+            return TaskEx.Completed;
         }
     }
 }
