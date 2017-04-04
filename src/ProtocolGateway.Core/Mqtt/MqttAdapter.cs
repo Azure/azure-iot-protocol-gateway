@@ -978,8 +978,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             TimeSpan elapsedSinceLastActive = DateTime.UtcNow - self.lastClientActivityTime;
             if (elapsedSinceLastActive > self.keepAliveTimeout)
             {
-                ShutdownOnError(context, string.Empty, new
-                    (ErrorCode.KeepAliveTimedOut, "Keep Alive timed out."));
+                ShutdownOnError(context, string.Empty, new ProtocolGatewayException(ErrorCode.KeepAliveTimedOut, "Keep Alive timed out."));
                 return;
             }
 
