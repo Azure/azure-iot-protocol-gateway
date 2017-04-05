@@ -21,6 +21,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway
         ExactlyOnceQosNotSupported = 400011,
         UnknownPacketType = 400012,
         DuplicateConnectReceived = 400013,
+        ChannelClosed = 400014,
 
         AuthenticationFailed = 401000,
     }
