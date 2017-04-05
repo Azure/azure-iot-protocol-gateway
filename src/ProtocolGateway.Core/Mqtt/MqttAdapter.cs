@@ -182,7 +182,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
         public override void ChannelInactive(IChannelHandlerContext context)
         {
-            this.Shutdown(context, new ChannelException("Channel closed."));
+            // For situations where the shutdown was initiated by us, we'd already be in a closed state and a better exception would be propagated.
+            // In this case, the channel closure was beyond our control (device initiated).
+            this.Shutdown(context, new ProtocolGatewayException(ErrorCode.ChannelClosed, "Channel closed."));
 
             base.ChannelInactive(context);
         }

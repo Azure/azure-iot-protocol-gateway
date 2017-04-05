@@ -23,5 +23,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway
         DuplicateConnectReceived = 400013,
 
         AuthenticationFailed = 401000,
+
+        //ClientClosedRequest - 499
+        ChannelClosed = 499001,
     }
 }
