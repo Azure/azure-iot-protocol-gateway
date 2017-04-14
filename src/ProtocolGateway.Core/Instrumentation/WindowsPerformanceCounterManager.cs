@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft. All rights reserved.
+﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
@@ -8,11 +8,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
     using System.Diagnostics;
     using System.Linq;
 
-    public class PerformanceCounterManager
+    public class WindowsPerformanceCounterManager : IPerformanceCounterManager
     {
         readonly Dictionary<Tuple<string, string>, SafePerformanceCounter> counterMap;
 
-        protected PerformanceCounterManager(IDictionary<PerformanceCounterCategoryInfo, CounterCreationData[]> counterDefinitions)
+        protected WindowsPerformanceCounterManager(IDictionary<PerformanceCounterCategoryInfo, CounterCreationData[]> counterDefinitions)
         {
             this.counterMap = new Dictionary<Tuple<string, string>, SafePerformanceCounter>();
 
@@ -64,7 +64,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
             return category;
         }
 
-        public SafePerformanceCounter GetCounter(string category, string name)
+        public IPerformanceCounter GetCounter(string category, string name)
         {
             SafePerformanceCounter counter;
             if (!this.counterMap.TryGetValue(Tuple.Create(category, name), out counter))

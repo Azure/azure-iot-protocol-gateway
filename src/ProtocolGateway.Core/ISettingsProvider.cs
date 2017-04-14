@@ -4,9 +4,11 @@
 namespace Microsoft.Azure.Devices.ProtocolGateway
 {
     using System;
-    using System.Configuration;
     using System.Diagnostics;
     using System.Globalization;
+#if !NETSTANDARD1_3
+    using System.Configuration;
+#endif
 
     public interface ISettingsProvider
     {
@@ -28,8 +30,12 @@ namespace Microsoft.Azure.Devices.ProtocolGateway
                 return defaultValue;
             }
 
+#if NETSTANDARD1_3  
+            throw new ConfigurationErrorsException(name);
+#else
             Trace.TraceError("Setting could not be found: " + name);
             throw new ConfigurationErrorsException(name);
+#endif
         }
 
         public static int GetIntegerSetting(this ISettingsProvider settingsProvider, string name, int? defaultValue = null)
@@ -45,8 +51,13 @@ namespace Microsoft.Azure.Devices.ProtocolGateway
                 return defaultValue.Value;
             }
 
+#if NETSTANDARD1_3
+            
+            throw new ConfigurationErrorsException(name);
+#else
             Trace.TraceError("Error converting configuration value to integer: " + name);
             throw new ConfigurationErrorsException(name);
+#endif
         }
 
         public static bool TryGetIntegerSetting(this ISettingsProvider settingsProvider, string name, out int result)
@@ -74,8 +85,13 @@ namespace Microsoft.Azure.Devices.ProtocolGateway
                 return defaultValue.Value;
             }
 
+#if NETSTANDARD1_3
+            
+            throw new ConfigurationErrorsException(name);
+#else
             Trace.TraceError("Error converting configuration value to bool: " + name);
             throw new ConfigurationErrorsException(name);
+#endif
         }
 
         public static bool TryGetBooleanSetting(this ISettingsProvider settingsProvider, string name, out bool result)
@@ -102,9 +118,13 @@ namespace Microsoft.Azure.Devices.ProtocolGateway
             {
                 return defaultValue.Value;
             }
-
+#if NETSTANDARD1_3
+            
+            throw new ConfigurationErrorsException(name);
+#else
             Trace.TraceError("Error converting configuration value to TimeSpan: " + name);
             throw new ConfigurationErrorsException(name);
+#endif
         }
 
         public static bool TryGetTimeSpanSetting(this ISettingsProvider settingsProvider, string name, out TimeSpan result)

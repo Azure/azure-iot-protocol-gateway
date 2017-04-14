@@ -1,0 +1,46 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26228.9
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProtocolGateway.Core.NetStandard", "src\ProtocolGateway.Core\ProtocolGateway.Core.NetStandard.csproj", "{A41D4C90-05A9-447E-AFF7-DD21560D64EC}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProtocolGateway.IotHubClient.NetStandard", "src\ProtocolGateway.IotHubClient\ProtocolGateway.IotHubClient.NetStandard.csproj", "{A4652600-FAA7-4B82-AEA5-172E6C1FD3CC}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProtocolGateway.Host.Common.NetStandard", "host\ProtocolGateway.Host.Common\ProtocolGateway.Host.Common.NetStandard.csproj", "{692B767F-7805-4662-83DF-CA6771C1612E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProtocolGateway.Host.Console.NetStandard", "host\ProtocolGateway.Host.Console.NetStandard\ProtocolGateway.Host.Console.NetStandard.csproj", "{16704F95-3FBC-442A-981F-93794B61ED8F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProtocolGateway.Client.NetStandard", "test\ProtocolGateway.Client.NetStandard\ProtocolGateway.Client.NetStandard.csproj", "{C4303641-E19E-4DE3-BF29-9AA002090E30}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A41D4C90-05A9-447E-AFF7-DD21560D64EC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A41D4C90-05A9-447E-AFF7-DD21560D64EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A41D4C90-05A9-447E-AFF7-DD21560D64EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A41D4C90-05A9-447E-AFF7-DD21560D64EC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A4652600-FAA7-4B82-AEA5-172E6C1FD3CC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A4652600-FAA7-4B82-AEA5-172E6C1FD3CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A4652600-FAA7-4B82-AEA5-172E6C1FD3CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A4652600-FAA7-4B82-AEA5-172E6C1FD3CC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{692B767F-7805-4662-83DF-CA6771C1612E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{692B767F-7805-4662-83DF-CA6771C1612E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{692B767F-7805-4662-83DF-CA6771C1612E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{692B767F-7805-4662-83DF-CA6771C1612E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{16704F95-3FBC-442A-981F-93794B61ED8F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{16704F95-3FBC-442A-981F-93794B61ED8F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{16704F95-3FBC-442A-981F-93794B61ED8F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{16704F95-3FBC-442A-981F-93794B61ED8F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C4303641-E19E-4DE3-BF29-9AA002090E30}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C4303641-E19E-4DE3-BF29-9AA002090E30}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C4303641-E19E-4DE3-BF29-9AA002090E30}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C4303641-E19E-4DE3-BF29-9AA002090E30}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

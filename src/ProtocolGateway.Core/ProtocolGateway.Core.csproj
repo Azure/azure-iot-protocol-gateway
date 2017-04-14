@@ -118,7 +118,12 @@
     <Compile Include="..\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="IAppConfigReader.cs" />
+    <Compile Include="ConfigManagerReader.cs" />
     <Compile Include="ErrorCode.cs" />
+    <Compile Include="Instrumentation\IPerformanceCounter.cs" />
+    <Compile Include="Instrumentation\IPerformanceCounterManager.cs" />
+    <Compile Include="Instrumentation\WindowsPerformanceCounterManager.cs" />
     <Compile Include="Messaging\IMessagingChannel.cs" />
     <Compile Include="Messaging\IMessage.cs" />
     <Compile Include="Instrumentation\AveragePerformanceCounter.cs" />
@@ -148,7 +153,6 @@
     <Compile Include="Mqtt\Persistence\IQos2MessageDeliveryState.cs" />
     <Compile Include="Mqtt\RequestAckPairProcessor.cs" />
     <Compile Include="Instrumentation\PerformanceCounterCategoryInfo.cs" />
-    <Compile Include="Instrumentation\PerformanceCounterManager.cs" />
     <Compile Include="Instrumentation\PerformanceCounters.cs" />
     <Compile Include="Mqtt\TemplateParameters.cs" />
     <Compile Include="Mqtt\Persistence\TransientSubscription.cs" />
