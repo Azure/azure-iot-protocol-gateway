@@ -3,8 +3,10 @@
 
 namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
 {
-    using System.Collections.Generic;
+#if !NETSTANDARD1_3
     using System.Diagnostics;
+    using System.Collections.Generic;
+#endif
 
     public static class PerformanceCounters
     {
@@ -28,23 +30,23 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
         const string InboundMessageProcessingTimeCounterName = "Inbound Message Processing Time, msec"; // from received to completed (incl roundtrip to ack)
         const string InboundMessageProcessingTimeBaseCounterName = "Inbound Message Processing Time Base";
 
-        static readonly Manager ManagerInstance = new Manager();
-        public static readonly SafePerformanceCounter ConnectionsEstablishedTotal = ManagerInstance.GetCounter(CategoryName, ConnectionsEstablishedTotalCounterName);
-        public static readonly SafePerformanceCounter ConnectionsCurrent = ManagerInstance.GetCounter(CategoryName, ConnectionsCurrentCounterName);
-        public static readonly SafePerformanceCounter ConnectionsEstablishedPerSecond = ManagerInstance.GetCounter(CategoryName, ConnectionsEstablishedPerSecondCounterName);
-        public static readonly SafePerformanceCounter ConnectionFailedAuthPerSecond = ManagerInstance.GetCounter(CategoryName, ConnectionFailedAuthPerSecondCounterName);
-        public static readonly SafePerformanceCounter ConnectionFailedOperationalPerSecond = ManagerInstance.GetCounter(CategoryName, ConnectionFailedOperationalPerSecondCounterName);
-        public static readonly SafePerformanceCounter PacketsReceivedPerSecond = ManagerInstance.GetCounter(CategoryName, PacketsReceivedPerSecondCounterName);
-        public static readonly SafePerformanceCounter PacketsSentPerSecond = ManagerInstance.GetCounter(CategoryName, PacketsSentPerSecondCounterName);
-        public static readonly SafePerformanceCounter PublishPacketsReceivedPerSecond = ManagerInstance.GetCounter(CategoryName, PublishPacketsReceivedPerSecondCounterName);
-        public static readonly SafePerformanceCounter PublishPacketsSentPerSecond = ManagerInstance.GetCounter(CategoryName, PublishPacketsSentPerSecondCounterName);
-        public static readonly SafePerformanceCounter MessagesReceivedPerSecond = ManagerInstance.GetCounter(CategoryName, MessagesReceivedPerSecondCounterName);
-        public static readonly SafePerformanceCounter MessagesRejectedPerSecond = ManagerInstance.GetCounter(CategoryName, MessagesRejectedPerSecondCounterName);
-        public static readonly SafePerformanceCounter MessagesSentPerSecond = ManagerInstance.GetCounter(CategoryName, MessagesSentPerSecondCounterName);
+        static readonly IPerformanceCounterManager ManagerInstance = GetPerformanceCounterManager();
+        public static readonly IPerformanceCounter ConnectionsEstablishedTotal = ManagerInstance.GetCounter(CategoryName, ConnectionsEstablishedTotalCounterName);
+        public static readonly IPerformanceCounter ConnectionsCurrent = ManagerInstance.GetCounter(CategoryName, ConnectionsCurrentCounterName);
+        public static readonly IPerformanceCounter ConnectionsEstablishedPerSecond = ManagerInstance.GetCounter(CategoryName, ConnectionsEstablishedPerSecondCounterName);
+        public static readonly IPerformanceCounter ConnectionFailedAuthPerSecond = ManagerInstance.GetCounter(CategoryName, ConnectionFailedAuthPerSecondCounterName);
+        public static readonly IPerformanceCounter ConnectionFailedOperationalPerSecond = ManagerInstance.GetCounter(CategoryName, ConnectionFailedOperationalPerSecondCounterName);
+        public static readonly IPerformanceCounter PacketsReceivedPerSecond = ManagerInstance.GetCounter(CategoryName, PacketsReceivedPerSecondCounterName);
+        public static readonly IPerformanceCounter PacketsSentPerSecond = ManagerInstance.GetCounter(CategoryName, PacketsSentPerSecondCounterName);
+        public static readonly IPerformanceCounter PublishPacketsReceivedPerSecond = ManagerInstance.GetCounter(CategoryName, PublishPacketsReceivedPerSecondCounterName);
+        public static readonly IPerformanceCounter PublishPacketsSentPerSecond = ManagerInstance.GetCounter(CategoryName, PublishPacketsSentPerSecondCounterName);
+        public static readonly IPerformanceCounter MessagesReceivedPerSecond = ManagerInstance.GetCounter(CategoryName, MessagesReceivedPerSecondCounterName);
+        public static readonly IPerformanceCounter MessagesRejectedPerSecond = ManagerInstance.GetCounter(CategoryName, MessagesRejectedPerSecondCounterName);
+        public static readonly IPerformanceCounter MessagesSentPerSecond = ManagerInstance.GetCounter(CategoryName, MessagesSentPerSecondCounterName);
 
         public static readonly AveragePerformanceCounter OutboundMessageProcessingTime = new AveragePerformanceCounter(
-            ManagerInstance.GetCounter(CategoryName, OutboundMessageProcessingTimeCounterName),
-            ManagerInstance.GetCounter(CategoryName, OutboundMessageProcessingTimeBaseCounterName));
+           ManagerInstance.GetCounter(CategoryName, OutboundMessageProcessingTimeCounterName),
+           ManagerInstance.GetCounter(CategoryName, OutboundMessageProcessingTimeBaseCounterName));
 
         public static readonly AveragePerformanceCounter InboundMessageProcessingTime = new AveragePerformanceCounter(
             ManagerInstance.GetCounter(CategoryName, InboundMessageProcessingTimeCounterName),
@@ -52,13 +54,23 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
 
         public static void RegisterCountersIfRequired()
         {
-            var manager = new Manager();
+            var manager = GetPerformanceCounterManager();
         }
 
-        class Manager : PerformanceCounterManager
+        private static IPerformanceCounterManager GetPerformanceCounterManager()
         {
-            public Manager()
-                : base(new Dictionary<PerformanceCounterCategoryInfo, CounterCreationData[]>
+#if NETSTANDARD1_3
+            return new EmptyPerformanceCounterManager();
+#else
+            return new Manager();
+#endif
+
+        }
+
+#if !NETSTANDARD1_3
+        class Manager : WindowsPerformanceCounterManager
+        {
+            public Manager() : base(new Dictionary<PerformanceCounterCategoryInfo, CounterCreationData[]>
                 {
                     {
                         new PerformanceCounterCategoryInfo(CategoryName, PerformanceCounterCategoryType.SingleInstance, CategoryHelp),
@@ -86,5 +98,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
             {
             }
         }
+#endif
     }
 }

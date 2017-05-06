@@ -6,17 +6,27 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Addressing
     using System;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
-    using System.Configuration;
     using System.Diagnostics.Contracts;
     using System.Linq;
     using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
     using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
+#if NETSTANDARD1_3
+    using Microsoft.Extensions.Configuration;
+
+#else
+    using System.Configuration;
+#endif
 
     public sealed class ConfigurableMessageAddressConverter : IMessageAddressConverter
     {
         static readonly Uri BaseUri = new Uri("http://x/", UriKind.Absolute);
-
+#if NETSTANDARD1_3
+        IList<UriPathTemplate> topicTemplateTable;
+        static readonly IConfigurationRoot configurationRoot = new ConfigurationBuilder().AddJsonFile("appSettings.json").Build();
+#else
         UriTemplateTable topicTemplateTable;
+#endif
+
         UriPathTemplate outboundTemplate;
 
         public ConfigurableMessageAddressConverter()
@@ -43,7 +53,14 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Addressing
         {
             Contract.Requires(!string.IsNullOrEmpty(configurationSectionName));
 
-            var configuration = (MessageAddressConversionConfiguration)ConfigurationManager.GetSection(configurationSectionName);
+#if NETSTANDARD1_3
+            var configuration = new MessageAddressConversionConfiguration();
+            configurationRoot.GetSection(configurationSectionName).Bind(configuration);
+#else
+            var configuration =
+(MessageAddressConversionConfiguration)ConfigurationManager.GetSection(configurationSectionName);
+#endif
+
             this.InitializeFromConfiguration(configuration);
         }
 
@@ -62,10 +79,15 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Addressing
         {
             Contract.Requires(configuration != null);
 
+#if NETSTANDARD1_3
+            this.topicTemplateTable = (from template in configuration.InboundTemplates
+                                       select new UriPathTemplate(template)).ToList();
+#else
             this.topicTemplateTable = new UriTemplateTable(
                 BaseUri,
                 from template in configuration.InboundTemplates select new KeyValuePair<UriTemplate, object>(new UriTemplate(template, false), null));
             this.topicTemplateTable.MakeReadOnly(true);
+#endif
             this.outboundTemplate = configuration.OutboundTemplates.Select(x => new UriPathTemplate(x)).Single();
         }
 
@@ -85,6 +107,51 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Addressing
         }
 
         public bool TryParseAddressIntoMessageProperties(string address, IMessage message)
+        {
+#if NETSTANDARD1_3
+            return TryParseAddressIntoMessagePropertiesWithRegex(address, message);
+#else
+            return TryParseAddressIntoMessagePropertiesDefault(address, message);
+#endif
+        }
+
+
+#if NETSTANDARD1_3
+
+        private bool TryParseAddressIntoMessagePropertiesWithRegex(string address, IMessage message)
+        {
+            bool matched = false;
+            foreach (UriPathTemplate uriPathTemplate in this.topicTemplateTable)
+            {
+                IList<KeyValuePair<string, string>> matches = uriPathTemplate.Match(new Uri(BaseUri, address));
+
+                if (matches.Count == 0)
+                {
+                    continue;
+                }
+
+                if (matches.Count > 1 && matched)
+                {
+                    if (CommonEventSource.Log.IsVerboseEnabled)
+                    {
+                        CommonEventSource.Log.Verbose("Topic name matches more than one route.", address);
+                    }
+                    break;
+                }
+                matched = true;
+
+                int variableCount = matches.Count;
+                for (int i = 0; i < variableCount; i++)
+                {
+                    // todo: this will unconditionally set property values - is it acceptable to overwrite existing value?
+                    message.Properties.Add(matches[i].Key, matches[i].Value);
+                }
+            }
+            return matched;
+        }
+
+#else
+        private bool TryParseAddressIntoMessagePropertiesDefault(string address, IMessage message)
         {
             Collection<UriTemplateMatch> matches = this.topicTemplateTable.Match(new Uri(BaseUri, address));
 
@@ -110,5 +177,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Addressing
             }
             return true;
         }
+#endif
     }
 }

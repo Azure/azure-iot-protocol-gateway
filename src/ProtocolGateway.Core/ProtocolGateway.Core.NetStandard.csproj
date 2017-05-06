@@ -1,0 +1,67 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+ 
+  <PropertyGroup>
+    <TargetFrameworks>netstandard1.3;net451</TargetFrameworks>
+    <PackageId>Microsoft.Azure.Devices.ProtocolGateway.Core</PackageId>
+    <Title>Microsoft Azure IoT protocol gateway framework - Core</Title>
+    <Description>This library contains the core components of Azure IoT protocol gateway that enables protocol translation for Azure IoT Hub.</Description>
+    <OutputType>Library</OutputType>
+    <NetStandardImplicitPackageVersion Condition=" '$(TargetFramework)' == 'netstandard1.3' ">1.6.1</NetStandardImplicitPackageVersion>
+    <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
+    <AssemblyName>Microsoft.Azure.Devices.ProtocolGateway.Core</AssemblyName>
+    <RootNamespace>Microsoft.Azure.Devices.ProtocolGateway.Core</RootNamespace>
+    <Version>1.3.0.0</Version>
+    <PackageVersion>1.3.0</PackageVersion>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <Company>Microsoft</Company>
+    <Copyright>Copyright © Microsoft 2015</Copyright>
+    <Product>Microsoft Azure IoT protocol gateway</Product>
+    <Authors>Microsoft Azure</Authors>
+    <PackageIconUrl>http://go.microsoft.com/fwlink/?LinkID=288890</PackageIconUrl>
+    <PackageLicenseUrl>http://go.microsoft.com/fwlink/?LinkId=536623</PackageLicenseUrl>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard1.3'">
+    <AssemblyTitle>Microsoft.Azure.Devices.ProtocolGateway.Core .NET Standard 1.3</AssemblyTitle>
+    <DefineConstants>NETSTANDARD1_3</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net451'">
+    <AssemblyTitle>Microsoft.Azure.Devices.ProtocolGateway.Core .NET 4.5.1</AssemblyTitle>
+    <DefineConstants>NET451</DefineConstants>
+  </PropertyGroup>
+  
+  <ItemGroup Condition="'$(TargetFramework)'=='netstandard1.3'">
+    <Compile Remove="Instrumentation\PerformanceCounterCategoryInfo.cs" Link="Instrumentation\PerformanceCounterCategoryInfo.cs" />
+    <Compile Remove="Instrumentation\WindowsPerformanceCounterManager.cs" Link="Instrumentation\WindowsPerformanceCounterManager.cs" />
+    <Compile Remove="ConfigManagerReader.cs" Link="ConfigManagerReader.cs" />
+    <Compile Remove="Instrumentation\SafePerformanceCounter.cs" Link="Instrumentation\SafePerformanceCounter.cs" />
+  </ItemGroup>
+ 
+  <ItemGroup>
+    <Compile Remove="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)'=='net451'">
+    <Compile Remove="Instrumentation\EmptyPerformanceCounter.cs" Link="Instrumentation\EmptyPerformanceCounter.cs" />
+    <Compile Remove="Instrumentation\EmptyPerformanceCounterManager.cs" Link="Instrumentation\EmptyPerformanceCounterManager.cs" />
+    <Compile Remove="ConfigurationErrorsException.cs" Link="ConfigurationErrorsException.cs" />
+    <Compile Remove="ConfigurationExtensionReader.cs" Link="ConfigurationExtensionReader.cs" />
+  </ItemGroup>
+
+   <ItemGroup>
+     <PackageReference Include="DotNetty.Codecs.Mqtt" Version="0.4.4" />
+     <PackageReference Include="DotNetty.Handlers" version="0.4.4" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)'=='net451'">
+    <Reference Include="System.Configuration" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)'=='netstandard1.3'">
+    <PackageReference Include="Microsoft.Extensions.Configuration" version="1.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="1.1.1" />
+  </ItemGroup>
+
+</Project>

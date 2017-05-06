@@ -6,10 +6,10 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
     using System;
     using System.Diagnostics;
 
-    public sealed class SafePerformanceCounter
+    public sealed class SafePerformanceCounter : IPerformanceCounter
     {
         readonly PerformanceCounter counter;
-
+        
         public SafePerformanceCounter(PerformanceCounter counter)
         {
             this.counter = counter;
@@ -23,7 +23,10 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
 
         public float NextValue
         {
-            get { return this.counter.NextValue(); }
+            get
+            {
+                return this.counter.NextValue();
+            }
         }
 
         public void Increment()

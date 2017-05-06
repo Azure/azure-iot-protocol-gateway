@@ -7,10 +7,10 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
 
     public sealed class AveragePerformanceCounter
     {
-        readonly SafePerformanceCounter countCounter;
-        readonly SafePerformanceCounter baseCounter;
+        readonly IPerformanceCounter countCounter;
+        readonly IPerformanceCounter baseCounter;
 
-        public AveragePerformanceCounter(SafePerformanceCounter countCounter, SafePerformanceCounter baseCounter)
+        public AveragePerformanceCounter(IPerformanceCounter countCounter, IPerformanceCounter baseCounter)
         {
             this.countCounter = countCounter;
             this.baseCounter = baseCounter;

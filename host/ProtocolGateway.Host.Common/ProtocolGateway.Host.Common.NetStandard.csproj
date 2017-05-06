@@ -1,0 +1,43 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard1.3</TargetFrameworks>
+    <PackageId>Microsoft.Azure.Devices.ProtocolGateway.Host.Common</PackageId>
+    <Description>Microsoft.Azure.Devices.ProtocolGateway.Host.Common</Description>
+    <OutputType>Library</OutputType>
+    <NetStandardImplicitPackageVersion Condition=" '$(TargetFramework)' == 'netstandard1.3' ">1.6.1</NetStandardImplicitPackageVersion>
+    <AssemblyName>ProtocolGateway.Host.Common</AssemblyName>
+    <RootNamespace>ProtocolGateway.Host.Common</RootNamespace>
+    <Version>1.0.0.0</Version>
+    <Company>Copyright © Microsoft 2015</Company>
+    <Product>Microsoft.Azure.Devices.ProtocolGateway.Host.Common</Product>
+    <Copyright>Copyright ©  2015</Copyright>
+  </PropertyGroup>
+
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.3' ">
+    <Compile Remove="MqttPacketPayloadCompressionHandler.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DotNetty.Buffers" Version="0.4.4" />
+    <PackageReference Include="DotNetty.Codecs" Version="0.4.4" />
+    <PackageReference Include="DotNetty.Codecs.Mqtt" Version="0.4.4" />
+    <PackageReference Include="DotNetty.Common" Version="0.4.4" />
+    <PackageReference Include="DotNetty.Handlers" Version="0.4.4" />
+    <PackageReference Include="DotNetty.Transport" Version="0.4.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\ProtocolGateway.Core\ProtocolGateway.Core.NetStandard.csproj" />
+    <ProjectReference Include="..\..\src\ProtocolGateway.IotHubClient\ProtocolGateway.IotHubClient.NetStandard.csproj" />
+  </ItemGroup>
+
+</Project>

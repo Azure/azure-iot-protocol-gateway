@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  
+  <PropertyGroup>
+    <OutputType>exe</OutputType>
+    <TargetFrameworks>netcoreapp1.1</TargetFrameworks>
+    <ApplicationIcon />
+    <OutputTypeEx>exe</OutputTypeEx>
+    <StartupObject />
+    <AssemblyName>ProtocolGateway.Client</AssemblyName>
+    <RootNamespace>ProtocolGateway.Client</RootNamespace>
+    <Version>1.0.0.0</Version>
+    <Company>Microsoft</Company>
+    <Copyright>Copyright © Microsoft 2015</Copyright>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Azure.Devices.Client" Version="1.2.9" />
+  </ItemGroup>
+ 
+</Project>
