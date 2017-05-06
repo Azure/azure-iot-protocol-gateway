@@ -4,9 +4,7 @@
 namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
 {
     using System;
-#if !NETSTANDARD1_3
     using System.Diagnostics;
-#endif
 
     public sealed class SafePerformanceCounter : IPerformanceCounter
     {

@@ -6,7 +6,7 @@ namespace ProtocolGateway.Host.Console.NetStandard
     using System.Diagnostics.Tracing;
     using System.Text;
 
-    class ConsoleEventListner : EventListener
+    class ConsoleEventListener : EventListener
     {
         protected override void OnEventWritten(EventWrittenEventArgs eventData)
         {

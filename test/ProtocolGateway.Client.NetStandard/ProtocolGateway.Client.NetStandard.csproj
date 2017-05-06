@@ -3,9 +3,7 @@
   
   <PropertyGroup>
     <OutputType>exe</OutputType>
-    <TargetFrameworks>netcoreapp2.0</TargetFrameworks>
-    <RuntimeFrameworkVersion>2.0.0-beta-001753-00</RuntimeFrameworkVersion>
-    <NetStandardImplicitPackageVersion Condition=" '$(TargetFramework)' == 'netcoreapp2.0' ">1.6.1</NetStandardImplicitPackageVersion>
+    <TargetFrameworks>netcoreapp1.1</TargetFrameworks>
     <ApplicationIcon />
     <OutputTypeEx>exe</OutputTypeEx>
     <StartupObject />

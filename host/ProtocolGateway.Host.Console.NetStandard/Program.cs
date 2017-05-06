@@ -25,7 +25,7 @@ namespace ProtocolGateway.Host.Console.NetStandard
                 threadCount = int.Parse(args[0]);
             }
 
-            var eventListener = new ConsoleEventListner();
+            var eventListener = new ConsoleEventListener();
 
             eventListener.EnableEvents(BootstrapperEventSource.Log, EventLevel.Verbose);
             eventListener.EnableEvents(CommonEventSource.Log, EventLevel.Verbose);
