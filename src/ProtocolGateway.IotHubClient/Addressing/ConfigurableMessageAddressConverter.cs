@@ -130,7 +130,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Addressing
                     continue;
                 }
 
-                if (matches.Count > 1 && matched)
+                if (matched)
                 {
                     if (CommonEventSource.Log.IsVerboseEnabled)
                     {
