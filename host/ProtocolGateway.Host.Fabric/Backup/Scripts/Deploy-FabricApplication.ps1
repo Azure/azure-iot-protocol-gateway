@@ -14,7 +14,7 @@ Path to the file containing the publish profile.
 .PARAMETER ApplicationPackagePath
 Path to the folder of the packaged Service Fabric application.
 
-.PARAMETER DeloyOnly
+.PARAMETER DeployOnly
 Indicates that the Service Fabric application should not be created or upgraded after registering the application type.
 
 .PARAMETER ApplicationParameter
@@ -25,7 +25,7 @@ Indicates whether to unregister any unused application versions that exist after
 
 .PARAMETER OverrideUpgradeBehavior
 Indicates the behavior used to override the upgrade settings specified by the publish profile.
-'None' indicates that the upgrade settings will not be overridden.
+'None' indicates that the upgrade settings will not be overriden.
 'ForceUpgrade' indicates that an upgrade will occur with default settings, regardless of what is specified in the publish profile.
 'VetoUpgrade' indicates that an upgrade will not occur, regardless of what is specified in the publish profile.
 
@@ -44,21 +44,18 @@ Switch signaling whether the package should be validated or not before deploymen
 .PARAMETER SecurityToken
 A security token for authentication to cluster management endpoints. Used for silent authentication to clusters that are protected by Azure Active Directory.
 
-.PARAMETER CopyPackageTimeoutSec
-Timeout in seconds for copying application package to image store.
-
 .EXAMPLE
-. Scripts\Deploy-FabricApplication.ps1 -ApplicationPackagePath 'pkg\Debug'
+. Scripts\Deploy-FabricApplication.ps1 -ApplicationPackagePath 'pkg\Release'
 
 Deploy the application using the default package location for a Debug build.
 
 .EXAMPLE
-. Scripts\Deploy-FabricApplication.ps1 -ApplicationPackagePath 'pkg\Debug' -DoNotCreateApplication
+. Scripts\Deploy-FabricApplication.ps1 -ApplicationPackagePath 'pkg\Release' -DoNotCreateApplication
 
 Deploy the application but do not create the application instance.
 
 .EXAMPLE
-. Scripts\Deploy-FabricApplication.ps1 -ApplicationPackagePath 'pkg\Debug' -ApplicationParameter @{CustomParameter1='MyValue'; CustomParameter2='MyValue'}
+. Scripts\Deploy-FabricApplication.ps1 -ApplicationPackagePath 'pkg\Release' -ApplicationParameter @{CustomParameter1='MyValue'; CustomParameter2='MyValue'}
 
 Deploy the application by providing values for parameters that are defined in the application manifest.
 #>
@@ -95,10 +92,7 @@ Param
     $SkipPackageValidation,
 
     [String]
-    $SecurityToken,
-
-    [int]
-    $CopyPackageTimeoutSec
+    $SecurityToken 
 )
 
 function Read-XmlElementAsHashtable
@@ -212,14 +206,7 @@ if ($IsUpgrade)
         $UpgradeParameters = @{ UnmonitoredAuto = $true; Force = $true }
     }
 
-    if ($CopyPackageTimeoutSec)
-    {
-        Publish-UpgradedServiceFabricApplication -ApplicationPackagePath $ApplicationPackagePath -ApplicationParameterFilePath $publishProfile.ApplicationParameterFile -Action $Action -UpgradeParameters $UpgradeParameters -ApplicationParameter $ApplicationParameter -UnregisterUnusedVersions:$UnregisterUnusedApplicationVersionsAfterUpgrade -CopyPackageTimeoutSec $CopyPackageTimeoutSec -ErrorAction Stop
-    }
-    else
-    {
-        Publish-UpgradedServiceFabricApplication -ApplicationPackagePath $ApplicationPackagePath -ApplicationParameterFilePath $publishProfile.ApplicationParameterFile -Action $Action -UpgradeParameters $UpgradeParameters -ApplicationParameter $ApplicationParameter -UnregisterUnusedVersions:$UnregisterUnusedApplicationVersionsAfterUpgrade -ErrorAction Stop
-    }
+    Publish-UpgradedServiceFabricApplication -ApplicationPackagePath $ApplicationPackagePath -ApplicationParameterFilePath $publishProfile.ApplicationParameterFile -Action $Action -UpgradeParameters $UpgradeParameters -ApplicationParameter $ApplicationParameter -UnregisterUnusedVersions:$UnregisterUnusedApplicationVersionsAfterUpgrade -ErrorAction Stop
 }
 else
 {
@@ -229,12 +216,5 @@ else
         $Action = "Register"
     }
     
-    if ($CopyPackageTimeoutSec)
-    {
-        Publish-NewServiceFabricApplication -ApplicationPackagePath $ApplicationPackagePath -ApplicationParameterFilePath $publishProfile.ApplicationParameterFile -Action $Action -ApplicationParameter $ApplicationParameter -OverwriteBehavior $OverwriteBehavior -SkipPackageValidation:$SkipPackageValidation -CopyPackageTimeoutSec $CopyPackageTimeoutSec -ErrorAction Stop
-    }
-    else
-    {
-        Publish-NewServiceFabricApplication -ApplicationPackagePath $ApplicationPackagePath -ApplicationParameterFilePath $publishProfile.ApplicationParameterFile -Action $Action -ApplicationParameter $ApplicationParameter -OverwriteBehavior $OverwriteBehavior -SkipPackageValidation:$SkipPackageValidation -ErrorAction Stop
-    }
+    Publish-NewServiceFabricApplication -ApplicationPackagePath $ApplicationPackagePath -ApplicationParameterFilePath $publishProfile.ApplicationParameterFile -Action $Action -ApplicationParameter $ApplicationParameter -OverwriteBehavior $OverwriteBehavior -SkipPackageValidation:$SkipPackageValidation -ErrorAction Stop
 }

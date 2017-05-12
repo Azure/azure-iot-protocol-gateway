@@ -165,10 +165,14 @@
 
                         if (metrics.Length > 0)
                         {
-                            this.partition.ReportLoad(metrics.Select(item => new LoadMetric(item.Key, item.Value)));
+                            this.partition.ReportLoad(metrics.Select(item => new LoadMetric(item.Key, item.Value > 0 ? item.Value : 0)));
                         }
                     }
                     catch (FabricObjectClosedException e)
+                    {
+                        this.logger.Error(traceId, this.componentName, "Error reporting metrics", null, e);
+                    }
+                    catch (Exception e)
                     {
                         this.logger.Error(traceId, this.componentName, "Error reporting metrics", null, e);
                     }
