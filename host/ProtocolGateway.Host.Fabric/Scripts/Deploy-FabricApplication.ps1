@@ -25,7 +25,7 @@ Indicates whether to unregister any unused application versions that exist after
 
 .PARAMETER OverrideUpgradeBehavior
 Indicates the behavior used to override the upgrade settings specified by the publish profile.
-'None' indicates that the upgrade settings will not be overriden.
+'None' indicates that the upgrade settings will not be overridden.
 'ForceUpgrade' indicates that an upgrade will occur with default settings, regardless of what is specified in the publish profile.
 'VetoUpgrade' indicates that an upgrade will not occur, regardless of what is specified in the publish profile.
 
@@ -44,18 +44,21 @@ Switch signaling whether the package should be validated or not before deploymen
 .PARAMETER SecurityToken
 A security token for authentication to cluster management endpoints. Used for silent authentication to clusters that are protected by Azure Active Directory.
 
+.PARAMETER CopyPackageTimeoutSec
+Timeout in seconds for copying application package to image store.
+
 .EXAMPLE
-. Scripts\Deploy-FabricApplication.ps1 -ApplicationPackagePath 'pkg\Release'
+. Scripts\Deploy-FabricApplication.ps1 -ApplicationPackagePath 'pkg\Debug'
 
 Deploy the application using the default package location for a Debug build.
 
 .EXAMPLE
-. Scripts\Deploy-FabricApplication.ps1 -ApplicationPackagePath 'pkg\Release' -DoNotCreateApplication
+. Scripts\Deploy-FabricApplication.ps1 -ApplicationPackagePath 'pkg\Debug' -DoNotCreateApplication
 
 Deploy the application but do not create the application instance.
 
 .EXAMPLE
-. Scripts\Deploy-FabricApplication.ps1 -ApplicationPackagePath 'pkg\Release' -ApplicationParameter @{CustomParameter1='MyValue'; CustomParameter2='MyValue'}
+. Scripts\Deploy-FabricApplication.ps1 -ApplicationPackagePath 'pkg\Debug' -ApplicationParameter @{CustomParameter1='MyValue'; CustomParameter2='MyValue'}
 
 Deploy the application by providing values for parameters that are defined in the application manifest.
 #>
@@ -92,7 +95,10 @@ Param
     $SkipPackageValidation,
 
     [String]
-    $SecurityToken 
+    $SecurityToken,
+
+    [int]
+    $CopyPackageTimeoutSec
 )
 
 function Read-XmlElementAsHashtable
@@ -133,6 +139,7 @@ function Read-PublishProfile
 
     $publishProfile.ClusterConnectionParameters = Read-XmlElementAsHashtable $publishProfileXml.PublishProfile.Item("ClusterConnectionParameters")
     $publishProfile.UpgradeDeployment = Read-XmlElementAsHashtable $publishProfileXml.PublishProfile.Item("UpgradeDeployment")
+    $publishProfile.CopyPackageParameters = Read-XmlElementAsHashtable $publishProfileXml.PublishProfile.Item("CopyPackageParameters")
 
     if ($publishProfileXml.PublishProfile.Item("UpgradeDeployment"))
     {
@@ -190,6 +197,29 @@ Import-Module "$ModuleFolderPath\ServiceFabricSDK.psm1"
 
 $IsUpgrade = ($publishProfile.UpgradeDeployment -and $publishProfile.UpgradeDeployment.Enabled -and $OverrideUpgradeBehavior -ne 'VetoUpgrade') -or $OverrideUpgradeBehavior -eq 'ForceUpgrade'
 
+$PublishParameters = @{
+    'ApplicationPackagePath' = $ApplicationPackagePath
+    'ApplicationParameterFilePath' = $publishProfile.ApplicationParameterFile
+    'ApplicationParameter' = $ApplicationParameter
+    'ErrorAction' = 'Stop'
+}
+
+if ($publishProfile.CopyPackageParameters.CopyPackageTimeoutSec)
+{
+    $PublishParameters['CopyPackageTimeoutSec'] = $publishProfile.CopyPackageParameters.CopyPackageTimeoutSec
+}
+
+if ($publishProfile.CopyPackageParameters.CompressPackage)
+{
+    $PublishParameters['CompressPackage'] = $publishProfile.CopyPackageParameters.CompressPackage
+}
+
+# CopyPackageTimeoutSec parameter overrides the value from the publish profile
+if ($CopyPackageTimeoutSec)
+{
+    $PublishParameters['CopyPackageTimeoutSec'] = $CopyPackageTimeoutSec
+}
+
 if ($IsUpgrade)
 {
     $Action = "RegisterAndUpgrade"
@@ -206,7 +236,11 @@ if ($IsUpgrade)
         $UpgradeParameters = @{ UnmonitoredAuto = $true; Force = $true }
     }
 
-    Publish-UpgradedServiceFabricApplication -ApplicationPackagePath $ApplicationPackagePath -ApplicationParameterFilePath $publishProfile.ApplicationParameterFile -Action $Action -UpgradeParameters $UpgradeParameters -ApplicationParameter $ApplicationParameter -UnregisterUnusedVersions:$UnregisterUnusedApplicationVersionsAfterUpgrade -ErrorAction Stop
+    $PublishParameters['Action'] = $Action
+    $PublishParameters['UpgradeParameters'] = $UpgradeParameters
+    $PublishParameters['UnregisterUnusedVersions'] = $UnregisterUnusedApplicationVersionsAfterUpgrade
+
+    Publish-UpgradedServiceFabricApplication @PublishParameters
 }
 else
 {
@@ -215,6 +249,10 @@ else
     {
         $Action = "Register"
     }
+
+    $PublishParameters['Action'] = $Action
+    $PublishParameters['OverwriteBehavior'] = $OverwriteBehavior
+    $PublishParameters['SkipPackageValidation'] = $SkipPackageValidation
     
-    Publish-NewServiceFabricApplication -ApplicationPackagePath $ApplicationPackagePath -ApplicationParameterFilePath $publishProfile.ApplicationParameterFile -Action $Action -ApplicationParameter $ApplicationParameter -OverwriteBehavior $OverwriteBehavior -SkipPackageValidation:$SkipPackageValidation -ErrorAction Stop
+    Publish-NewServiceFabricApplication @PublishParameters
 }

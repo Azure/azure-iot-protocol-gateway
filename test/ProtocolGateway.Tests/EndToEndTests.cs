@@ -445,11 +445,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
                         Payload = Unpooled.WrappedBuffer(Encoding.UTF8.GetBytes("{\"test\": \"telemetry\"}"))
                     });
 
-                var packets = new Packet[5];
-                for (int i = packets.Length - 1; i >= 0; i--)
-                {
-                    packets[i] = Assert.IsAssignableFrom<Packet>(await readHandler.ReceiveAsync());
-                }
+                Packet[] packets = (await Task.WhenAll(Enumerable.Repeat(0, 5).Select(_ => readHandler.ReceiveAsync())))
+                    .Select(Assert.IsAssignableFrom<Packet>)
+                    .ToArray();
 
                 PubAckPacket pubAckPacket = Assert.Single(packets.OfType<PubAckPacket>());
                 Assert.Equal(publishQoS1PacketId, pubAckPacket.PacketId);
@@ -460,7 +458,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
                 PublishPacket publishQoS1Packet = Assert.Single(packets.OfType<PublishPacket>().Where(x => x.QualityOfService == QualityOfService.AtLeastOnce));
                 this.AssertPacketCoreValue(publishQoS1Packet, NotificationQoS1Content);
 
-                PublishPacket[] publishQoS2Packets = packets.OfType<PublishPacket>().Where(x => x.QualityOfService == QualityOfService.ExactlyOnce).Reverse().ToArray();
+                PublishPacket[] publishQoS2Packets = packets.OfType<PublishPacket>().Where(x => x.QualityOfService == QualityOfService.ExactlyOnce).ToArray();
                 Assert.Equal(2, publishQoS2Packets.Length);
                 PublishPacket publishQoS2Packet1 = publishQoS2Packets[0];
                 this.AssertPacketCoreValue(publishQoS2Packet1, NotificationQoS2Content);

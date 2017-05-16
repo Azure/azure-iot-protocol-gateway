@@ -51,68 +51,56 @@
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
-  <Choose>
-    <When Condition="'$(DotNettyPath)' == ''">
-      <ItemGroup>
-        <Reference Include="DotNetty.Buffers, Version=0.3.2.0, Culture=neutral, PublicKeyToken=e7a0210a354f294a, processorArchitecture=MSIL">
-          <HintPath>..\..\packages\DotNetty.Buffers-signed.0.3.2\lib\net45\DotNetty.Buffers.dll</HintPath>
-          <Private>True</Private>
-        </Reference>
-        <Reference Include="DotNetty.Codecs, Version=0.3.2.0, Culture=neutral, PublicKeyToken=e7a0210a354f294a, processorArchitecture=MSIL">
-          <HintPath>..\..\packages\DotNetty.Codecs-signed.0.3.2\lib\net45\DotNetty.Codecs.dll</HintPath>
-          <Private>True</Private>
-        </Reference>
-        <Reference Include="DotNetty.Codecs.Mqtt, Version=0.3.2.0, Culture=neutral, PublicKeyToken=e7a0210a354f294a, processorArchitecture=MSIL">
-          <HintPath>..\..\packages\DotNetty.Codecs.Mqtt-signed.0.3.2\lib\net45\DotNetty.Codecs.Mqtt.dll</HintPath>
-          <Private>True</Private>
-        </Reference>
-        <Reference Include="DotNetty.Common, Version=0.3.2.0, Culture=neutral, PublicKeyToken=e7a0210a354f294a, processorArchitecture=MSIL">
-          <HintPath>..\..\packages\DotNetty.Common-signed.0.3.2\lib\net45\DotNetty.Common.dll</HintPath>
-          <Private>True</Private>
-        </Reference>
-        <Reference Include="DotNetty.Handlers, Version=0.3.2.0, Culture=neutral, PublicKeyToken=e7a0210a354f294a, processorArchitecture=MSIL">
-          <HintPath>..\..\packages\DotNetty.Handlers-signed.0.3.2\lib\net45\DotNetty.Handlers.dll</HintPath>
-          <Private>True</Private>
-        </Reference>
-        <Reference Include="DotNetty.Transport, Version=0.3.2.0, Culture=neutral, PublicKeyToken=e7a0210a354f294a, processorArchitecture=MSIL">
-          <HintPath>..\..\packages\DotNetty.Transport-signed.0.3.2\lib\net45\DotNetty.Transport.dll</HintPath>
-          <Private>True</Private>
-        </Reference>
-      </ItemGroup>
-    </When>
-    <Otherwise>
-      <ItemGroup>
-        <ProjectReference Include="$(DotNettyPath)\src\DotNetty.Buffers\DotNetty.Buffers.csproj">
-          <Project>{5de3c557-48bf-4cdb-9f47-474d343dd841}</Project>
-          <Name>DotNetty.Buffers</Name>
-        </ProjectReference>
-        <ProjectReference Include="$(DotNettyPath)\src\DotNetty.Codecs.Mqtt\DotNetty.Codecs.Mqtt.csproj">
-          <Project>{58ffea83-c956-49f9-9435-18332ad0e0d1}</Project>
-          <Name>DotNetty.Codecs.Mqtt</Name>
-        </ProjectReference>
-        <ProjectReference Include="$(DotNettyPath)\src\DotNetty.Codecs\DotNetty.Codecs.csproj">
-          <Project>{2abd244e-ef8f-460d-9c30-39116499e6e4}</Project>
-          <Name>DotNetty.Codecs</Name>
-        </ProjectReference>
-        <ProjectReference Include="$(DotNettyPath)\src\DotNetty.Common\DotNetty.Common.csproj">
-          <Project>{de58fe41-5e99-44e5-86bc-fc9ed8761daf}</Project>
-          <Name>DotNetty.Common</Name>
-        </ProjectReference>
-        <ProjectReference Include="$(DotNettyPath)\src\DotNetty.Handlers\DotNetty.Handlers.csproj">
-          <Project>{09628314-f44e-445e-9f0d-cbe33b736ac3}</Project>
-          <Name>DotNetty.Handlers</Name>
-        </ProjectReference>
-        <ProjectReference Include="$(DotNettyPath)\src\DotNetty.Transport\DotNetty.Transport.csproj">
-          <Project>{8218c9ee-0a4a-432f-a12a-b54202f97b05}</Project>
-          <Name>DotNetty.Transport</Name>
-        </ProjectReference>
-      </ItemGroup>
-    </Otherwise>
-  </Choose>
   <ItemGroup>
+    <Reference Include="DotNetty.Buffers, Version=0.4.5.0, Culture=neutral, PublicKeyToken=bc13ca065fa06c29, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\DotNetty.Buffers.0.4.5\lib\net45\DotNetty.Buffers.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DotNetty.Codecs, Version=0.4.5.0, Culture=neutral, PublicKeyToken=bc13ca065fa06c29, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\DotNetty.Codecs.0.4.5\lib\net45\DotNetty.Codecs.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DotNetty.Codecs.Mqtt, Version=0.4.5.0, Culture=neutral, PublicKeyToken=bc13ca065fa06c29, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\DotNetty.Codecs.Mqtt.0.4.5\lib\net45\DotNetty.Codecs.Mqtt.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DotNetty.Common, Version=0.4.5.0, Culture=neutral, PublicKeyToken=bc13ca065fa06c29, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\DotNetty.Common.0.4.5\lib\net45\DotNetty.Common.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DotNetty.Handlers, Version=0.4.5.0, Culture=neutral, PublicKeyToken=bc13ca065fa06c29, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\DotNetty.Handlers.0.4.5\lib\net45\DotNetty.Handlers.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DotNetty.Transport, Version=0.4.5.0, Culture=neutral, PublicKeyToken=bc13ca065fa06c29, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\DotNetty.Transport.0.4.5\lib\net45\DotNetty.Transport.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.DependencyInjection.Abstractions, Version=1.1.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>$(SolutionDir)packages\Microsoft.Extensions.DependencyInjection.Abstractions.1.1.0\lib\netstandard1.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Logging, Version=1.1.1.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>$(SolutionDir)packages\Microsoft.Extensions.Logging.1.1.1\lib\netstandard1.1\Microsoft.Extensions.Logging.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Logging.Abstractions, Version=1.1.1.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>$(SolutionDir)packages\Microsoft.Extensions.Logging.Abstractions.1.1.1\lib\netstandard1.1\Microsoft.Extensions.Logging.Abstractions.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Runtime.InteropServices.RuntimeInformation, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>$(SolutionDir)packages\System.Runtime.InteropServices.RuntimeInformation.4.3.0\lib\net45\System.Runtime.InteropServices.RuntimeInformation.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\SharedAssemblyInfo.cs">
@@ -157,7 +145,6 @@
     <Compile Include="Mqtt\TemplateParameters.cs" />
     <Compile Include="Mqtt\Persistence\TransientSubscription.cs" />
     <Compile Include="ProtocolGatewayException.cs" />
-    <Compile Include="ReadOnlyByteBufferStream.cs" />
     <Compile Include="AppConfigSettingsProvider.cs" />
     <Compile Include="Properties\Friends.cs" />
     <Compile Include="ISettingsProvider.cs" />
@@ -173,8 +160,9 @@
     <Compile Include="UriPathTemplate.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
-    <None Include="ProtocolGateway.Core.nuspec" />
+    <None Include="packages.config">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

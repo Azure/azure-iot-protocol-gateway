@@ -12,7 +12,7 @@
     <language>en-US</language>
     <dependencies>
       <group targetFramework="net451">
-        <dependency id="DotNetty.Codecs.Mqtt-signed" version="0.3.2" />
+        <dependency id="DotNetty.Codecs.Mqtt" version="0.4.4" />
         <dependency id="Microsoft.Azure.Devices.ProtocolGateway.Core" version="1.2.0" />
         <dependency id="WindowsAzure.Storage" version="7.0.0" />
         <dependency id="Newtonsoft.Json" version="9.0.1" />

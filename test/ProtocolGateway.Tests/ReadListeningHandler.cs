@@ -4,15 +4,15 @@
 namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
     using System.Threading.Tasks;
     using DotNetty.Transport.Channels;
 
     public sealed class ReadListeningHandler : ChannelHandlerAdapter
     {
         readonly Queue<object> receivedQueue = new Queue<object>();
-        TaskCompletionSource<object> readPromise;
+        readonly ConcurrentQueue<TaskCompletionSource<object>> readPromises;
         Exception registeredException;
         readonly TimeSpan defaultReadTimeout;
 
@@ -24,14 +24,14 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
         public ReadListeningHandler(TimeSpan defaultReadTimeout)
         {
             this.defaultReadTimeout = defaultReadTimeout;
+            this.readPromises = new ConcurrentQueue<TaskCompletionSource<object>>();
         }
 
         public override void ChannelRead(IChannelHandlerContext context, object message)
         {
-            TaskCompletionSource<object> promise = this.readPromise;
-            if (this.readPromise != null)
+            TaskCompletionSource<object> promise;
+            if (this.readPromises.TryDequeue(out promise))
             {
-                this.readPromise = null;
                 promise.TrySetResult(message);
             }
             else
@@ -51,13 +51,15 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
         void SetException(Exception exception)
         {
             this.registeredException = exception;
-            this.readPromise?.TrySetException(exception);
+            TaskCompletionSource<object> promise;
+            while (this.readPromises.TryDequeue(out promise))
+            {
+                promise.TrySetException(exception);
+            }
         }
 
         public async Task<object> ReceiveAsync(TimeSpan timeout = default(TimeSpan))
         {
-            Contract.Assert(this.readPromise == null);
-
             if (this.registeredException != null)
             {
                 throw this.registeredException;
@@ -69,7 +71,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
             }
 
             var promise = new TaskCompletionSource<object>();
-            this.readPromise = promise;
+            this.readPromises.Enqueue(promise);
 
             timeout = timeout <= TimeSpan.Zero ? this.defaultReadTimeout : timeout;
             if (timeout > TimeSpan.Zero)
