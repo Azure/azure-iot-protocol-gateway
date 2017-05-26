@@ -16,6 +16,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway
         const char WildcardCharacter = '*';
         const char VariablePlaceholderStartCharacter = '{';
         const char VariablePlaceholderEndCharacter = '}';
+        const char PeriodCharacter = '.';
         const int EstimatedVariableValueLength = 20;
 
         public static readonly char[] PathSegmentTerminationCharacters = { PathSeparator };
@@ -134,7 +135,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway
                     {
                         int partLength = varStartIndex - index;
                         templateParts.Add(new TemplatePart(template.Substring(index, partLength)));
-                        pattern.Append(template.Substring(index, partLength));
+                        pattern.Append(Regex.Escape(template.Substring(index, partLength)));
                         initialCapacity += partLength;
                     }
                     templateParts.Add(new TemplatePart(varName, varDefaultValue));
@@ -148,7 +149,17 @@ namespace Microsoft.Azure.Devices.ProtocolGateway
                     int partLength = length - index;
                     string part = template.Substring(index, partLength);
                     templateParts.Add(new TemplatePart(part));
-                    pattern.Append(part);
+                    // don't escape wildcard if it is at the end of the template
+                    if (part.EndsWith(WildcardCharacter.ToString()) && index + partLength == length)
+                    {
+                        pattern.Append(Regex.Escape(part.Substring(0, partLength -1)));
+                        pattern.Append(PeriodCharacter.ToString() + WildcardCharacter.ToString());
+                    }
+                    else
+                    {
+                        pattern.Append(Regex.Escape(part));
+                    }
+                    
                     initialCapacity += partLength;
                     index = length;
                 }
