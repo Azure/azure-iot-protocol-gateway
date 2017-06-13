@@ -1025,7 +1025,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             {
                 this.stateFlags |= StateFlags.Closed; // "or" not to interfere with ongoing logic which has to honor Closed state when it's right time to do (case by case)
 
-                PerformanceCounters.ConnectionsCurrent.Decrement();
+                // only decrement connection current counter if the state had connected state in this session 
+                if (this.IsInState(StateFlags.Connected))
+                {
+                    PerformanceCounters.ConnectionsCurrent.Decrement();
+                }
 
                 Queue<Packet> connectQueue = this.connectPendingQueue;
                 if (connectQueue != null)
