@@ -561,6 +561,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                             throw new ProtocolGatewayException(ErrorCode.QoSLevelNotSupported, "Requested QoS level is not supported.");
                     }
                 }
+                this.lastClientActivityTime = DateTime.UtcNow; // note last client activity - used in handling disconnects on keep-alive timeout
             }
             catch (Exception ex)
             {
