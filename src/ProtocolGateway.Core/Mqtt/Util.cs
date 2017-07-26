@@ -185,9 +185,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             await context.WriteAndFlushAsync(message);
             if (message is PublishPacket)
             {
-                PerformanceCounters.PublishPacketsSentPerSecond.Increment();
+               // PerformanceCounters.PublishPacketsSentPerSecond.Increment();
             }
-            PerformanceCounters.PacketsSentPerSecond.Increment();
+            //PerformanceCounters.PacketsSentPerSecond.Increment();
         }
     }
 }

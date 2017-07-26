@@ -213,7 +213,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 return;
             }
 
-            PerformanceCounters.PacketsReceivedPerSecond.Increment();
+           // PerformanceCounters.PacketsReceivedPerSecond.Increment();
 
             switch (packet.PacketType)
             {
@@ -221,7 +221,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     this.Connect(context, (ConnectPacket)packet);
                     break;
                 case PacketType.PUBLISH:
-                    PerformanceCounters.PublishPacketsReceivedPerSecond.Increment();
+                  //  PerformanceCounters.PublishPacketsReceivedPerSecond.Increment();
                     this.ProcessPublish(context, (PublishPacket)packet);
                     break;
                 case PacketType.PUBACK:
@@ -344,7 +344,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     }
                     context.Flush();
                     await Task.WhenAll(tasks);
-                    PerformanceCounters.PacketsSentPerSecond.IncrementBy(acks.Count);
+                  //  PerformanceCounters.PacketsSentPerSecond.IncrementBy(acks.Count);
                 }
                 while (this.subscriptionChangeQueue.Count > 0);
 
@@ -387,7 +387,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
                 await sendingClient.SendAsync(message);
 
-                PerformanceCounters.MessagesSentPerSecond.Increment();
+               // PerformanceCounters.MessagesSentPerSecond.Increment();
 
                 if (!this.IsInState(StateFlags.Closed))
                 {
@@ -395,12 +395,12 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     {
                         case QualityOfService.AtMostOnce:
                             // no response necessary
-                            PerformanceCounters.InboundMessageProcessingTime.Register(startedTimestamp);
+                           // PerformanceCounters.InboundMessageProcessingTime.Register(startedTimestamp);
                             break;
                         case QualityOfService.AtLeastOnce:
                             Util.WriteMessageAsync(context, PubAckPacket.InResponseTo(packet))
                                 .OnFault(ShutdownOnWriteFaultAction, context);
-                            PerformanceCounters.InboundMessageProcessingTime.Register(startedTimestamp); // todo: assumes PUBACK is written out sync
+                          //  PerformanceCounters.InboundMessageProcessingTime.Register(startedTimestamp); // todo: assumes PUBACK is written out sync
                             break;
                         case QualityOfService.ExactlyOnce:
                             ShutdownOnError(context, InboundPublishProcessingScope, new ProtocolGatewayException(ErrorCode.ExactlyOnceQosNotSupported, "QoS 2 is not supported."));
@@ -445,7 +445,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             {
                 Contract.Assert(message != null);
 
-                PerformanceCounters.MessagesReceivedPerSecond.Increment();
+                //PerformanceCounters.MessagesReceivedPerSecond.Increment();
 
                 int processorsInRetransmission = 0;
                 bool sentThroughRetransmission = false;
@@ -573,7 +573,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         static async Task RejectMessageAsync(MessageWithFeedback messageWithFeedback)
         {
             await messageWithFeedback.FeedbackChannel.RejectAsync(); // awaiting guarantees that we won't complete consecutive message before this is completed.
-            PerformanceCounters.MessagesRejectedPerSecond.Increment();
+            //PerformanceCounters.MessagesRejectedPerSecond.Increment();
         }
 
         Task PublishToClientQos0Async(IChannelHandlerContext context, MessageWithFeedback messageWithFeedback, PublishPacket packet)
@@ -636,7 +636,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             {
                 await message.FeedbackChannel.CompleteAsync();
 
-                PerformanceCounters.OutboundMessageProcessingTime.Register(message.StartTimestamp);
+                //PerformanceCounters.OutboundMessageProcessingTime.Register(message.StartTimestamp);
 
                 this.publishPubAckProcessor.ResumeRetransmission(context);
             }
@@ -676,7 +676,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
                 await this.qos2StateProvider.DeleteMessageAsync(this.identity, message.PacketId, message.DeliveryState);
 
-                PerformanceCounters.OutboundMessageProcessingTime.Register(message.StartTimestamp);
+               // PerformanceCounters.OutboundMessageProcessingTime.Register(message.StartTimestamp);
 
                 this.pubRelPubCompProcessor.ResumeRetransmission(context);
             }
@@ -822,7 +822,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     {
                         ReturnCode = ConnectReturnCode.RefusedNotAuthorized
                     });
-                    PerformanceCounters.ConnectionFailedAuthPerSecond.Increment();
+                   // PerformanceCounters.ConnectionFailedAuthPerSecond.Increment();
                     ShutdownOnError(context, ConnectProcessingScope, new ProtocolGatewayException(ErrorCode.AuthenticationFailed, "Authentication failed."));
                     return;
                 }
@@ -949,9 +949,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
             this.messagingBridge.BindMessagingChannel(this);
 
-            PerformanceCounters.ConnectionsEstablishedTotal.Increment();
-            PerformanceCounters.ConnectionsCurrent.Increment();
-            PerformanceCounters.ConnectionsEstablishedPerSecond.Increment();
+           // PerformanceCounters.ConnectionsEstablishedTotal.Increment();
+           // PerformanceCounters.ConnectionsCurrent.Increment();
+           // PerformanceCounters.ConnectionsEstablishedPerSecond.Increment();
 
             if (this.connectPendingQueue != null)
             {
@@ -1007,7 +1007,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             var self = (MqttAdapter)context.Handler;
             if (!self.IsInState(StateFlags.Closed))
             {
-                PerformanceCounters.ConnectionFailedOperationalPerSecond.Increment();
+               // PerformanceCounters.ConnectionFailedOperationalPerSecond.Increment();
                 self.Shutdown(context, error);
             }
         }
@@ -1029,7 +1029,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 // only decrement connection current counter if the state had connected state in this session 
                 if (this.IsInState(StateFlags.Connected))
                 {
-                    PerformanceCounters.ConnectionsCurrent.Decrement();
+                   // PerformanceCounters.ConnectionsCurrent.Decrement();
                 }
 
                 Queue<Packet> connectQueue = this.connectPendingQueue;

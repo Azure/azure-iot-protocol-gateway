@@ -62,7 +62,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
 #if NETSTANDARD1_3
             return new EmptyPerformanceCounterManager();
 #else
-            return new Manager();
+            return null;
 #endif
 
         }
