@@ -164,6 +164,20 @@
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\inc_int\ih\common\Microsoft.Azure.Devices.Common\Microsoft.Azure.Devices.Common.csproj">
+      <Project>{9F84EEE0-97B8-437F-8691-0ECAEA315143}</Project>
+      <Name>Microsoft.Azure.Devices.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\inc_int\ih\common\Microsoft.Azure.Devices.Tracing\Microsoft.Azure.Devices.Tracing.csproj">
+      <Project>{B52A0422-E3DC-4C6D-9850-066362EA180F}</Project>
+      <Name>Microsoft.Azure.Devices.Tracing</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\iotsdks\service\Microsoft.Azure.Devices\Microsoft.Azure.Devices.csproj">
+      <Project>{7fc2a03f-36fe-44c5-a1ef-5b1f11458350}</Project>
+      <Name>Microsoft.Azure.Devices</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
