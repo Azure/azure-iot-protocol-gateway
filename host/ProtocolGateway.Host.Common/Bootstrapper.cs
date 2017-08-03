@@ -11,6 +11,7 @@ namespace ProtocolGateway.Host.Common
     using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
+    using DotNetty.Common.Utilities;
     using DotNetty.Codecs.Mqtt;
     using DotNetty.Common.Concurrency;
     using DotNetty.Handlers.Tls;
@@ -94,6 +95,7 @@ namespace ProtocolGateway.Host.Common
                 BootstrapperEventSource.Log.Info($"Initializing TLS endpoint on port {MqttsPort.ToString()} with certificate {this.tlsCertificate.Thumbprint}.", null);
                 this.serverChannel = await bootstrap.BindAsync(IPAddress.Any, MqttsPort);
 
+                this.serverChannel.CloseCompletion.LinkOutcome(this.closeCompletionSource);
                 cancellationToken.Register(this.CloseAsync);
 
                 BootstrapperEventSource.Log.Info("Started", null);
