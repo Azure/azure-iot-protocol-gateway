@@ -3,8 +3,6 @@
 
 namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
 {
-    using Microsoft.Azure.Devices.Common.Cloud;
-    using Microsoft.Azure.Devices.Tracing;
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
@@ -40,17 +38,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
             PerformanceCounterCategory category = null;
             if (PerformanceCounterCategory.Exists(categoryName))
             {
-                RegistrationServiceGatewayEventSource.Log.Informational(
-                    "WindowsPerformanceCounterExists",
-                    "MqttGateway",
-                    null,
-                    null,
-                    "Category: {0}. Counters: {1}".FormatInvariant(categoryName, string.Concat(counters.Select(info => info.CounterName))),
-                    null,
-                    null,
-                    null,
-                    0,
-                    0);
                 categoryExists = true;
                 category = new PerformanceCounterCategory(categoryName);
                 PerformanceCounter[] counterList = category.GetCounters();
@@ -73,17 +60,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
                     categoryInfo.CategoryHelp,
                     categoryInfo.CategoryType,
                     counterCollection);
-                RegistrationServiceGatewayEventSource.Log.Informational(
-                    "WindowsPerformanceCounterCreated",
-                    "MqttGateway",
-                    null,
-                    null,
-                    "Category: {0}. Counters: {1}".FormatInvariant(categoryName, string.Concat(counters.Select(info => info.CounterName))),
-                    null,
-                    null,
-                    null,
-                    0,
-                    0);
             }
             return category;
         }
@@ -93,19 +69,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
             SafePerformanceCounter counter;
             if (!this.counterMap.TryGetValue(Tuple.Create(category, name), out counter))
             {
-
-                RegistrationServiceGatewayEventSource.Log.Informational(
-                    "WindowsPerformanceCounterNotFound",
-                    "MqttGateway",
-                    null,
-                    null,
-                    "Category: {0}. Counter: {1}".FormatInvariant(category, name),
-                    null,
-                    null,
-                    null,
-                    0,
-                    0);
-
                 throw new InvalidOperationException(string.Format("Counter named `{0}` could not be found under category `{1}`", name, category));
             }
 
