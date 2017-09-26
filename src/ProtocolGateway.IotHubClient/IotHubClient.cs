@@ -75,9 +75,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
         public static Func<IDeviceIdentity, Task<IMessagingServiceClient>> PreparePoolFactory(string baseConnectionString, int connectionPoolSize,
             TimeSpan? connectionIdleTimeout, IotHubClientSettings settings, IByteBufferAllocator allocator, IMessageAddressConverter messageAddressConverter)
         {
-            IotHubConnectionStringBuilder csb = IotHubConnectionStringBuilder.Create(baseConnectionString);
             Func<IDeviceIdentity, Task<IMessagingServiceClient>> mqttCommunicatorFactory = deviceIdentity =>
             {
+                IotHubConnectionStringBuilder csb = IotHubConnectionStringBuilder.Create(baseConnectionString);
                 var identity = (IotHubDeviceIdentity)deviceIdentity;
                 csb.AuthenticationMethod = DeriveAuthenticationMethod(csb.AuthenticationMethod, identity);
                 csb.HostName = identity.IotHubHostName;
