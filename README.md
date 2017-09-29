@@ -14,7 +14,7 @@ For guidance on customizations and extensibility of the protocol gateway, please
 ### Prerequisites
 The protocol gateway requires an Azure IoT hub to connect to and an Azure Storage account used for persisting state. You can also use the Azure Storage Emulator for the console or cloud hosts running locally.
 
-To build the protocol gateway you need Microsoft Visual Studio 2013 (or later) and Microsoft Azure SDK 2.6 installed on your development machine. For deployment of the protocol gateway you need Microsoft Azure PowerShell installed.
+To build the protocol gateway you need Microsoft Visual Studio 2015 (or later) and Microsoft Azure SDK 2.6 installed on your development machine. For deployment of the protocol gateway you need Microsoft Azure PowerShell installed.
 
 ### Running the Console Host
 The Azure IoT protocol gateway repository contains reference implementations of hosts in the ‘/host’ folder. The console app in this folder hosts a protocol gateway that connects to IoT Hub and starts listening for devices to connect (Note: by default the gateway listens on port 8883 for MQTTS and uses port 5671 for AMQPS traffic).

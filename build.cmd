@@ -10,10 +10,10 @@ IF NOT EXIST %LocalAppData%\NuGet md %LocalAppData%\NuGet
 @powershell -NoProfile -ExecutionPolicy unrestricted -Command "$ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest 'https://www.nuget.org/nuget.exe' -OutFile '%CACHED_NUGET%'"
 
 :vsvarssetup
-if not defined VS120COMNTOOLS goto build
-if not exist "%VS120COMNTOOLS%\VsDevCmd.bat" goto build
-call "%VS120COMNTOOLS%\VsDevCmd.bat"
+if not defined VS140COMNTOOLS goto build
+if not exist "%VS140COMNTOOLS%\VsDevCmd.bat" goto build
+call "%VS140COMNTOOLS%\VsDevCmd.bat"
 
 :build
-%CACHED_NUGET% restore
+%CACHED_NUGET% restore ProtocolGateway.sln
 msbuild ProtocolGateway.sln
