@@ -1044,7 +1044,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
                 PublishPacket will = (cause != null) && this.IsInState(StateFlags.Connected) ? this.willPacket : null;
 
-                this.CloseServiceConnection(context, cause, will);
+                await this.CloseServiceConnection(context, cause, will);
                 await context.CloseAsync();
             }
             catch (Exception ex)
@@ -1053,7 +1053,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             }
         }
 
-        async void CloseServiceConnection(IChannelHandlerContext context, Exception cause, PublishPacket will)
+        async Task CloseServiceConnection(IChannelHandlerContext context, Exception cause, PublishPacket will)
         {
             if (!this.ConnectedToService)
             {
