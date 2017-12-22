@@ -276,8 +276,7 @@ if ($diagConfigXml.PublicConfig.StorageAccount)
 $diagnosticsConfigurationPath = (Resolve-Path $diagnosticsConfigurationPath).ToString() + ".final"
 $diagConfigXml.Save($diagnosticsConfigurationPath)
 
-$storageContext = New-AzureStorageContext -StorageAccountName $storageAccountName -StorageAccountKey $storageAccountKey
-$diagConfig = New-AzureServiceDiagnosticsExtensionConfig -StorageContext $storageContext -DiagnosticsConfigurationPath $diagnosticsConfigurationPath
+$diagConfig = New-AzureStorageContext -StorageAccountName $storageAccountName -StorageAccountKey $storageAccountKey |  New-AzureServiceDiagnosticsExtensionConfig -DiagnosticsConfigurationPath $diagnosticsConfigurationPath
 
 # upgrading or creating a deployment
 $deployment = Execute-Command -Command { Get-AzureDeployment $serviceName $slot } -EEL @($global:resourceNotFound)
