@@ -9,11 +9,11 @@
     <NetStandardImplicitPackageVersion Condition=" '$(TargetFramework)' == 'netstandard1.3' ">1.6.1</NetStandardImplicitPackageVersion>
     <AssemblyName>Microsoft.Azure.Devices.ProtocolGateway.IotHubClient</AssemblyName>
     <RootNamespace>Microsoft.Azure.Devices.ProtocolGateway.IotHubClient</RootNamespace>
-    <Version>1.3.0.0</Version>
-    <PackageVersion>1.3.0</PackageVersion>
+    <Version>1.3.1.0</Version>
+    <PackageVersion>1.3.1</PackageVersion>
     <Company>Microsoft</Company>
     <Product>Microsoft Azure IoT protocol gateway</Product>
-    <Copyright>Copyright © Microsoft 2015</Copyright>
+    <Copyright>Copyright © Microsoft 2017</Copyright>
     <NeutralLanguage>en-US</NeutralLanguage>
     <Authors>Microsoft Azure</Authors>
     <PackageLicenseUrl>http://go.microsoft.com/fwlink/?LinkId=536623</PackageLicenseUrl>
@@ -21,13 +21,11 @@
   </PropertyGroup>
   
   <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard1.3'">
-    <AssemblyTitle>Microsoft.Azure.Devices.ProtocolGateway.IotHubClient .NET Standard 1.3</AssemblyTitle>
-    <DefineConstants>NETSTANDARD1_3</DefineConstants>
+    <AssemblyTitle>Microsoft.Azure.Devices.ProtocolGateway.IotHubClient</AssemblyTitle>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'net451'">
-    <AssemblyTitle>Microsoft.Azure.Devices.ProtocolGateway.IotHubClient .NET 4.5.1</AssemblyTitle>
-    <DefineConstants>NET451</DefineConstants>
+    <AssemblyTitle>Microsoft.Azure.Devices.ProtocolGateway.IotHubClient</AssemblyTitle>
   </PropertyGroup>
   
   <ItemGroup Condition="'$(TargetFramework)'=='netstandard1.3'">
@@ -39,7 +37,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.Devices.Client" Version="1.2.9" />
+    <PackageReference Include="Microsoft.Azure.Devices.Client" Version="1.3.1" />
     <PackageReference Include="System.Diagnostics.Contracts" Version="4.3.0" />
   </ItemGroup>
 
