@@ -123,6 +123,10 @@
       <Project>{ac34c945-61de-4700-bd42-2b19a441b4c3}</Project>
       <Name>ProtocolGateway.Providers.CloudStorage</Name>
     </ProjectReference>
+    <ProjectReference Include="..\fabricsetup\ProtocolGateway.Host.FabricSetup.CounterSetup\ProtocolGateway.Host.FabricSetup.CounterSetup.csproj">
+      <Project>{07885ae0-1df1-4ba5-8197-f3514a06bdd3}</Project>
+      <Name>ProtocolGateway.Host.FabricSetup.CounterSetup</Name>
+    </ProjectReference>
     <ProjectReference Include="..\fabricshared\ProtocolGateway.Host.Fabric.FabricShared.Configuration\ProtocolGateway.Host.Fabric.FabricShared.Configuration.csproj">
       <Project>{cedd1f60-e803-476a-9f73-3814cdce3c4b}</Project>
       <Name>ProtocolGateway.Host.Fabric.FabricShared.Configuration</Name>
