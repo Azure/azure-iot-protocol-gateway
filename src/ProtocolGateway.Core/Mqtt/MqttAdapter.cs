@@ -1095,32 +1095,27 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
         async Task CompletePublishAsync(IChannelHandlerContext context, PublishPacket will)
         {
-            IMessagingServiceClient sendingClient = null;
-            if (will != null)
-            {
-                sendingClient = this.ResolveSendingClient(will.TopicName);
-            }
-
             var completionTasks = new List<Task>();
             foreach (var publishProcessorRecord in this.publishProcessors)
             {
                 publishProcessorRecord.Value.Complete();
-                if (publishProcessorRecord.Key == sendingClient)
-                {
-                    try
-                    {
-                        await this.PublishToServerAsync(context, sendingClient, will, MessageTypes.Will);
-                    }
-                    catch (Exception ex)
-                    {
-                        CommonEventSource.Log.Warning("Failed sending Will Message.", ex, this.ChannelId);
-                    }
-                }
                 completionTasks.Add(publishProcessorRecord.Value.Completion);
             }
-
             await Task.WhenAll(completionTasks);
 
+            IMessagingServiceClient sendingClient = null;
+            if (will != null)
+            {
+                sendingClient = this.ResolveSendingClient(will.TopicName);
+                try
+                {
+                    await this.PublishToServerAsync(context, sendingClient, will, MessageTypes.Will);
+                }
+                catch (Exception ex)
+                {
+                    CommonEventSource.Log.Warning("Failed sending Will Message.", ex, this.ChannelId);
+                }
+            }
         }
 
         #endregion
