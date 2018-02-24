@@ -58,6 +58,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProtocolGateway.Host.Fabric
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProtocolGateway.Providers.ReliableStorage", "src\ProtocolGateway.Providers.ReliableStorage\ProtocolGateway.Providers.ReliableStorage.csproj", "{4DB21DAB-5357-4FA0-8B5A-DDD8BF93F341}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProtocolGateway.Host.Fabric.BackEnd", "host\ProtocolGateway.Host.Fabric.BackEnd\ProtocolGateway.Host.Fabric.BackEnd.csproj", "{93A5E17B-93B4-497C-95AB-053DA866A382}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -205,6 +207,12 @@ Global
 		{4DB21DAB-5357-4FA0-8B5A-DDD8BF93F341}.Release|Any CPU.Build.0 = Release|Any CPU
 		{4DB21DAB-5357-4FA0-8B5A-DDD8BF93F341}.Release|x64.ActiveCfg = Release|Any CPU
 		{4DB21DAB-5357-4FA0-8B5A-DDD8BF93F341}.Release|x64.Build.0 = Release|Any CPU
+		{93A5E17B-93B4-497C-95AB-053DA866A382}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{93A5E17B-93B4-497C-95AB-053DA866A382}.Debug|x64.ActiveCfg = Debug|x64
+		{93A5E17B-93B4-497C-95AB-053DA866A382}.Debug|x64.Build.0 = Debug|x64
+		{93A5E17B-93B4-497C-95AB-053DA866A382}.Release|Any CPU.ActiveCfg = Release|x64
+		{93A5E17B-93B4-497C-95AB-053DA866A382}.Release|x64.ActiveCfg = Release|x64
+		{93A5E17B-93B4-497C-95AB-053DA866A382}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -230,6 +238,7 @@ Global
 		{443E59D8-9395-41F1-AA8F-4895A734C2AA} = {C3D241FB-0849-486C-8686-A33DB8486BB3}
 		{1CB06C3E-3D1C-4FD4-95E9-037B4361303A} = {C3D241FB-0849-486C-8686-A33DB8486BB3}
 		{4DB21DAB-5357-4FA0-8B5A-DDD8BF93F341} = {40E01D4A-EFB5-4BE5-A267-0C0DD70F0C75}
+		{93A5E17B-93B4-497C-95AB-053DA866A382} = {9F27B381-3559-42D0-9EDE-0637E02ADFC8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		EnterpriseLibraryConfigurationToolBinariesPathV6 = packages\EnterpriseLibrary.TransientFaultHandling.6.0.1304.0\lib\portable-net45+win+wp8
