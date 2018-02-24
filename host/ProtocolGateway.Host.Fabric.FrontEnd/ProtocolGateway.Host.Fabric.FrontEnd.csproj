@@ -102,14 +102,12 @@
     <Compile Include="Program.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\shared\protocol-gateway.contoso.com.pfx">
-      <Link>PackageRoot\Data\protocol-gateway.contoso.com.pfx</Link>
-    </None>
     <None Include="PackageRoot\Config\FrontEnd.AzureState.json" />
     <None Include="PackageRoot\Config\FrontEnd.IoTHubClient.json" />
     <None Include="PackageRoot\Config\FrontEnd.json" />
     <None Include="PackageRoot\Config\FrontEnd.Mqtt.json" />
     <None Include="PackageRoot\Config\Settings.xml" />
+    <None Include="PackageRoot\Data\protocol-gateway.contoso.com.pfx" />
     <None Include="PackageRoot\ServiceManifest.xml" />
     <None Include="App.config" />
     <None Include="packages.config" />
