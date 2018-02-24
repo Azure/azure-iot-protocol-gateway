@@ -49,7 +49,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProtocolGateway.Host.Fabric
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProtocolGateway.Host.FabricSetup.CounterSetup", "host\fabricsetup\ProtocolGateway.Host.FabricSetup.CounterSetup\ProtocolGateway.Host.FabricSetup.CounterSetup.csproj", "{07885AE0-1DF1-4BA5-8197-F3514A06BDD3}"
 	ProjectSection(ProjectDependencies) = postProject
-		{A4701342-633A-4EEE-BA50-7384156BEBBD} = {A4701342-633A-4EEE-BA50-7384156BEBBD}
 		{A90B33E9-A3EE-402C-B692-63450B876E59} = {A90B33E9-A3EE-402C-B692-63450B876E59}
 	EndProjectSection
 EndProject
