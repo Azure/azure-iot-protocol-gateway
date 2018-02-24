@@ -72,8 +72,10 @@
     <Compile Include="ExceptionExtensions.cs" />
     <Compile Include="ILogger.cs" />
     <Compile Include="IServiceLogger.cs" />
+    <Compile Include="Logger.cs" />
     <Compile Include="LoggerBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ServiceLogger.cs" />
     <Compile Include="ServiceLoggerBase.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -14,7 +14,6 @@
     using FabricShared.Configuration;
     using FabricShared.Logging;
     using Configuration;
-    using Logging;
     using Mqtt;
     using ProtocolGateway.Host.Fabric.FabricShared.Health;
 

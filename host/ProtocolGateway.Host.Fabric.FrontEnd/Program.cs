@@ -5,7 +5,7 @@
     using System.Threading;
     using Microsoft.ServiceFabric.Services.Runtime;
     using FabricShared.Logging;
-    using Logging;
+
     #endregion
 
     /// <summary>

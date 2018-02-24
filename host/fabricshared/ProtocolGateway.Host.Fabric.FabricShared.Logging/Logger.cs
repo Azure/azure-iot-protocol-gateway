@@ -1,9 +1,10 @@
-﻿namespace ProtocolGateway.Host.Fabric.FrontEnd.Logging
+﻿namespace ProtocolGateway.Host.Fabric.FabricShared.Logging
 {
     #region Using Clauses
+
     using System;
     using System.Diagnostics.Tracing;
-    using ProtocolGateway.Host.Fabric.FabricShared.Logging;
+
     #endregion
 
     /// <summary>

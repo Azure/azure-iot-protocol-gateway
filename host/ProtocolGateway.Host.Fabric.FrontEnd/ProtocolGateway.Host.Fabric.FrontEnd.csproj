@@ -78,8 +78,6 @@
     <Compile Include="configuration\IoTHubConfiguration.cs" />
     <Compile Include="configuration\MqttServiceConfiguration.cs" />
     <Compile Include="configuration\ServiceFabricConfigurationProvider.cs" />
-    <Compile Include="logging\Logger.cs" />
-    <Compile Include="logging\ServiceLogger.cs" />
     <Compile Include="mqtt\MqttCommunicationListener.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="FrontEnd.cs" />
@@ -129,6 +127,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="logging\" />
     <Folder Include="PackageRoot\Code\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
