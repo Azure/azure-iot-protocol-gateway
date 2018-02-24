@@ -6,7 +6,7 @@ _ReSharper.*/
 *.exe
 packages/
 artifacts/
-PublishProfiles/
+#PublishProfiles/
 csx/
 *.user
 *.suo
