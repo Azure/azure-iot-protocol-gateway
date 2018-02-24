@@ -13,6 +13,7 @@
     using FabricShared.Logging;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence;
     using Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage;
+    using Microsoft.Azure.Devices.ProtocolGateway.Providers.ReliableStorage;
     using ProtocolGateway.Host.Common;
     using ProtocolGateway.Host.Fabric.FabricShared.Configuration;
     using ProtocolGateway.Host.Fabric.FabricShared.Security;
@@ -240,9 +241,9 @@
                     break;
 
                 case MqttServiceConfiguration.QosStateType.ServiceFabricStateful:
-                    this.logger.Critical(traceId, this.componentName, "QOS state provider requested was Service Fabric Stateful Service but it is not currently implemented.");
-                    throw new NotImplementedException("Only azure storage provider is supported");
-
+                    stateProvider = new ReliableSessionStatePersistenceProvider();
+                    this.logger.Informational(traceId, this.componentName, "QOS state provider request complete.");
+                    break;
                 default:
                     this.logger.Critical(traceId, this.componentName, "QOS state provider requested was unknown.");
                     throw new ApplicationException("MQTT state provider must be specified in configuration.");
@@ -281,8 +282,9 @@
                     break;
 
                 case MqttServiceConfiguration.QosStateType.ServiceFabricStateful:
-                    this.logger.Critical(traceId, this.componentName, "QOS2 state provider requested was Service Fabric Stateful Service but it is not currently implemented.");
-                    throw new NotImplementedException("Only azure storage provider is supported");
+                    stateProvider = new ReliableQos2StatePersistenceProvider();
+                    this.logger.Informational(traceId, this.componentName, "QOS2 state provider request complete.");
+                    break;
 
                 default:
                     this.logger.Critical(traceId, this.componentName, "QOS2 state provider requested was unknown.");
