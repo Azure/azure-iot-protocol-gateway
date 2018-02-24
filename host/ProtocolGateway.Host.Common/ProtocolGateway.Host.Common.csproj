@@ -50,29 +50,23 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="DotNetty.Buffers, Version=0.4.6.0, Culture=neutral, PublicKeyToken=bc13ca065fa06c29, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\DotNetty.Buffers.0.4.6\lib\net45\DotNetty.Buffers.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="DotNetty.Buffers, Version=0.4.7.0, Culture=neutral, PublicKeyToken=bc13ca065fa06c29, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\DotNetty.Buffers.0.4.7\lib\net45\DotNetty.Buffers.dll</HintPath>
     </Reference>
-    <Reference Include="DotNetty.Codecs, Version=0.4.6.0, Culture=neutral, PublicKeyToken=bc13ca065fa06c29, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\DotNetty.Codecs.0.4.6\lib\net45\DotNetty.Codecs.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="DotNetty.Codecs, Version=0.4.7.0, Culture=neutral, PublicKeyToken=bc13ca065fa06c29, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\DotNetty.Codecs.0.4.7\lib\net45\DotNetty.Codecs.dll</HintPath>
     </Reference>
-    <Reference Include="DotNetty.Codecs.Mqtt, Version=0.4.6.0, Culture=neutral, PublicKeyToken=bc13ca065fa06c29, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\DotNetty.Codecs.Mqtt.0.4.6\lib\net45\DotNetty.Codecs.Mqtt.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="DotNetty.Codecs.Mqtt, Version=0.4.7.0, Culture=neutral, PublicKeyToken=bc13ca065fa06c29, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\DotNetty.Codecs.Mqtt.0.4.7\lib\net45\DotNetty.Codecs.Mqtt.dll</HintPath>
     </Reference>
-    <Reference Include="DotNetty.Common, Version=0.4.6.0, Culture=neutral, PublicKeyToken=bc13ca065fa06c29, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\DotNetty.Common.0.4.6\lib\net45\DotNetty.Common.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="DotNetty.Common, Version=0.4.7.0, Culture=neutral, PublicKeyToken=bc13ca065fa06c29, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\DotNetty.Common.0.4.7\lib\net45\DotNetty.Common.dll</HintPath>
     </Reference>
-    <Reference Include="DotNetty.Handlers, Version=0.4.6.0, Culture=neutral, PublicKeyToken=bc13ca065fa06c29, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\DotNetty.Handlers.0.4.6\lib\net45\DotNetty.Handlers.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="DotNetty.Handlers, Version=0.4.7.0, Culture=neutral, PublicKeyToken=bc13ca065fa06c29, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\DotNetty.Handlers.0.4.7\lib\net45\DotNetty.Handlers.dll</HintPath>
     </Reference>
-    <Reference Include="DotNetty.Transport, Version=0.4.6.0, Culture=neutral, PublicKeyToken=bc13ca065fa06c29, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\DotNetty.Transport.0.4.6\lib\net45\DotNetty.Transport.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="DotNetty.Transport, Version=0.4.7.0, Culture=neutral, PublicKeyToken=bc13ca065fa06c29, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\DotNetty.Transport.0.4.7\lib\net45\DotNetty.Transport.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Azure.Amqp, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Microsoft.Azure.Amqp.2.0.4\lib\net45\Microsoft.Azure.Amqp.dll</HintPath>
@@ -165,6 +159,9 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Numerics" />
+    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=4.0.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\System.Runtime.CompilerServices.Unsafe.4.4.0\lib\netstandard1.0\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
     <Reference Include="System.Runtime.InteropServices.RuntimeInformation, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\..\packages\System.Runtime.InteropServices.RuntimeInformation.4.3.0\lib\net45\System.Runtime.InteropServices.RuntimeInformation.dll</HintPath>
       <Private>True</Private>
