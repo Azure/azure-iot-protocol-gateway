@@ -38,6 +38,8 @@
         /// </summary>
         readonly UnsupportedConfigurationChange unsupportedConfigurationChangeCallback;
 
+        readonly int backendPartitionCount;
+
         /// <summary>
         /// The logger used to write debugging and diagnostics information
         /// </summary>
@@ -83,7 +85,7 @@
         /// <param name="logger">A service logger used to write debugging and diagnostics messages</param>
         /// <param name="configurationProvider">The configuration provider for the gateway settings</param>
         /// <param name="unsupportedConfigurationChangeCallback">A method to call when an unsupported configuration change occurs.</param>
-        public MqttCommunicationListener(Guid traceId, string componentName, StatelessServiceContext serviceContext, IServiceLogger logger, IConfigurationProvider<GatewayConfiguration> configurationProvider, UnsupportedConfigurationChange unsupportedConfigurationChangeCallback)
+        public MqttCommunicationListener(Guid traceId, string componentName, StatelessServiceContext serviceContext, IServiceLogger logger, IConfigurationProvider<GatewayConfiguration> configurationProvider, UnsupportedConfigurationChange unsupportedConfigurationChangeCallback, int backendPartitionCount)
         {
             if (serviceContext == null) throw new ArgumentNullException(nameof(serviceContext));
             if (configurationProvider == null) throw new ArgumentNullException(nameof(configurationProvider));
@@ -94,6 +96,7 @@
             this.serviceContext = serviceContext;
             this.configurationProvider = configurationProvider;
             this.unsupportedConfigurationChangeCallback = unsupportedConfigurationChangeCallback;
+            this.backendPartitionCount = backendPartitionCount;
 
             // optimizing IOCP performance
             int minWorkerThreads;
@@ -241,7 +244,7 @@
                     break;
 
                 case MqttServiceConfiguration.QosStateType.ServiceFabricStateful:
-                    stateProvider = new ReliableSessionStatePersistenceProvider();
+                    stateProvider = new ReliableSessionStatePersistenceProvider(this.backendPartitionCount);
                     this.logger.Informational(traceId, this.componentName, "QOS state provider request complete.");
                     break;
                 default:
@@ -282,7 +285,7 @@
                     break;
 
                 case MqttServiceConfiguration.QosStateType.ServiceFabricStateful:
-                    stateProvider = new ReliableQos2StatePersistenceProvider();
+                    stateProvider = new ReliableQos2StatePersistenceProvider(this.backendPartitionCount);
                     this.logger.Informational(traceId, this.componentName, "QOS2 state provider request complete.");
                     break;
 

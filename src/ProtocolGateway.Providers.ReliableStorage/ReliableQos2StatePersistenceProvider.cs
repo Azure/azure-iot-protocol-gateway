@@ -21,20 +21,19 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.ReliableStorage
 
     public class ReliableQos2StatePersistenceProvider : IQos2StatePersistenceProvider
     {
-        /// <summary>
-        /// The partition count.
-        /// </summary>
-        const int PartitionCount = 0x10; // WARNING: changing partition count will change placement of device in partitions. Do it only if is wiped or migrated along the change.
+        readonly int partitionCount;
 
         static readonly Uri BackEndEndpoint = new Uri("fabric:/ProtocolGateway.Host.Fabric/BackEnd");
 
         /// <summary>
         /// The partition keys.
         /// </summary>
-        static readonly string[] PartitionKeys = Enumerable.Range(0, PartitionCount).Select(i => $"BackEnd_{i}").ToArray(); // WARNING: Do not change naming convention
+        readonly string[] partitionKeys;
 
-        public ReliableQos2StatePersistenceProvider()
+        public ReliableQos2StatePersistenceProvider(int partitionCount)
         {
+            this.partitionCount = partitionCount;
+            this.partitionKeys = Enumerable.Range(0, this.partitionCount).Select(i => $"BackEnd_{i}").ToArray(); // WARNING: Do not change naming convention
         }
 
         public IQos2MessageDeliveryState Create(ulong sequenceNumber)
@@ -44,7 +43,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.ReliableStorage
 
         public async Task<IQos2MessageDeliveryState> GetMessageAsync(IDeviceIdentity deviceIdentity, int packetId)
         {
-            var partitionKey = CalculatePartitionKey(deviceIdentity.Id);
+            var partitionKey = this.CalculatePartitionKey(deviceIdentity.Id);
             if (CommonEventSource.Log.IsVerboseEnabled)
             {
                 CommonEventSource.Log.Verbose($"Selecting partition {partitionKey} of SF reliable state for storing Device {deviceIdentity.Id} MQTT OoS2 message state", string.Empty); 
@@ -59,7 +58,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.ReliableStorage
             Contract.Requires(message != null);
 
             var reliableMessage = ValidateMessageType(message);
-            var partitionKey = CalculatePartitionKey(deviceIdentity.Id);
+            var partitionKey = this.CalculatePartitionKey(deviceIdentity.Id);
             if (CommonEventSource.Log.IsVerboseEnabled)
             {
                 CommonEventSource.Log.Verbose($"Selecting partition {partitionKey} of SF reliable state for storing Device {deviceIdentity.Id} MQTT OoS2 message state", string.Empty);
@@ -74,7 +73,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.ReliableStorage
             Contract.Requires(message != null);
 
             var reliableMessage = ValidateMessageType(message);
-            var partitionKey = CalculatePartitionKey(deviceIdentity.Id);
+            var partitionKey = this.CalculatePartitionKey(deviceIdentity.Id);
             if (CommonEventSource.Log.IsVerboseEnabled)
             {
                 CommonEventSource.Log.Verbose($"Selecting partition {partitionKey} of SF reliable state for storing Device {deviceIdentity.Id} MQTT OoS2 message state", string.Empty);
@@ -96,12 +95,10 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.ReliableStorage
             return reliableMessage;
         }
 
-        static string CalculateRowKey(string deviceId, int packetId) => deviceId + "_" + packetId.ToString(CultureInfo.InvariantCulture);
-
-        static string CalculatePartitionKey(string identifier)
+        string CalculatePartitionKey(string identifier)
         {
             byte[] hash = MurmurHash.Create32(0, false).ComputeHash(Encoding.ASCII.GetBytes(identifier));
-            return PartitionKeys[BitConverter.ToUInt32(hash, 0) % PartitionCount];
+            return this.partitionKeys[BitConverter.ToUInt32(hash, 0) % this.partitionCount];
         }
     }
 }

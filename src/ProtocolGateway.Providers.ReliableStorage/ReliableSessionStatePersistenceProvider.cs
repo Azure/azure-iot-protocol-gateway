@@ -29,11 +29,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.ReliableStorage
     /// </summary>
     public class ReliableSessionStatePersistenceProvider : ISessionStatePersistenceProvider
     {
-        /// <summary>
-        /// The partition count.
-        /// </summary>
-        const int PartitionCount = 0x10; // WARNING: changing partition count will change placement of device in partitions. Do it only if is wiped or migrated along the change.
-
+        readonly int partitionCount;
         static readonly Uri BackEndEndpoint = new Uri("fabric:/ProtocolGateway.Host.Fabric/BackEnd");
 
         /// <summary>
@@ -50,10 +46,12 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.ReliableStorage
         /// <summary>
         /// The partition keys.
         /// </summary>
-        static readonly string[] PartitionKeys = Enumerable.Range(0, PartitionCount).Select(i => $"BackEnd_{i}").ToArray(); // WARNING: Do not change naming convention
+        readonly string[] partitionKeys;
 
-        public ReliableSessionStatePersistenceProvider()
+        public ReliableSessionStatePersistenceProvider(int partitionCount)
         {
+            this.partitionCount = partitionCount;
+            this.partitionKeys = Enumerable.Range(0, this.partitionCount).Select(i => $"BackEnd_{i}").ToArray(); // WARNING: Do not change naming convention
         }
 
         /// <summary>
@@ -81,7 +79,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.ReliableStorage
         /// </returns>
         public async Task<ISessionState> GetAsync(IDeviceIdentity identity)
         {
-            var partitionKey = CalculatePartitionKey(identity.Id);
+            var partitionKey = this.CalculatePartitionKey(identity.Id);
             if (CommonEventSource.Log.IsVerboseEnabled)
             {
                 CommonEventSource.Log.Verbose($"Selecting partition {partitionKey} of SF reliable state for getting Device {identity.Id} MQTT session state", string.Empty);
@@ -118,7 +116,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.ReliableStorage
                 throw new ArgumentException("Cannot persist transient Session State object.", nameof(sessionState));
             }
 
-            var partitionKey = CalculatePartitionKey(identity.Id);
+            var partitionKey = this.CalculatePartitionKey(identity.Id);
             if (CommonEventSource.Log.IsVerboseEnabled)
             {
                 CommonEventSource.Log.Verbose($"Selecting partition {partitionKey} of SF reliable state for getting Device {identity.Id} MQTT session state", string.Empty);
@@ -150,7 +148,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.ReliableStorage
                 throw new ArgumentException("Cannot set Session State object that hasn't been acquired from provider.", nameof(sessionState));
             }
 
-            var partitionKey = CalculatePartitionKey(identity.Id);
+            var partitionKey = this.CalculatePartitionKey(identity.Id);
             if (CommonEventSource.Log.IsVerboseEnabled)
             {
                 CommonEventSource.Log.Verbose($"Selecting partition {partitionKey} of SF reliable state for getting Device {identity.Id} MQTT session state", string.Empty);
@@ -169,10 +167,10 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.ReliableStorage
         /// <returns>
         /// The <see cref="string"/>.
         /// </returns>
-        static string CalculatePartitionKey(string identifier)
+        string CalculatePartitionKey(string identifier)
         {
             byte[] hash = MurmurHash.Create32(0, false).ComputeHash(Encoding.ASCII.GetBytes(identifier));
-            return PartitionKeys[BitConverter.ToUInt32(hash, 0) % PartitionCount];
+            return this.partitionKeys[BitConverter.ToUInt32(hash, 0) % this.partitionCount];
         }
     }
 
