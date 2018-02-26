@@ -32,8 +32,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.ReliableStorage
         /// <summary>
         /// The subscriptions.
         /// </summary>
-        [IgnoreDataMember]
-        [JsonIgnore]
+        [DataMember]
+        [JsonProperty]
         readonly List<ISubscription> subscriptions;
 
         /// <summary>
@@ -61,19 +61,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.ReliableStorage
         /// <summary>
         /// The subscriptions.
         /// </summary>
-        [DataMember]
-        [JsonProperty]
-        public IReadOnlyList<ISubscription> Subscriptions
-        {
-            get
-            {
-                return this.subscriptions;
-            }
-            set
-            {
-                // do nothing, this was to satisfy the data member need
-            }
-        }
+        [IgnoreDataMember]
+        [JsonIgnore]
+        public IReadOnlyList<ISubscription> Subscriptions => this.subscriptions;
 
         /// <summary>
         /// The copy.
