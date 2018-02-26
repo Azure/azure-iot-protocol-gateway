@@ -119,7 +119,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.ReliableStorage
             var partitionKey = this.CalculatePartitionKey(identity.Id);
             if (CommonEventSource.Log.IsVerboseEnabled)
             {
-                CommonEventSource.Log.Verbose($"Selecting partition {partitionKey} of SF reliable state for getting Device {identity.Id} MQTT session state", string.Empty);
+                CommonEventSource.Log.Verbose($"Selecting partition {partitionKey} of SF reliable state for storing Device {identity.Id} MQTT session state", string.Empty);
             }
             var servicePartitionKey = new ServicePartitionKey(partitionKey);
             var backEndService = ServiceProxy.Create<IBackEndService>(BackEndEndpoint, servicePartitionKey);
@@ -151,7 +151,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.ReliableStorage
             var partitionKey = this.CalculatePartitionKey(identity.Id);
             if (CommonEventSource.Log.IsVerboseEnabled)
             {
-                CommonEventSource.Log.Verbose($"Selecting partition {partitionKey} of SF reliable state for getting Device {identity.Id} MQTT session state", string.Empty);
+                CommonEventSource.Log.Verbose($"Selecting partition {partitionKey} of SF reliable state for deleting Device {identity.Id} MQTT session state", string.Empty);
             }
             var servicePartitionKey = new ServicePartitionKey(partitionKey);
             var backEndService = ServiceProxy.Create<IBackEndService>(BackEndEndpoint, servicePartitionKey);

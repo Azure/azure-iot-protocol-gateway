@@ -46,7 +46,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.ReliableStorage
             var partitionKey = this.CalculatePartitionKey(deviceIdentity.Id);
             if (CommonEventSource.Log.IsVerboseEnabled)
             {
-                CommonEventSource.Log.Verbose($"Selecting partition {partitionKey} of SF reliable state for storing Device {deviceIdentity.Id} MQTT OoS2 message state", string.Empty); 
+                CommonEventSource.Log.Verbose($"Selecting partition {partitionKey} of SF reliable state for getting Device {deviceIdentity.Id} MQTT OoS2 message state", string.Empty); 
             }
             var servicePartitionKey = new ServicePartitionKey(partitionKey);
             var backEndService = ServiceProxy.Create<IBackEndService>(BackEndEndpoint, servicePartitionKey);
@@ -61,7 +61,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.ReliableStorage
             var partitionKey = this.CalculatePartitionKey(deviceIdentity.Id);
             if (CommonEventSource.Log.IsVerboseEnabled)
             {
-                CommonEventSource.Log.Verbose($"Selecting partition {partitionKey} of SF reliable state for storing Device {deviceIdentity.Id} MQTT OoS2 message state", string.Empty);
+                CommonEventSource.Log.Verbose($"Selecting partition {partitionKey} of SF reliable state for deleting Device {deviceIdentity.Id} MQTT OoS2 message state", string.Empty);
             }
             var servicePartitionKey = new ServicePartitionKey(partitionKey);
             var backEndService = ServiceProxy.Create<IBackEndService>(BackEndEndpoint, servicePartitionKey);
