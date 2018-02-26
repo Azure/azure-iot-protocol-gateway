@@ -48,9 +48,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProtocolGateway.Host.Fabric.FabricShared.Logging", "host\fabricshared\ProtocolGateway.Host.Fabric.FabricShared.Logging\ProtocolGateway.Host.Fabric.FabricShared.Logging.csproj", "{A2537696-FD02-40CD-B179-2DF85CC52A89}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProtocolGateway.Host.FabricSetup.CounterSetup", "host\fabricsetup\ProtocolGateway.Host.FabricSetup.CounterSetup\ProtocolGateway.Host.FabricSetup.CounterSetup.csproj", "{07885AE0-1DF1-4BA5-8197-F3514A06BDD3}"
-	ProjectSection(ProjectDependencies) = postProject
-		{A90B33E9-A3EE-402C-B692-63450B876E59} = {A90B33E9-A3EE-402C-B692-63450B876E59}
-	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProtocolGateway.Host.Fabric.FabricShared.Health", "host\fabricshared\ProtocolGateway.Host.Fabric.FabricShared.Health\ProtocolGateway.Host.Fabric.FabricShared.Health.csproj", "{443E59D8-9395-41F1-AA8F-4895A734C2AA}"
 EndProject
