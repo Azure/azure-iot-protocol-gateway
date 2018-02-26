@@ -146,19 +146,25 @@
 
             while (!cancellationToken.IsCancellationRequested)
             {
-                if (this.backupStorageType == BackupMode.None)
+                try
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(10));
+                    if (this.backupStorageType == BackupMode.None)
+                    {
+                        await Task.Delay(TimeSpan.FromSeconds(10));
+                    }
+                    else
+                    {
+                        await Task.Delay(TimeSpan.FromSeconds(this.backupManager.backupFrequencyInSeconds), cancellationToken).ConfigureAwait(false);
+
+                        var backupDescription = new BackupDescription(BackupOption.Full, this.BackupCallbackAsync);
+
+                        await this.BackupAsync(backupDescription, TimeSpan.FromHours(1), cancellationToken);
+
+                        backupsTaken++;
+                    }
                 }
-                else
+                catch (OperationCanceledException)
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(this.backupManager.backupFrequencyInSeconds), cancellationToken).ConfigureAwait(false);
-
-                    var backupDescription = new BackupDescription(BackupOption.Full, this.BackupCallbackAsync);
-
-                    await this.BackupAsync(backupDescription, TimeSpan.FromHours(1), cancellationToken);
-
-                    backupsTaken++;
                 }
             }
         }
