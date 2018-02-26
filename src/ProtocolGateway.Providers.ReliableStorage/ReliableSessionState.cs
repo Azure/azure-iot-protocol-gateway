@@ -63,7 +63,17 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.ReliableStorage
         /// </summary>
         [DataMember]
         [JsonProperty]
-        public IReadOnlyList<ISubscription> Subscriptions => this.subscriptions;
+        public IReadOnlyList<ISubscription> Subscriptions
+        {
+            get
+            {
+                return this.subscriptions;
+            }
+            set
+            {
+                // do nothing, this was to satisfy the data member need
+            }
+        }
 
         /// <summary>
         /// The copy.
