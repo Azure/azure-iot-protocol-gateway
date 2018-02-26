@@ -61,8 +61,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.ReliableStorage
         /// <summary>
         /// The subscriptions.
         /// </summary>
-        [DataMember(Name = "subscriptions")]
-        [JsonProperty("subscriptions")]
+        [DataMember]
+        [JsonProperty]
         public IReadOnlyList<ISubscription> Subscriptions => this.subscriptions;
 
         /// <summary>

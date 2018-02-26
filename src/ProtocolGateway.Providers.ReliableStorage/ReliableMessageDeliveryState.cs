@@ -7,7 +7,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.ReliableStorage
     using System.Runtime.Serialization;
 
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence;
-
+    using Newtonsoft.Json;
 
     [Serializable]
     [DataContract]
@@ -26,10 +26,16 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.ReliableStorage
             this.LastModified = DateTime.UtcNow;
         }
 
-        public DateTime LastModified { get; }
+        [DataMember]
+        [JsonProperty]
+        public DateTime LastModified { get; set; }
 
-        public long MessageNumber { get; }
+        [DataMember]
+        [JsonProperty]
+        public long MessageNumber { get; set; }
 
+        [IgnoreDataMember]
+        [JsonIgnore]
         ulong IQos2MessageDeliveryState.SequenceNumber => unchecked((ulong)this.MessageNumber);
     }
 }
