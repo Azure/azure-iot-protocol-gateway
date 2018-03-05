@@ -103,7 +103,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.ReliableStorage
         /// </returns>
         /// <exception cref="ArgumentException">
         /// </exception>
-        public async Task SetAsync(IDeviceIdentity identity, ISessionState sessionState)
+        public Task SetAsync(IDeviceIdentity identity, ISessionState sessionState)
         {
             var state = sessionState as ReliableSessionState;
             if (state == null)
@@ -123,7 +123,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.ReliableStorage
             }
             var servicePartitionKey = new ServicePartitionKey(partitionKey);
             var backEndService = ServiceProxy.Create<IBackEndService>(BackEndEndpoint, servicePartitionKey);
-            await backEndService.SetSessionStateAsync(identity.Id, state).ConfigureAwait(false);
+            return backEndService.SetSessionStateAsync(identity.Id, state);
         }
 
         /// <summary>
@@ -140,7 +140,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.ReliableStorage
         /// </returns>
         /// <exception cref="ArgumentException">
         /// </exception>
-        public async Task DeleteAsync(IDeviceIdentity identity, ISessionState sessionState)
+        public Task DeleteAsync(IDeviceIdentity identity, ISessionState sessionState)
         {
             var state = sessionState as ReliableSessionState;
             if (state == null)
@@ -155,7 +155,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.ReliableStorage
             }
             var servicePartitionKey = new ServicePartitionKey(partitionKey);
             var backEndService = ServiceProxy.Create<IBackEndService>(BackEndEndpoint, servicePartitionKey);
-            await backEndService.DeleteSessionStateAsync(identity.Id).ConfigureAwait(false);
+            return backEndService.DeleteSessionStateAsync(identity.Id);
         }
 
         /// <summary>
