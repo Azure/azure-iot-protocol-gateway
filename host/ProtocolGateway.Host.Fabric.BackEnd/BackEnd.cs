@@ -70,9 +70,9 @@
 
         public async Task SetSessionStateAsync(string identityId, ReliableSessionState sessionState)
         {
+            var sessionStateDictionary = await this.StateManager.GetOrAddAsync<IReliableDictionary<string, ReliableSessionState>>(this.backEndConfigurationProvider.Config.SessionDictionaryName).ConfigureAwait(false);
             using (var tx = this.StateManager.CreateTransaction())
             {
-                var sessionStateDictionary = await this.StateManager.GetOrAddAsync<IReliableDictionary<string, ReliableSessionState>>(tx, this.backEndConfigurationProvider.Config.SessionDictionaryName).ConfigureAwait(false);
                 await sessionStateDictionary.AddOrUpdateAsync(tx, identityId, sessionState, (s, state) => sessionState).ConfigureAwait(false);
                 await tx.CommitAsync().ConfigureAwait(false);
             }
@@ -80,9 +80,9 @@
 
         public async Task DeleteSessionStateAsync(string identityId)
         {
+            var sessionStateDictionary = await this.StateManager.GetOrAddAsync<IReliableDictionary<string, ReliableSessionState>>(this.backEndConfigurationProvider.Config.SessionDictionaryName).ConfigureAwait(false);
             using (var tx = this.StateManager.CreateTransaction())
             {
-                var sessionStateDictionary = await this.StateManager.GetOrAddAsync<IReliableDictionary<string, ReliableSessionState>>(tx, this.backEndConfigurationProvider.Config.SessionDictionaryName).ConfigureAwait(false);
                 await sessionStateDictionary.TryRemoveAsync(tx, identityId).ConfigureAwait(false);
                 await tx.CommitAsync().ConfigureAwait(false);
             }
@@ -91,9 +91,9 @@
         public async Task<ReliableSessionState> GetSessionStateAsync(string identityId)
         {
             ReliableSessionState sessionState;
+            var sessionStateDictionary = await this.StateManager.GetOrAddAsync<IReliableDictionary<string, ReliableSessionState>>(this.backEndConfigurationProvider.Config.SessionDictionaryName).ConfigureAwait(false);
             using (var tx = this.StateManager.CreateTransaction())
             {
-                var sessionStateDictionary = await this.StateManager.GetOrAddAsync<IReliableDictionary<string, ReliableSessionState>>(tx, this.backEndConfigurationProvider.Config.SessionDictionaryName).ConfigureAwait(false);
                 var result = await sessionStateDictionary.TryGetValueAsync(tx, identityId).ConfigureAwait(false);
                 sessionState = result.HasValue ? result.Value : null;
                 await tx.CommitAsync().ConfigureAwait(false);
@@ -106,9 +106,9 @@
         {
             var key = $"{identityId}_{packetId}";
             ReliableMessageDeliveryState deliveryState;
+            var deliveryStateDictionary = await this.StateManager.GetOrAddAsync<IReliableDictionary<string, ReliableMessageDeliveryState>>(this.backEndConfigurationProvider.Config.Qos2DictionaryName).ConfigureAwait(false);
             using (var tx = this.StateManager.CreateTransaction())
             {
-                var deliveryStateDictionary = await this.StateManager.GetOrAddAsync<IReliableDictionary<string, ReliableMessageDeliveryState>>(tx, this.backEndConfigurationProvider.Config.Qos2DictionaryName).ConfigureAwait(false);
                 var result = await deliveryStateDictionary.TryGetValueAsync(tx, key).ConfigureAwait(false);
                 deliveryState = result.HasValue ? result.Value : null;
                 await tx.CommitAsync().ConfigureAwait(false);
@@ -120,9 +120,9 @@
         public async Task DeleteMessageAsync(string identityId, int packetId)
         {
             var key = $"{identityId}_{packetId}";
+            var deliveryStateDictionary = await this.StateManager.GetOrAddAsync<IReliableDictionary<string, ReliableMessageDeliveryState>>(this.backEndConfigurationProvider.Config.Qos2DictionaryName).ConfigureAwait(false);
             using (var tx = this.StateManager.CreateTransaction())
             {
-                var deliveryStateDictionary = await this.StateManager.GetOrAddAsync<IReliableDictionary<string, ReliableMessageDeliveryState>>(tx, this.backEndConfigurationProvider.Config.Qos2DictionaryName).ConfigureAwait(false);
                 await deliveryStateDictionary.TryRemoveAsync(tx, key).ConfigureAwait(false);
                 await tx.CommitAsync().ConfigureAwait(false);
             }
@@ -131,9 +131,9 @@
         public async Task SetMessageAsync(string identityId, int packetId, ReliableMessageDeliveryState message)
         {
             var key = $"{identityId}_{packetId}";
+            var deliveryStateDictionary = await this.StateManager.GetOrAddAsync<IReliableDictionary<string, ReliableMessageDeliveryState>>(this.backEndConfigurationProvider.Config.Qos2DictionaryName).ConfigureAwait(false);
             using (var tx = this.StateManager.CreateTransaction())
             {
-                var deliveryStateDictionary = await this.StateManager.GetOrAddAsync<IReliableDictionary<string, ReliableMessageDeliveryState>>(tx, this.backEndConfigurationProvider.Config.Qos2DictionaryName).ConfigureAwait(false);
                 await deliveryStateDictionary.AddOrUpdateAsync(tx, key, message, (s, state) => message).ConfigureAwait(false);
                 await tx.CommitAsync().ConfigureAwait(false);
             }
