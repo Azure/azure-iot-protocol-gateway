@@ -2,8 +2,9 @@
 {
     #region Using Clauses
     using System;
-    using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
     using logging;
+    using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
+
     #endregion
 
     /// <summary>

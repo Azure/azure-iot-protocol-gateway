@@ -48,14 +48,14 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProtocolGateway.Host.Fabric.FabricShared.Logging", "host\fabricshared\ProtocolGateway.Host.Fabric.FabricShared.Logging\ProtocolGateway.Host.Fabric.FabricShared.Logging.csproj", "{A2537696-FD02-40CD-B179-2DF85CC52A89}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProtocolGateway.Host.FabricSetup.CounterSetup", "host\fabricsetup\ProtocolGateway.Host.FabricSetup.CounterSetup\ProtocolGateway.Host.FabricSetup.CounterSetup.csproj", "{07885AE0-1DF1-4BA5-8197-F3514A06BDD3}"
-	ProjectSection(ProjectDependencies) = postProject
-		{A4701342-633A-4EEE-BA50-7384156BEBBD} = {A4701342-633A-4EEE-BA50-7384156BEBBD}
-		{A90B33E9-A3EE-402C-B692-63450B876E59} = {A90B33E9-A3EE-402C-B692-63450B876E59}
-	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProtocolGateway.Host.Fabric.FabricShared.Health", "host\fabricshared\ProtocolGateway.Host.Fabric.FabricShared.Health\ProtocolGateway.Host.Fabric.FabricShared.Health.csproj", "{443E59D8-9395-41F1-AA8F-4895A734C2AA}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProtocolGateway.Host.Fabric.FabricShared.Security", "host\fabricshared\ProtocolGateway.Host.Fabric.FabricShared.Security\ProtocolGateway.Host.Fabric.FabricShared.Security.csproj", "{1CB06C3E-3D1C-4FD4-95E9-037B4361303A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProtocolGateway.Providers.ReliableStorage", "src\ProtocolGateway.Providers.ReliableStorage\ProtocolGateway.Providers.ReliableStorage.csproj", "{4DB21DAB-5357-4FA0-8B5A-DDD8BF93F341}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProtocolGateway.Host.Fabric.BackEnd", "host\ProtocolGateway.Host.Fabric.BackEnd\ProtocolGateway.Host.Fabric.BackEnd.csproj", "{93A5E17B-93B4-497C-95AB-053DA866A382}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -196,6 +196,20 @@ Global
 		{1CB06C3E-3D1C-4FD4-95E9-037B4361303A}.Release|Any CPU.Build.0 = Release|x64
 		{1CB06C3E-3D1C-4FD4-95E9-037B4361303A}.Release|x64.ActiveCfg = Release|x64
 		{1CB06C3E-3D1C-4FD4-95E9-037B4361303A}.Release|x64.Build.0 = Release|x64
+		{4DB21DAB-5357-4FA0-8B5A-DDD8BF93F341}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4DB21DAB-5357-4FA0-8B5A-DDD8BF93F341}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4DB21DAB-5357-4FA0-8B5A-DDD8BF93F341}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4DB21DAB-5357-4FA0-8B5A-DDD8BF93F341}.Debug|x64.Build.0 = Debug|Any CPU
+		{4DB21DAB-5357-4FA0-8B5A-DDD8BF93F341}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4DB21DAB-5357-4FA0-8B5A-DDD8BF93F341}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4DB21DAB-5357-4FA0-8B5A-DDD8BF93F341}.Release|x64.ActiveCfg = Release|Any CPU
+		{4DB21DAB-5357-4FA0-8B5A-DDD8BF93F341}.Release|x64.Build.0 = Release|Any CPU
+		{93A5E17B-93B4-497C-95AB-053DA866A382}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{93A5E17B-93B4-497C-95AB-053DA866A382}.Debug|x64.ActiveCfg = Debug|x64
+		{93A5E17B-93B4-497C-95AB-053DA866A382}.Debug|x64.Build.0 = Debug|x64
+		{93A5E17B-93B4-497C-95AB-053DA866A382}.Release|Any CPU.ActiveCfg = Release|x64
+		{93A5E17B-93B4-497C-95AB-053DA866A382}.Release|x64.ActiveCfg = Release|x64
+		{93A5E17B-93B4-497C-95AB-053DA866A382}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -220,6 +234,8 @@ Global
 		{07885AE0-1DF1-4BA5-8197-F3514A06BDD3} = {EB9EFEF3-F837-4654-9636-EAC6D303B828}
 		{443E59D8-9395-41F1-AA8F-4895A734C2AA} = {C3D241FB-0849-486C-8686-A33DB8486BB3}
 		{1CB06C3E-3D1C-4FD4-95E9-037B4361303A} = {C3D241FB-0849-486C-8686-A33DB8486BB3}
+		{4DB21DAB-5357-4FA0-8B5A-DDD8BF93F341} = {40E01D4A-EFB5-4BE5-A267-0C0DD70F0C75}
+		{93A5E17B-93B4-497C-95AB-053DA866A382} = {9F27B381-3559-42D0-9EDE-0637E02ADFC8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		EnterpriseLibraryConfigurationToolBinariesPathV6 = packages\EnterpriseLibrary.TransientFaultHandling.6.0.1304.0\lib\portable-net45+win+wp8

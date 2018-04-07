@@ -831,7 +831,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
                 this.messagingBridge = await this.messagingBridgeFactory(this.identity);
 
-                bool sessionPresent = await this.EstablishSessionStateAsync(packet.CleanSession);
+                // running this IO in a threadpool thread to avoid deadlock
+                bool sessionPresent = await Task.Run(() => this.EstablishSessionStateAsync(packet.CleanSession));
 
                 this.keepAliveTimeout = this.DeriveKeepAliveTimeout(context, packet);
 

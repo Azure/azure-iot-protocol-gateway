@@ -14,7 +14,6 @@
     using FabricShared.Configuration;
     using FabricShared.Logging;
     using Configuration;
-    using Logging;
     using Mqtt;
     using ProtocolGateway.Host.Fabric.FabricShared.Health;
 
@@ -89,9 +88,12 @@
 
             this.logger.Verbose(traceId, ComponentName, "CreateServiceInstanceListeners() Invoked.");
 
+            // WARNING: changing partition count will change placement of device in partitions. Do it only if is wiped or migrated along the change.
+            const int BackendPartitionCount = 0x10;
+
             return new[]
             {
-                new ServiceInstanceListener(serviceContext => new MqttCommunicationListener(traceId, ComponentName, serviceContext, this.logger, this.configurationProvider, this.OnUnsupportedConfigurationChange))
+                new ServiceInstanceListener(serviceContext => new MqttCommunicationListener(traceId, ComponentName, serviceContext, this.logger, this.configurationProvider, this.OnUnsupportedConfigurationChange, BackendPartitionCount))
             };
         }
 

@@ -44,7 +44,8 @@ Please follow these steps in order to run the end-to-end test for the protocol g
 		Note: It is recommended to use an IoT hub instance specifically created for the tests. The test will register a device in the IoT hub and will use it for to exchange messages between the device and the simulated app back end.
 	- `End2End.DeviceName` - identity of the device that will be used during the test. If the device name is not specified, a new device will be created for the test.
 	- If you want to run the test against an already running protocol gateway, uncomment the `End2End.ServerAddress` setting in the test configuration file and provide the IP-address of the protocol gateway you want to use. Otherwise, the test will start a new in-process protocol gateway. If you want to connect to a running protocol gateway on the same machine you can use 127.0.0.1 as the IP address.
-	(Note: by default, the gateway listens on port 8883 for MQTTS and uses port 5671 for AMQPS traffic).
+>Note: by default, the gateway listens on port 8883 for MQTTS and uses port 5671 for AMQPS traffic.
+
 2. In Visual Studio, run the unit test `EndToEndTests.BasicFunctionalityTest` in the ProtocolGateway.Tests project. This test is expected to pass if the setup has been successful.
 
 ### Deploying a Cloud Services Host
@@ -65,25 +66,28 @@ The Service Fabric host runs the protocol gateway in a Service Fabric Cluster us
 	
 1. Update the IoT Hub client configuration file (`ProtocolGateway.Host.Fabric.FrontEnd\PackageRoot\Config\FrontEnd.IoTHubClient.json`) by providing the following settings:
 	 - `ConnectionString` - connection string for your IoT hub that will be used for the test. For this test specifically you need to provide the connection string for the device policy in the `Shared access policies` settings of the IoT hub.
-		Note: It is recommended to use an IoT Hub instance specifically created for the tests. The test will register a device in the IoT hub and will use it to exchange messages between the device and the simulated app back end.
-2. Update the Azure Storage configuration file (`ProtocolGateway.Host.Fabric.FrontEnd\PackageRoot\Config\FrontEnd.AzureState.json`) by providing the following settings:
+>Note: It is recommended to use an IoT Hub instance specifically created for the tests. The test will register a device in the IoT hub and will use it to exchange messages between the device and the simulated app back end.
+
+>Note: Following 2 storage connection strings are not required if MqttQoSStateProvider and MqttQoS2StateProvider is ServiceFabricStateful in `ProtocolGateway.Host.Fabric.FrontEnd\PackageRoot\Config\FrondEnd.Mqtt.json` (default)
+
+2. If you change the state provider to AzureStorage, update the Azure Storage configuration file (`ProtocolGateway.Host.Fabric.FrontEnd\PackageRoot\Config\FrontEnd.AzureState.json`) by providing the following settings:
  - `BlobConnectionString` - connection string for your Azure Storage that will be used for persisting the BLOB based MQTT session state. 
-		Note: The storage emulator can be used for local development cluster deployment.
+>Note: The storage emulator can be used for local development cluster deployment.
  - `TableConnectionString` - connection string for your Azure Storage that will be used for persisting the Table based MQTT session state. 
-		Note: The storage emulator can be used for local development cluster deployment.
-2. Open the solution in Visual Studio.
-3. Right-click on **host/ProtocolGateway.Host.Fabric** project and choose **Package**.
-4. Open PowerShell and set current directory to `<repo root>\host\ProtocolGateway.Host.Fabric\Scripts`.
-5. Execute the following commands
- 	
+>Note: The storage emulator can be used for local development cluster deployment.
+
+3. Open the solution in Visual Studio.
+4. Right-click on **host/ProtocolGateway.Host.Fabric** project and choose **Package**.
+5. Open PowerShell and set current directory to `<repo root>\host\ProtocolGateway.Host.Fabric\Scripts`.
+6. Execute the following commands
 
 ----------
+```ps
 `Import-Module "$ModuleFolderPath\ServiceFabricSdk.psm1"` 
 	`Connect-ServiceFabricCluster -ConnectEndpoint 'localhost:19000'`
 	`Test-ServiceFabricClusterConnection`
 	`./Deploy-FabricApplication.ps1 -ApplicationPackagePath '..\pkg\Release' -UseExistingClusterConnection` 
-
-
+```
 ----------
 6. You can see the deployed service through the Service Fabric Local Cluster Manager.
 

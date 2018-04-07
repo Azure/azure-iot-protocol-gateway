@@ -104,7 +104,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="MurmurHash, Version=1.0.0.0, Culture=neutral, PublicKeyToken=ff7eff5eb27df7b9, processorArchitecture=MSIL">
-      <HintPath>$(SolutionDir)\packages\murmurhash-signed.1.0.0\lib\net45\MurmurHash.dll</HintPath>
+      <HintPath>..\..\packages\murmurhash-signed.1.0.2\lib\net45\MurmurHash.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
@@ -152,7 +152,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
+    <None Include="app.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>

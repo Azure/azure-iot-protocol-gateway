@@ -1,0 +1,15 @@
+﻿{
+  "BackupMode": "None",
+  "LocalBackupConfiguration": {
+    "BackupArchivalPath": "d:\\test\\backups",
+    "BackupFrequencyInSeconds": "3600",
+    "MaxBackupsToKeep": "10"
+  },
+  "AzureBackupConfiguration": {
+    "BackupFrequencyInSeconds": "3600",
+    "MaxBackupsToKeep": "10",
+    "BlobConnectionString": "UseDevelopmentStorage=true;"
+  },
+  "SessionDictionaryName": "mqtt-sessions",
+  "Qos2DictionaryName": "mqttqos2"
+}
