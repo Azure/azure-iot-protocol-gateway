@@ -747,7 +747,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             {
                 ISubscription subscription = subscriptions[i];
                 if ((!found || subscription.QualityOfService > qos)
-                    && subscription.CreationTime < messageTime
+                    && subscription.CreationTime <= messageTime
                     && Util.CheckTopicFilterMatch(topicName, subscription.TopicFilter))
                 {
                     found = true;
