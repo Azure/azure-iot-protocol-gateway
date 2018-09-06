@@ -9,15 +9,16 @@
     <NetStandardImplicitPackageVersion Condition=" '$(TargetFramework)' == 'netstandard1.3' ">1.6.1</NetStandardImplicitPackageVersion>
     <AssemblyName>Microsoft.Azure.Devices.ProtocolGateway.IotHubClient</AssemblyName>
     <RootNamespace>Microsoft.Azure.Devices.ProtocolGateway.IotHubClient</RootNamespace>
-    <Version>1.3.1.0</Version>
-    <PackageVersion>1.3.1</PackageVersion>
+    <Version>2.0.0.0</Version>
+    <PackageVersion>2.0.0</PackageVersion>
     <Company>Microsoft</Company>
     <Product>Microsoft Azure IoT protocol gateway</Product>
-    <Copyright>Copyright © Microsoft 2017</Copyright>
+    <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
     <NeutralLanguage>en-US</NeutralLanguage>
-    <Authors>Microsoft Azure</Authors>
-    <PackageLicenseUrl>http://go.microsoft.com/fwlink/?LinkId=536623</PackageLicenseUrl>
+    <Authors>Microsoft</Authors>
+    <PackageLicenseUrl>https://github.com/Azure/azure-iot-protocol-gateway/blob/master/LICENSE.txt</PackageLicenseUrl>
     <PackageIconUrl>http://go.microsoft.com/fwlink/?LinkID=288890</PackageIconUrl>
+    <RequireLicenseAcceptance>true</RequireLicenseAcceptance>
   </PropertyGroup>
   
   <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard1.3'">
@@ -37,7 +38,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.Devices.Client" Version="1.3.1" />
+    <PackageReference Include="Microsoft.Azure.Devices.Client" Version="1.18.0" />
     <PackageReference Include="System.Diagnostics.Contracts" Version="4.3.0" />
   </ItemGroup>
 

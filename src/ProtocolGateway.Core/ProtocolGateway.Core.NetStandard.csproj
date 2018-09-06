@@ -11,15 +11,16 @@
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
     <AssemblyName>Microsoft.Azure.Devices.ProtocolGateway.Core</AssemblyName>
     <RootNamespace>Microsoft.Azure.Devices.ProtocolGateway.Core</RootNamespace>
-    <Version>1.3.0.0</Version>
-    <PackageVersion>1.3.1</PackageVersion>
+    <Version>2.0.0.0</Version>
+    <PackageVersion>2.0.0</PackageVersion>
     <NeutralLanguage>en-US</NeutralLanguage>
     <Company>Microsoft</Company>
-    <Copyright>Copyright © Microsoft 2017</Copyright>
+    <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
     <Product>Microsoft Azure IoT protocol gateway</Product>
-    <Authors>Microsoft Azure</Authors>
+    <Authors>Microsoft</Authors>
     <PackageIconUrl>http://go.microsoft.com/fwlink/?LinkID=288890</PackageIconUrl>
-    <PackageLicenseUrl>http://go.microsoft.com/fwlink/?LinkId=536623</PackageLicenseUrl>
+    <PackageLicenseUrl>https://github.com/Azure/azure-iot-protocol-gateway/blob/master/LICENSE.txt</PackageLicenseUrl>
+    <RequireLicenseAcceptance>true</RequireLicenseAcceptance>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard1.3'">
@@ -49,8 +50,8 @@
   </ItemGroup>
 
    <ItemGroup>
-     <PackageReference Include="DotNetty.Codecs.Mqtt" Version="0.4.6" />
-     <PackageReference Include="DotNetty.Handlers" version="0.4.6" />
+     <PackageReference Include="DotNetty.Codecs.Mqtt" Version="0.5.0" />
+     <PackageReference Include="DotNetty.Handlers" version="0.5.0" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)'=='net451'">
