@@ -125,7 +125,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
             TableContinuationToken continuationToken = null;
             do
             {
-                TableQuerySegment<TableMessageDeliveryState> queryResult = await this.table.ExecuteQuerySegmentedAsync(query, continuationToken, cancellationToken);
+                TableQuerySegment<TableMessageDeliveryState> queryResult = await this.table.ExecuteQuerySegmentedAsync<TableMessageDeliveryState>(query, continuationToken, null, null, cancellationToken);
                 List<TableMessageDeliveryState> results = queryResult.Results;
                 if (results.Count > 1)
                 {
