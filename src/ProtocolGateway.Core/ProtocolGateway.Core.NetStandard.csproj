@@ -1,5 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
  
   <PropertyGroup>
     <TargetFrameworks>netstandard1.3;net451</TargetFrameworks>
@@ -8,29 +7,22 @@
     <Description>This library contains the core components of Azure IoT protocol gateway that enables protocol translation for Azure IoT Hub.</Description>
     <OutputType>Library</OutputType>
     <NetStandardImplicitPackageVersion Condition=" '$(TargetFramework)' == 'netstandard1.3' ">1.6.1</NetStandardImplicitPackageVersion>
-    <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
     <AssemblyName>Microsoft.Azure.Devices.ProtocolGateway.Core</AssemblyName>
     <RootNamespace>Microsoft.Azure.Devices.ProtocolGateway.Core</RootNamespace>
     <Version>2.0.0.0</Version>
     <PackageVersion>2.0.0</PackageVersion>
     <NeutralLanguage>en-US</NeutralLanguage>
     <Company>Microsoft</Company>
-    <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
     <Product>Microsoft Azure IoT protocol gateway</Product>
+    <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
     <Authors>Microsoft</Authors>
     <PackageIconUrl>http://go.microsoft.com/fwlink/?LinkID=288890</PackageIconUrl>
     <PackageLicenseUrl>https://github.com/Azure/azure-iot-protocol-gateway/blob/master/LICENSE.txt</PackageLicenseUrl>
-    <RequireLicenseAcceptance>true</RequireLicenseAcceptance>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard1.3'">
+    <PackageProjectUrl>https://github.com/Azure/azure-iot-protocol-gateway/</PackageProjectUrl>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <AssemblyTitle>Microsoft.Azure.Devices.ProtocolGateway.Core</AssemblyTitle>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net451'">
-    <AssemblyTitle>Microsoft.Azure.Devices.ProtocolGateway.Core</AssemblyTitle>
-  </PropertyGroup>
-  
   <ItemGroup Condition="'$(TargetFramework)'=='netstandard1.3'">
     <Compile Remove="Instrumentation\PerformanceCounterCategoryInfo.cs" Link="Instrumentation\PerformanceCounterCategoryInfo.cs" />
     <Compile Remove="Instrumentation\WindowsPerformanceCounterManager.cs" Link="Instrumentation\WindowsPerformanceCounterManager.cs" />
