@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
+namespace ProtocolGateway.Host.Cloud.Service
 {
     using Microsoft.Azure.Devices.ProtocolGateway;
     using Microsoft.WindowsAzure.ServiceRuntime;

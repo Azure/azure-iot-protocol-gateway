@@ -1,14 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard1.3;net451</TargetFrameworks>
-    <PackageId>Microsoft.Azure.Devices.ProtocolGateway.IotHubClient</PackageId>
-    <Title>Microsoft Azure IoT protocol gateway framework - IoT Hub client</Title>
-    <Description>This library contains Azure IoT Hub specific components of Azure IoT protocol gateway that enables protocol translation for Azure IoT Hub.</Description>
+    <TargetFrameworks>netstandard1.4;net451</TargetFrameworks>
+    <PackageId>Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage</PackageId>
+    <Title>Microsoft Azure IoT protocol gateway framework - Azure Storage persistence providers</Title>
+    <Description>This library contains the Azure Storage-based persistence components of Azure IoT protocol gateway that enables protocol translation for Azure IoT Hub.</Description>
     <OutputType>Library</OutputType>
     <NetStandardImplicitPackageVersion Condition=" '$(TargetFramework)' == 'netstandard1.3' ">1.6.1</NetStandardImplicitPackageVersion>
-    <AssemblyName>Microsoft.Azure.Devices.ProtocolGateway.IotHubClient</AssemblyName>
-    <RootNamespace>Microsoft.Azure.Devices.ProtocolGateway.IotHubClient</RootNamespace>
+    <AssemblyName>Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage</AssemblyName>
+    <RootNamespace>Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage</RootNamespace>
     <Version>2.0.1.0</Version>
     <PackageVersion>2.0.1</PackageVersion>
     <NeutralLanguage>en-US</NeutralLanguage>
@@ -20,12 +20,8 @@
     <PackageLicenseUrl>https://github.com/Azure/azure-iot-protocol-gateway/blob/master/LICENSE.txt</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/Azure/azure-iot-protocol-gateway/</PackageProjectUrl>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-    <AssemblyTitle>Microsoft.Azure.Devices.ProtocolGateway.IotHubClient</AssemblyTitle>
+    <AssemblyTitle>Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage</AssemblyTitle>
   </PropertyGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)'=='netstandard1.3'">
-    <Compile Remove="Addressing\MessageAddressConversionConfigurationHandler.cs" />
-  </ItemGroup>
 
   <ItemGroup>
     <Compile Remove="Properties\AssemblyInfo.cs" />
@@ -33,16 +29,9 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.Devices.Client" Version="1.18.1" />
+    <PackageReference Include="murmurhash-signed" Version="1.0.2" />
     <PackageReference Include="System.Diagnostics.Contracts" Version="4.3.0" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)'=='net451'">
-    <Reference Include="System.ServiceModel" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)'=='netstandard1.3'">
-    <PackageReference Include="Microsoft.Extensions.Configuration" version="1.1.1" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="1.1.1" />
+    <PackageReference Include="WindowsAzure.Storage" Version="9.3.1" />
   </ItemGroup>
 
   <ItemGroup>

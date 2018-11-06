@@ -211,7 +211,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
 
             Device device = await registryManager.GetDeviceAsync(this.deviceId);
             this.deviceSas =
-                new SharedAccessSignatureBuilder
+                new Client.SharedAccessSignatureBuilder
                 {
                     Key = device.Authentication.SymmetricKey.PrimaryKey,
                     Target = $"{hubConnectionStringBuilder.HostName}/devices/{this.deviceId}",

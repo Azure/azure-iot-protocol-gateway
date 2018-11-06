@@ -13,6 +13,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProtocolGateway.Host.Consol
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProtocolGateway.Client.NetStandard", "test\ProtocolGateway.Client.NetStandard\ProtocolGateway.Client.NetStandard.csproj", "{C4303641-E19E-4DE3-BF29-9AA002090E30}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProtocolGateway.Providers.CloudStorage.NetStandard", "src\ProtocolGateway.Providers.CloudStorage\ProtocolGateway.Providers.CloudStorage.NetStandard.csproj", "{CA34A598-EEA8-410B-8AA6-30D3D1BB1FE3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,8 +41,15 @@ Global
 		{C4303641-E19E-4DE3-BF29-9AA002090E30}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C4303641-E19E-4DE3-BF29-9AA002090E30}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C4303641-E19E-4DE3-BF29-9AA002090E30}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CA34A598-EEA8-410B-8AA6-30D3D1BB1FE3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CA34A598-EEA8-410B-8AA6-30D3D1BB1FE3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CA34A598-EEA8-410B-8AA6-30D3D1BB1FE3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CA34A598-EEA8-410B-8AA6-30D3D1BB1FE3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {01C3BAD6-4187-4117-82C8-FD5F3871DCC3}
 	EndGlobalSection
 EndGlobal
