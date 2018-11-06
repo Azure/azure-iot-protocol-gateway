@@ -9,8 +9,8 @@
     <NetStandardImplicitPackageVersion Condition=" '$(TargetFramework)' == 'netstandard1.3' ">1.6.1</NetStandardImplicitPackageVersion>
     <AssemblyName>Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage</AssemblyName>
     <RootNamespace>Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage</RootNamespace>
-    <Version>2.0.0.0</Version>
-    <PackageVersion>2.0.0</PackageVersion>
+    <Version>2.0.1.0</Version>
+    <PackageVersion>2.0.1</PackageVersion>
     <NeutralLanguage>en-US</NeutralLanguage>
     <Company>Microsoft</Company>
     <Product>Microsoft Azure IoT protocol gateway</Product>
@@ -28,7 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.Devices.Client" Version="1.18.0" />
+    <PackageReference Include="Microsoft.Azure.Devices.Client" Version="1.18.1" />
     <PackageReference Include="murmurhash-signed" Version="1.0.2" />
     <PackageReference Include="System.Diagnostics.Contracts" Version="4.3.0" />
     <PackageReference Include="WindowsAzure.Storage" Version="9.3.1" />

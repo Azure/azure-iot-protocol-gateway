@@ -1,5 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
- 
+
   <PropertyGroup>
     <TargetFrameworks>netstandard1.3;net451</TargetFrameworks>
     <PackageId>Microsoft.Azure.Devices.ProtocolGateway.Core</PackageId>
@@ -9,8 +9,8 @@
     <NetStandardImplicitPackageVersion Condition=" '$(TargetFramework)' == 'netstandard1.3' ">1.6.1</NetStandardImplicitPackageVersion>
     <AssemblyName>Microsoft.Azure.Devices.ProtocolGateway.Core</AssemblyName>
     <RootNamespace>Microsoft.Azure.Devices.ProtocolGateway.Core</RootNamespace>
-    <Version>2.0.0.0</Version>
-    <PackageVersion>2.0.0</PackageVersion>
+    <Version>2.0.1.0</Version>
+    <PackageVersion>2.0.1</PackageVersion>
     <NeutralLanguage>en-US</NeutralLanguage>
     <Company>Microsoft</Company>
     <Product>Microsoft Azure IoT protocol gateway</Product>
@@ -29,7 +29,7 @@
     <Compile Remove="ConfigManagerReader.cs" Link="ConfigManagerReader.cs" />
     <Compile Remove="Instrumentation\SafePerformanceCounter.cs" Link="Instrumentation\SafePerformanceCounter.cs" />
   </ItemGroup>
- 
+
   <ItemGroup>
     <Compile Remove="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -41,9 +41,9 @@
     <Compile Remove="ConfigurationExtensionReader.cs" Link="ConfigurationExtensionReader.cs" />
   </ItemGroup>
 
-   <ItemGroup>
-     <PackageReference Include="DotNetty.Codecs.Mqtt" Version="0.5.0" />
-     <PackageReference Include="DotNetty.Handlers" version="0.5.0" />
+  <ItemGroup>
+    <PackageReference Include="DotNetty.Codecs.Mqtt" Version="0.6.0" />
+    <PackageReference Include="DotNetty.Handlers" version="0.6.0" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)'=='net451'">
