@@ -61,6 +61,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
                 tcpSettings,
                 webSocketSettings
             });
+
+            client.ProductInfo = $"protocolgateway/poolsize={connectionPoolSize}";
+
             try
             {
                 await client.OpenAsync();
