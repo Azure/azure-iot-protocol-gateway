@@ -263,16 +263,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             }
         }
 
-        public async Task DisposeAsync(Exception cause)
+        public Task DisposeAsync(Exception cause)
         {
-            try
-            {
-                await this.deviceClient.CloseAsync();
-            }
-            catch (IotHubException ex)
-            {
-                throw ComposeIotHubCommunicationException(ex);
-            }
+            CommonEventSource.Log.Info("Shutting down", cause?.ToString(), this.deviceId);
+            this.deviceClient.Dispose();
+            return Task.FromResult(0);
         }
 
         internal static IAuthenticationMethod DeriveAuthenticationMethod(IAuthenticationMethod currentAuthenticationMethod, IotHubDeviceIdentity deviceIdentity)
