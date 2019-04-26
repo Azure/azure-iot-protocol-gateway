@@ -265,7 +265,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
 
         public Task DisposeAsync(Exception cause)
         {
-            CommonEventSource.Log.Info("Shutting down", cause?.ToString(), this.deviceId);
             this.deviceClient.Dispose();
             return Task.FromResult(0);
         }

@@ -56,14 +56,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 ? timeout
                 : (TimeSpan?)null;
 
-            int retransmissionCount;
-            if (!settingsProvider.TryGetIntegerSetting(MaxOutboundRetransmissionCountSetting, out retransmissionCount)
-                || (retransmissionCount < 0))
-            {
-                retransmissionCount = NoMaxOutboundRetransmissionCountValue;
-            }
-            this.MaxOutboundRetransmissionCount = retransmissionCount;
-
             this.ServicePropertyPrefix = settingsProvider.GetSetting(ServicePropertyPrefixSetting, string.Empty);
 
             bool abortOnOutOfOrderPubAck;
@@ -86,17 +78,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         public string QoSPropertyName { get; }
 
         public bool AbortOnOutOfOrderPubAck { get; }
-
-        /// <summary>
-        ///     When null, there is no limit on delay between sending PUBLISH to client and receiving PUBACK from the client
-        /// </summary>
-        public TimeSpan DeviceReceiveAckTimeout => this.deviceReceiveAckTimeout ?? TimeSpan.MinValue;
-
-        public bool DeviceReceiveAckCanTimeout => this.deviceReceiveAckTimeout.HasValue;
-
-        public bool MaxOutboundRetransmissionEnforced => this.MaxOutboundRetransmissionCount > NoMaxOutboundRetransmissionCountValue;
-
-        public int MaxOutboundRetransmissionCount { get; }
 
         public string ServicePropertyPrefix { get; private set; }
     }
