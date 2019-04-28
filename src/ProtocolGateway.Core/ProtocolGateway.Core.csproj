@@ -136,7 +136,6 @@
     <Compile Include="Mqtt\MessageAsyncProcessor.cs" />
     <Compile Include="Mqtt\CompletionPendingMessageState.cs" />
     <Compile Include="Messaging\IMessagingServiceClient.cs" />
-    <Compile Include="Mqtt\ISupportRetransmission.cs" />
     <Compile Include="Mqtt\MessagingBridgeFactoryFunc.cs" />
     <Compile Include="Mqtt\Persistence\ISubscription.cs" />
     <Compile Include="Mqtt\Persistence\TransientSessionState.cs" />
