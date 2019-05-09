@@ -19,7 +19,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
     using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence;
 
-    public sealed class MqttAdapter : ChannelHandlerAdapter, IMessagingChannel<MessageWithFeedback>
+    public sealed class MqttAdapter : ChannelHandlerAdapter, IMessagingChannel
     {
         public const string OperationScopeExceptionDataKey = "PG.MqttAdapter.Scope.Operation";
         public const string ConnectionScopeExceptionDataKey = "PG.MqttAdapter.Scope.Connection";
@@ -435,10 +435,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
         #region PUBLISH Server -> Client handling
 
-        public void Handle(MessageWithFeedback messageWithFeedback)
+        public async void Handle(IMessage message, IMessagingServiceClient sender)
         {
             IChannelHandlerContext context = this.capturedContext;
-            IMessage message = messageWithFeedback.Message;
             try
             {
                 Contract.Assert(message != null);

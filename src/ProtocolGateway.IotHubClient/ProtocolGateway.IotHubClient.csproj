@@ -161,6 +161,11 @@
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="AuthenticationScope.cs" />
+    <Compile Include="CommandReceiver.cs" />
+    <Compile Include="IMessageDispatcher.cs" />
+    <Compile Include="MethodHandler.cs" />
+    <Compile Include="SendMessageOutcome.cs" />
+    <Compile Include="TelemetrySender.cs" />
     <Compile Include="IotHubClientMessage.cs" />
     <Compile Include="Addressing\IMessageAddressConverter.cs" />
     <Compile Include="KeyDeviceIdentityProvider.cs" />

@@ -9,11 +9,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Messaging
     using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt;
 
-    public sealed class SingleClientMessagingBridge : IMessagingBridge, IMessagingChannel<IMessage>
+    public sealed class SingleClientMessagingBridge : IMessagingBridge
     {
         readonly IDeviceIdentity deviceIdentity;
         readonly IMessagingServiceClient messagingClient;
-        IMessagingChannel<MessageWithFeedback> messagingChannel;
+        IMessagingChannel messagingChannel;
 
         public SingleClientMessagingBridge(IDeviceIdentity deviceIdentity, IMessagingServiceClient messagingClient)
         {
@@ -21,16 +21,10 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Messaging
             this.messagingClient = messagingClient;
         }
 
-        public void BindMessagingChannel(IMessagingChannel<MessageWithFeedback> channel)
+        public void BindMessagingChannel(IMessagingChannel channel)
         {
             this.messagingChannel = channel;
-            this.messagingChannel.CapabilitiesChanged += this.OnChannelCapabilitiesChanged;
-            this.messagingClient.BindMessagingChannel(this);
-        }
-
-        void OnChannelCapabilitiesChanged(object sender, EventArgs args)
-        {
-            this.CapabilitiesChanged?.Invoke(this, EventArgs.Empty);
+            this.messagingClient.BindMessagingChannel(channel);
         }
 
         public bool TryResolveClient(string topicName, out IMessagingServiceClient sendingClient)
@@ -52,17 +46,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Messaging
                 CommonEventSource.Log.Warning($"Closing connection for device: {this.deviceIdentity}" + (operationScope == null ? null : ", scope: " + operationScope), cause, connectionScope);
             }
 
-            if (this.messagingChannel != null)
-            {
-                this.messagingChannel.CapabilitiesChanged -= this.OnChannelCapabilitiesChanged;
-            }
             return this.messagingClient.DisposeAsync(cause);
         }
 
-        public void Handle(IMessage message) => this.messagingChannel.Handle(new MessageWithFeedback(message, new MessageFeedbackChannel(message.Id, this.messagingClient)));
-
         public void Close(Exception cause) => this.messagingChannel.Close(cause);
-
-        public event EventHandler CapabilitiesChanged;
     }
 }

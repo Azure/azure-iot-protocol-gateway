@@ -141,9 +141,10 @@ namespace ProtocolGateway.Host.Common
             TimeSpan connectionIdleTimeout = this.settingsProvider.GetTimeSpanSetting("IotHubClient.ConnectionIdleTimeout", DefaultConnectionIdleTimeout);
             string connectionString = this.iotHubClientSettings.IotHubConnectionString;
 
-            Func<IDeviceIdentity, Task<IMessagingServiceClient>> deviceClientFactory = IotHubClient.PreparePoolFactory(connectionString, connectionPoolSize,
-                connectionIdleTimeout, this.iotHubClientSettings, PooledByteBufferAllocator.Default, this.topicNameConverter);
-            MessagingBridgeFactoryFunc bridgeFactory = async deviceIdentity => new SingleClientMessagingBridge(deviceIdentity, await deviceClientFactory(deviceIdentity));
+            MessagingBridgeFactoryFunc bridgeFactory = IotHubBridge.PrepareFactory(connectionString, connectionPoolSize,
+                connectionIdleTimeout, this.iotHubClientSettings, bridge => {
+                    bridge.RegisterRoute(t => true, new TelemetrySender(bridge, )) 
+                });
 
             return new ServerBootstrap()
                 .Group(this.parentEventLoopGroup, this.eventLoopGroup)
