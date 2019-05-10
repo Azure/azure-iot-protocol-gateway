@@ -22,23 +22,19 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
     {
         public delegate Task<MethodResponse> MethodHandlerCallback(MethodRequest request, IMessageDispatcher dispatcher);
 
-        readonly DeviceClient deviceClient;
-        readonly string deviceId;
-        readonly IotHubClientSettings settings;
+        readonly IotHubBridge bridge;
+        readonly MethodHandlerCallback dispatchCallback;
         IMessagingChannel messagingChannel;
-        MethodHandlerCallback dispatchCallback;
 
         Dictionary<string, TaskCompletionSource<SendMessageOutcome>> messageMap;
 
-        MethodHandler(DeviceClient deviceClient, string deviceId, IotHubClientSettings settings, MethodHandlerCallback dispatchCallback)
+        MethodHandler(IotHubBridge bridge, MethodHandlerCallback dispatchCallback)
         {
-            this.deviceClient = deviceClient;
-            this.deviceId = deviceId;
-            this.settings = settings;
+            this.bridge = bridge;
             this.dispatchCallback = dispatchCallback;
         }
 
-        public int MaxPendingMessages => this.settings.MaxPendingInboundMessages;
+        public int MaxPendingMessages => this.bridge.Settings.MaxPendingInboundMessages;
 
         public IMessage CreateMessage(string address, IByteBuffer payload)
         {
@@ -54,7 +50,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
                 Contract.Assert(this.messagingChannel == null);
 
                 this.messagingChannel = channel;
-                await this.deviceClient.SetMethodHandlerAsync(
+                await this.bridge.DeviceClient.SetMethodHandlerAsync(
                     null,
                     (req, self) =>
                     {
@@ -95,7 +91,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
         {
             var promise = new TaskCompletionSource<SendMessageOutcome>();
             this.messageMap[message.Id] = promise;
-            this.messagingChannel.Handle(this.AttachFeedbackChannel(message));
+            this.messagingChannel.Handle(message, this);
             return promise.Task;
         }
     }

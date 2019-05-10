@@ -34,7 +34,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
         public void RegisterRoute(Func<string, bool> topicEvaluator, IMessagingServiceClient handler)
         {
             this.routes.Add(Tuple.Create(topicEvaluator, handler));
-            if (this.messagingChannel != null) {
+            if (this.messagingChannel != null)
+            {
                 handler.BindMessagingChannel(this.messagingChannel);
             }
         }
@@ -98,7 +99,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
         }
 
         public string DeviceId { get; }
-        
+
         public DeviceClient DeviceClient { get; }
 
         public IotHubClientSettings Settings { get; }
@@ -111,7 +112,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             return TaskEx.Completed;
         }
 
-        internal static IAuthenticationMethod DeriveAuthenticationMethod(IAuthenticationMethod currentAuthenticationMethod, IotHubDeviceIdentity deviceIdentity)
+        static IAuthenticationMethod DeriveAuthenticationMethod(IAuthenticationMethod currentAuthenticationMethod, IotHubDeviceIdentity deviceIdentity)
         {
             switch (deviceIdentity.Scope)
             {
@@ -154,7 +155,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             Contract.Assert(this.messagingChannel == null);
 
             this.messagingChannel = channel;
-            foreach (var route in this.routes) {
+            foreach (var route in this.routes)
+            {
                 route.Item2.BindMessagingChannel(channel);
             }
         }

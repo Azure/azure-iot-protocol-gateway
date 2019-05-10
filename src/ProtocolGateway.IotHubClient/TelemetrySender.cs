@@ -15,9 +15,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt;
 
     /// <summary>Provides a way to send messages from client as events to IoT Hub.</summary>
-    public class TelemetrySender: IMessagingServiceClient
+    public class TelemetrySender : IMessagingServiceClient
     {
-        IotHubBridge bridge;
+        readonly IotHubBridge bridge;
         readonly IMessageAddressConverter messageAddressConverter;
 
         public TelemetrySender(IotHubBridge bridge, IMessageAddressConverter messageAddressConverter)
@@ -27,8 +27,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
         }
 
         public int MaxPendingMessages => this.bridge.Settings.MaxPendingInboundMessages;
-
-        IotHubClientSettings Settings => this.bridge.Settings;
 
         public IMessage CreateMessage(string address, IByteBuffer payload)
         {
@@ -62,17 +60,17 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
                 }
                 else
                 {
-                    if (!this.Settings.PassThroughUnmatchedMessages)
+                    if (!this.bridge.Settings.PassThroughUnmatchedMessages)
                     {
                         throw new InvalidOperationException($"Topic name `{address}` could not be matched against any of the configured routes.");
                     }
 
                     CommonEventSource.Log.Warning("Topic name could not be matched against any of the configured routes. Falling back to default telemetry settings.", address);
-                    message.Properties[this.Settings.ServicePropertyPrefix + MessagePropertyNames.Unmatched] = bool.TrueString;
-                    message.Properties[this.Settings.ServicePropertyPrefix + MessagePropertyNames.Subject] = address;
+                    message.Properties[this.bridge.Settings.ServicePropertyPrefix + MessagePropertyNames.Unmatched] = bool.TrueString;
+                    message.Properties[this.bridge.Settings.ServicePropertyPrefix + MessagePropertyNames.Subject] = address;
                 }
                 var iotHubMessage = clientMessage.ToMessage();
-                
+
                 await this.bridge.DeviceClient.SendEventAsync(iotHubMessage);
             }
             catch (IotHubException ex)

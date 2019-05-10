@@ -17,18 +17,14 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
 
     public class CommandReceiver : IMessagingServiceClient
     {
-        readonly DeviceClient deviceClient;
-        readonly string deviceId;
-        readonly IotHubClientSettings settings;
+        readonly IotHubBridge bridge;
         readonly IByteBufferAllocator allocator;
         readonly IMessageAddressConverter messageAddressConverter;
         IMessagingChannel messagingChannel;
 
-        CommandReceiver(DeviceClient deviceClient, string deviceId, IotHubClientSettings settings, IByteBufferAllocator allocator, IMessageAddressConverter messageAddressConverter)
+        CommandReceiver(IotHubBridge bridge, IByteBufferAllocator allocator, IMessageAddressConverter messageAddressConverter)
         {
-            this.deviceClient = deviceClient;
-            this.deviceId = deviceId;
-            this.settings = settings;
+            this.bridge = bridge;
             this.allocator = allocator;
             this.messageAddressConverter = messageAddressConverter;
         }
@@ -63,14 +59,14 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             {
                 while (true)
                 {
-                    message = await this.deviceClient.ReceiveAsync(TimeSpan.MaxValue);
+                    message = await this.bridge.DeviceClient.ReceiveAsync(TimeSpan.MaxValue);
                     if (message == null)
                     {
                         this.messagingChannel.Close(null);
                         return;
                     }
 
-                    if (this.settings.MaxOutboundRetransmissionEnforced && message.DeliveryCount > this.settings.MaxOutboundRetransmissionCount)
+                    if (this.bridge.Settings.MaxOutboundRetransmissionEnforced && message.DeliveryCount > this.bridge.Settings.MaxOutboundRetransmissionCount)
                     {
                         await this.RejectAsync(message.LockToken);
                         message.Dispose();
@@ -93,7 +89,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
                     }
 
                     var msg = new IotHubClientMessage(message, messagePayload);
-                    msg.Properties[TemplateParameters.DeviceIdTemplateParam] = this.deviceId;
+                    msg.Properties[TemplateParameters.DeviceIdTemplateParam] = this.bridge.DeviceId;
                     string address;
                     if (!this.messageAddressConverter.TryDeriveAddress(msg, out address))
                     {
@@ -104,7 +100,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
                     }
                     msg.Address = address;
 
-                    this.messagingChannel.Handle(this.AttachFeedbackChannel(msg));
+                    this.messagingChannel.Handle(msg, this);
 
                     message = null; // ownership has been transferred to messagingChannel
                     messagePayload = null;
@@ -132,7 +128,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
         {
             try
             {
-                await this.deviceClient.AbandonAsync(messageId);
+                await this.bridge.DeviceClient.AbandonAsync(messageId);
             }
             catch (IotHubException ex)
             {
@@ -144,7 +140,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
         {
             try
             {
-                await this.deviceClient.CompleteAsync(messageId);
+                await this.bridge.DeviceClient.CompleteAsync(messageId);
             }
             catch (IotHubException ex)
             {
@@ -156,7 +152,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
         {
             try
             {
-                await this.deviceClient.RejectAsync(messageId);
+                await this.bridge.DeviceClient.RejectAsync(messageId);
             }
             catch (IotHubException ex)
             {

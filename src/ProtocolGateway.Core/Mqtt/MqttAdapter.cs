@@ -7,6 +7,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
     using System.Collections.Generic;
     using System.Diagnostics.Contracts;
     using System.Security.Authentication;
+    using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Codecs.Mqtt.Packets;
     using DotNetty.Common;
@@ -41,6 +42,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         IChannelHandlerContext capturedContext;
         readonly Settings settings;
         StateFlags stateFlags;
+        CancellationTokenSource lifetimeCancellation;        
         DateTime lastClientActivityTime;
         ISessionState sessionState;
         Dictionary<IMessagingServiceClient, MessageAsyncProcessor<PublishPacket>> publishProcessors;
@@ -435,7 +437,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
         #region PUBLISH Server -> Client handling
 
-        public async void Handle(IMessage message, IMessagingServiceClient sender)
+        public void Handle(IMessage message, IMessagingServiceClient sender)
         {
             IChannelHandlerContext context = this.capturedContext;
             try
@@ -468,7 +470,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
         public event EventHandler CapabilitiesChanged;
 
-        async Task PublishToClientAsync(IChannelHandlerContext context, MessageWithFeedback messageWithFeedback)
+        async Task PublishToClientAsync(IChannelHandlerContext context, IMessage message, IMessagingServiceClient sender)
         {
             PublishPacket packet = null;
             try
@@ -727,7 +729,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
                 CommonEventSource.Log.Info("ClientAuthenticated", this.identity.ToString(), this.ChannelId);
 
-                this.messagingBridge = await this.messagingBridgeFactory(this.identity);
+                this.messagingBridge = await this.messagingBridgeFactory(this.identity, this.lifetimeCancellation.Token);
 
                 bool sessionPresent = await this.EstablishSessionStateAsync(packet.CleanSession);
 
