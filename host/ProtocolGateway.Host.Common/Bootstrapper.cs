@@ -136,11 +136,6 @@ namespace ProtocolGateway.Host.Common
 
         ServerBootstrap SetupBootstrap()
         {
-            if (this.settings.DeviceReceiveAckCanTimeout && this.iotHubClientSettings.MaxPendingOutboundMessages > 1)
-            {
-                throw new InvalidOperationException("Cannot maintain ordering on retransmission with more than 1 allowed pending outbound message.");
-            }
-
             int maxInboundMessageSize = this.settingsProvider.GetIntegerSetting("MaxInboundMessageSize", 256 * 1024);
             int connectionPoolSize = this.settingsProvider.GetIntegerSetting("IotHubClient.ConnectionPoolSize", DefaultConnectionPoolSize);
             TimeSpan connectionIdleTimeout = this.settingsProvider.GetTimeSpanSetting("IotHubClient.ConnectionIdleTimeout", DefaultConnectionIdleTimeout);

@@ -27,7 +27,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         const string InboundPublishProcessingScope = "-> PUBLISH";
         const string ReceiveProcessingScope = "Receive";
         const string ConnectProcessingScope = "Connect";
-        const string OutboundPublishRetransmissionScope = "<<- PUBLISH";
         const string ExceptionCaughtScope = "ExceptionCaught";
 
         static readonly Action<object> CheckConnectTimeoutCallback = CheckConnectionTimeout;
@@ -106,14 +105,13 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
             this.publishProcessors = new Dictionary<IMessagingServiceClient, MessageAsyncProcessor<PublishPacket>>(1);
 
-            TimeSpan? ackTimeout = this.settings.DeviceReceiveAckCanTimeout ? this.settings.DeviceReceiveAckTimeout : (TimeSpan?)null;
             bool abortOnOutOfOrderAck = this.settings.AbortOnOutOfOrderPubAck;
 
-            this.publishPubAckProcessor = new RequestAckPairProcessor<AckPendingMessageState, PublishPacket>(this.AcknowledgePublishAsync, this.RetransmitNextPublish, ackTimeout, abortOnOutOfOrderAck, this.ChannelId);
+            this.publishPubAckProcessor = new RequestAckPairProcessor<AckPendingMessageState, PublishPacket>(this.AcknowledgePublishAsync, abortOnOutOfOrderAck, this.ChannelId);
             this.publishPubAckProcessor.Completion.OnFault(ShutdownOnPubAckFaultAction, this);
-            this.publishPubRecProcessor = new RequestAckPairProcessor<AckPendingMessageState, PublishPacket>(this.AcknowledgePublishReceiveAsync, this.RetransmitNextPublish, ackTimeout, abortOnOutOfOrderAck, this.ChannelId);
+            this.publishPubRecProcessor = new RequestAckPairProcessor<AckPendingMessageState, PublishPacket>(this.AcknowledgePublishReceiveAsync, abortOnOutOfOrderAck, this.ChannelId);
             this.publishPubRecProcessor.Completion.OnFault(ShutdownOnPubRecFaultAction, this);
-            this.pubRelPubCompProcessor = new RequestAckPairProcessor<CompletionPendingMessageState, PubRelPacket>(this.AcknowledgePublishCompleteAsync, this.RetransmitNextPublishRelease, ackTimeout, abortOnOutOfOrderAck, this.ChannelId);
+            this.pubRelPubCompProcessor = new RequestAckPairProcessor<CompletionPendingMessageState, PubRelPacket>(this.AcknowledgePublishCompleteAsync, abortOnOutOfOrderAck, this.ChannelId);
             this.pubRelPubCompProcessor.Completion.OnFault(ShutdownOnPubCompFaultAction, this);
 
             this.stateFlags = StateFlags.WaitingForConnect;
@@ -437,7 +435,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
         #region PUBLISH Server -> Client handling
 
-        public async void Handle(MessageWithFeedback messageWithFeedback)
+        public void Handle(MessageWithFeedback messageWithFeedback)
         {
             IChannelHandlerContext context = this.capturedContext;
             IMessage message = messageWithFeedback.Message;
@@ -447,48 +445,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
                 PerformanceCounters.MessagesReceivedPerSecond.Increment();
 
-                int processorsInRetransmission = 0;
-                bool sentThroughRetransmission = false;
-
-                if (this.publishPubAckProcessor.Retransmitting)
-                {
-                    processorsInRetransmission++;
-                    AckPendingMessageState pendingPubAck = this.publishPubAckProcessor.FirstRequestPendingAck;
-                    if (pendingPubAck.SequenceNumber == message.SequenceNumber)
-                    {
-                        this.RetransmitPublishMessage(context, messageWithFeedback, pendingPubAck);
-                        sentThroughRetransmission = true;
-                    }
-                }
-
-                if (this.publishPubRecProcessor.Retransmitting)
-                {
-                    processorsInRetransmission++;
-                    if (!sentThroughRetransmission)
-                    {
-                        AckPendingMessageState pendingPubRec = this.publishPubRecProcessor.FirstRequestPendingAck;
-                        if (pendingPubRec.SequenceNumber == message.SequenceNumber)
-                        {
-                            this.RetransmitPublishMessage(context, messageWithFeedback, pendingPubRec);
-                            sentThroughRetransmission = true;
-                        }
-                    }
-                }
-
-                if (processorsInRetransmission == 0)
-                {
-                    this.PublishToClientAsync(context, messageWithFeedback).OnFault(ShutdownOnPublishFaultAction, context);
-                }
-                else
-                {
-                    if (!sentThroughRetransmission)
-                    {
-                        // message id is different - "publish" this message (it actually will be enqueued for future retransmission immediately)
-                        await this.PublishToClientAsync(context, messageWithFeedback);
-                        // todo: consider back pressure in a form of explicit retransmission state communication with MSC
-                    }
-                }
-
+                this.PublishToClientAsync(context, messageWithFeedback).OnFault(ShutdownOnPublishFaultAction, context);
                 message = null;
             }
             catch (MessagingException ex)
@@ -637,8 +594,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 await message.FeedbackChannel.CompleteAsync();
 
                 PerformanceCounters.OutboundMessageProcessingTime.Register(message.StartTimestamp);
-
-                this.publishPubAckProcessor.ResumeRetransmission(context);
             }
             catch (Exception ex)
             {
@@ -657,8 +612,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 await this.qos2StateProvider.SetMessageAsync(this.identity, message.PacketId, messageInfo);
 
                 await this.PublishReleaseToClientAsync(context, message.PacketId, message.FeedbackChannel, messageInfo, message.StartTimestamp);
-
-                this.publishPubRecProcessor.ResumeRetransmission(context);
             }
             catch (Exception ex)
             {
@@ -677,64 +630,10 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 await this.qos2StateProvider.DeleteMessageAsync(this.identity, message.PacketId, message.DeliveryState);
 
                 PerformanceCounters.OutboundMessageProcessingTime.Register(message.StartTimestamp);
-
-                this.pubRelPubCompProcessor.ResumeRetransmission(context);
             }
             catch (Exception ex)
             {
                 ShutdownOnError(context, "-> PUBCOMP", ex);
-            }
-        }
-
-        async void RetransmitNextPublish(IChannelHandlerContext context, AckPendingMessageState messageInfo)
-        {
-            try
-            {
-                await messageInfo.FeedbackChannel.AbandonAsync();
-            }
-            catch (MessagingException ex)
-            {
-                this.ShutdownOnReceiveError(ex);
-            }
-            catch (Exception ex)
-            {
-                ShutdownOnError(context, OutboundPublishRetransmissionScope, ex);
-            }
-        }
-
-        async void RetransmitPublishMessage(IChannelHandlerContext context, MessageWithFeedback messageWithFeedback, AckPendingMessageState messageInfo)
-        {
-            PublishPacket packet = null;
-            try
-            {
-                using (IMessage message = messageWithFeedback.Message)
-                {
-                    message.Properties[TemplateParameters.DeviceIdTemplateParam] = this.DeviceId;
-                    packet = Util.ComposePublishPacket(context, message, messageInfo.QualityOfService, context.Channel.Allocator);
-                    messageInfo.ResetMessage(message, messageWithFeedback.FeedbackChannel);
-                    await this.publishPubAckProcessor.RetransmitAsync(context, packet, messageInfo);
-                }
-            }
-            catch (Exception ex)
-            {
-                ReferenceCountUtil.SafeRelease(packet);
-                ShutdownOnError(context, "<- PUBLISH (retransmission)", ex);
-            }
-        }
-
-        async void RetransmitNextPublishRelease(IChannelHandlerContext context, CompletionPendingMessageState messageInfo)
-        {
-            try
-            {
-                var packet = new PubRelPacket
-                {
-                    PacketId = messageInfo.PacketId
-                };
-                await this.pubRelPubCompProcessor.RetransmitAsync(context, packet, messageInfo);
-            }
-            catch (Exception ex)
-            {
-                ShutdownOnError(context, "<- PUBREL (retransmission)", ex);
             }
         }
 

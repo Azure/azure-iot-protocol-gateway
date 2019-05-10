@@ -8,7 +8,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
     using DotNetty.Common;
     using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
 
-    sealed class AckPendingMessageState : IPacketReference, ISupportRetransmission // todo: recycle?
+    sealed class AckPendingMessageState : IPacketReference // todo: recycle?
     {
         public AckPendingMessageState(MessageWithFeedback messageWithFeedback, PublishPacket packet)
         {
@@ -16,7 +16,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             this.PacketId = packet.PacketId;
             this.QualityOfService = packet.QualityOfService;
             this.FeedbackChannel = messageWithFeedback.FeedbackChannel;
-            this.SentTime = DateTime.UtcNow;
             this.StartTimestamp = PreciseTimeSpan.FromStart;
         }
 
@@ -26,26 +25,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
         public int PacketId { get; }
 
-        public DateTime SentTime { get; private set; }
-
         public QualityOfService QualityOfService { get; private set; }
 
         public MessageFeedbackChannel FeedbackChannel { get; private set; }
-
-        public void ResetMessage(IMessage message, MessageFeedbackChannel feedbackChannel)
-        {
-            if (message.SequenceNumber != this.SequenceNumber)
-            {
-                throw new InvalidOperationException($"Expected to receive message with id of {this.SequenceNumber.ToString()} but saw a message " +
-                    $"with id of {message.SequenceNumber.ToString()}. Protocol Gateway only supports exclusive connection to IoT Hub.");
-            }
-
-            this.FeedbackChannel = feedbackChannel;
-        }
-
-        public void ResetSentTime()
-        {
-            this.SentTime = DateTime.UtcNow;
-        }
     }
 }
