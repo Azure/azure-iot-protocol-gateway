@@ -4,10 +4,10 @@
 namespace ProtocolGateway.Host.Common
 {
     using System;
-    using System.Collections.Generic;
     using System.Diagnostics.Contracts;
     using System.Net;
     using System.Security.Cryptography.X509Certificates;
+    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
@@ -18,14 +18,14 @@ namespace ProtocolGateway.Host.Common
     using DotNetty.Transport.Bootstrapping;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Sockets;
+    using Microsoft.Azure.Devices.Client;
     using Microsoft.Azure.Devices.ProtocolGateway;
     using Microsoft.Azure.Devices.ProtocolGateway.Identity;
     using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
     using Microsoft.Azure.Devices.ProtocolGateway.IotHubClient;
-    using Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Addressing;
-    using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence;
+    using Message = Microsoft.Azure.Devices.ProtocolGateway.Messaging.Message;
 
     public class Bootstrapper
     {
@@ -45,19 +45,8 @@ namespace ProtocolGateway.Host.Common
         IEventLoopGroup eventLoopGroup;
         IChannel serverChannel;
         readonly IotHubClientSettings iotHubClientSettings;
-        readonly IMessageAddressConverter topicNameConverter;
 
-        public Bootstrapper(ISettingsProvider settingsProvider, ISessionStatePersistenceProvider sessionStateManager, IQos2StatePersistenceProvider qos2StateProvider) : 
-            this(settingsProvider, sessionStateManager, qos2StateProvider, new ConfigurableMessageAddressConverter())
-        {
-        }
-
-        public Bootstrapper(ISettingsProvider settingsProvider, ISessionStatePersistenceProvider sessionStateManager, IQos2StatePersistenceProvider qos2StateProvider, List<string> inboundTemplates, List<string> outboundTemplates) : 
-            this(settingsProvider, sessionStateManager, qos2StateProvider, new ConfigurableMessageAddressConverter(inboundTemplates ?? new List<string>(), outboundTemplates ?? new List<string>()))
-        {
-        }
-
-        Bootstrapper(ISettingsProvider settingsProvider, ISessionStatePersistenceProvider sessionStateManager, IQos2StatePersistenceProvider qos2StateProvider, IMessageAddressConverter addressConverter)
+        public Bootstrapper(ISettingsProvider settingsProvider, ISessionStatePersistenceProvider sessionStateManager, IQos2StatePersistenceProvider qos2StateProvider)
         {
             Contract.Requires(settingsProvider != null);
             Contract.Requires(sessionStateManager != null);
@@ -70,7 +59,6 @@ namespace ProtocolGateway.Host.Common
             this.sessionStateManager = sessionStateManager;
             this.qos2StateProvider = qos2StateProvider;
             this.authProvider = new SasTokenDeviceIdentityProvider();
-            this.topicNameConverter = addressConverter;
         }
 
         public Task CloseCompletion => this.closeCompletionSource.Task;
@@ -136,16 +124,24 @@ namespace ProtocolGateway.Host.Common
 
         ServerBootstrap SetupBootstrap()
         {
+            // pull/customize configuration
             int maxInboundMessageSize = this.settingsProvider.GetIntegerSetting("MaxInboundMessageSize", 256 * 1024);
             int connectionPoolSize = this.settingsProvider.GetIntegerSetting("IotHubClient.ConnectionPoolSize", DefaultConnectionPoolSize);
             TimeSpan connectionIdleTimeout = this.settingsProvider.GetTimeSpanSetting("IotHubClient.ConnectionIdleTimeout", DefaultConnectionIdleTimeout);
             string connectionString = this.iotHubClientSettings.IotHubConnectionString;
 
+            // setup message processing logic
+            var telemetryProcessing = TopicHandling.CompileParserFromUriTemplates(new[] { "devices/{deviceId}/messages/events" });
+            var commandProcessing = TopicHandling.CompileFormatterFromUriTemplate("devices/{deviceId}/messages/devicebound");
             MessagingBridgeFactoryFunc bridgeFactory = IotHubBridge.PrepareFactory(connectionString, connectionPoolSize,
-                connectionIdleTimeout, this.iotHubClientSettings, bridge => {
-                    bridge.RegisterRoute(t => true, new TelemetrySender(bridge, )) 
+                connectionIdleTimeout, this.iotHubClientSettings, bridge =>
+                {
+                    bridge.RegisterRoute(topic => true, new TelemetrySender(bridge, telemetryProcessing)); // handle all incoming messages with TelemetrySender
+                    bridge.RegisterClient(new CommandReceiver(bridge, PooledByteBufferAllocator.Default, commandProcessing)); // handle device command queue
+                    bridge.RegisterClient(new MethodHandler("command", bridge, (request, dispatcher) => DispatchCommands(bridge.DeviceId, request, dispatcher))); // register
                 });
 
+            // bring together
             return new ServerBootstrap()
                 .Group(this.parentEventLoopGroup, this.eventLoopGroup)
                 .Option(ChannelOption.SoBacklog, ListenBacklogSize)
@@ -165,6 +161,29 @@ namespace ProtocolGateway.Host.Common
                             this.qos2StateProvider,
                             bridgeFactory));
                 }));
+        }
+
+        static async Task<MethodResponse> DispatchCommands(string deviceId, MethodRequest request, IMessageDispatcher dispatcher)
+        {
+            try
+            {
+                // deserialize request payload and further process it before sending or
+                // just pass it through to message.Payload using Unpooled.WrappedBuffer(request.Data)
+                var message = new Message
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Address = "devices/" + deviceId + "/messages/command",
+                    Properties = { { "extra", "property" } },
+                    Payload = Unpooled.WrappedBuffer(request.Data)
+                };
+
+                var outcome = await dispatcher.SendAsync(message);
+                return new MethodResponse(200); // no-op on the wire
+            }
+            catch (Exception ex)
+            {
+                return new MethodResponse(Encoding.UTF8.GetBytes($"{{\"message\":\"error sending message: {ex.ToString()}\"}}"), 500);
+            }
         }
     }
 }

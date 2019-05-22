@@ -6,35 +6,35 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
     using System;
     using System.Diagnostics.Contracts;
     using System.IO;
+    using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Common.Utilities;
-    using Microsoft.Azure.Devices.Client;
     using Microsoft.Azure.Devices.Client.Exceptions;
-    using Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Addressing;
     using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt;
+    using Message = Client.Message;
 
     public class CommandReceiver : IMessagingServiceClient
     {
+        public delegate bool TryFormatAddress(IMessage message, out string address);
+
         readonly IotHubBridge bridge;
         readonly IByteBufferAllocator allocator;
-        readonly IMessageAddressConverter messageAddressConverter;
+        readonly TryFormatAddress addressFormatter;
         IMessagingChannel messagingChannel;
+        CancellationTokenSource lifetimeCancellation;
 
-        CommandReceiver(IotHubBridge bridge, IByteBufferAllocator allocator, IMessageAddressConverter messageAddressConverter)
+        public CommandReceiver(IotHubBridge bridge, IByteBufferAllocator allocator, TryFormatAddress addressFormatter)
         {
             this.bridge = bridge;
             this.allocator = allocator;
-            this.messageAddressConverter = messageAddressConverter;
+            this.addressFormatter = addressFormatter;
         }
 
         public int MaxPendingMessages => int.MaxValue;
 
-        public IMessage CreateMessage(string address, IByteBuffer payload)
-        {
-            throw new InvalidOperationException("Must not receive messages from a client.");
-        }
+        public IMessage CreateMessage(string address, IByteBuffer payload) => throw new InvalidOperationException("Must not receive messages from a client.");
 
         public void BindMessagingChannel(IMessagingChannel channel)
         {
@@ -43,13 +43,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             Contract.Assert(this.messagingChannel == null);
 
             this.messagingChannel = channel;
+            this.lifetimeCancellation = new CancellationTokenSource();
             this.Receive();
         }
 
-        public Task SendAsync(IMessage message)
-        {
-            return TaskEx.FromException(new InvalidOperationException("Must not receive messages from a client."));
-        }
+        public Task SendAsync(IMessage message) => TaskEx.FromException(new InvalidOperationException("Must not receive messages from a client."));
 
         async void Receive()
         {
@@ -59,7 +57,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             {
                 while (true)
                 {
-                    message = await this.bridge.DeviceClient.ReceiveAsync(TimeSpan.MaxValue);
+                    message = await this.bridge.DeviceClient.ReceiveAsync(this.lifetimeCancellation.Token);
                     if (message == null)
                     {
                         this.messagingChannel.Close(null);
@@ -91,7 +89,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
                     var msg = new IotHubClientMessage(message, messagePayload);
                     msg.Properties[TemplateParameters.DeviceIdTemplateParam] = this.bridge.DeviceId;
                     string address;
-                    if (!this.messageAddressConverter.TryDeriveAddress(msg, out address))
+                    if (!this.addressFormatter(msg, out address))
                     {
                         messagePayload.Release();
                         await this.RejectAsync(message.LockToken); // todo: fork await
@@ -162,6 +160,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
 
         public Task DisposeAsync(Exception cause)
         {
+            this.lifetimeCancellation.Cancel();
             return TaskEx.Completed;
         }
 

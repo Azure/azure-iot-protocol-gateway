@@ -42,7 +42,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         IChannelHandlerContext capturedContext;
         readonly Settings settings;
         StateFlags stateFlags;
-        CancellationTokenSource lifetimeCancellation;        
+        CancellationTokenSource lifetimeCancellation;
         DateTime lastClientActivityTime;
         ISessionState sessionState;
         Dictionary<IMessagingServiceClient, MessageAsyncProcessor<PublishPacket>> publishProcessors;
@@ -60,7 +60,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         readonly IDeviceIdentityProvider authProvider;
         Queue<Packet> connectPendingQueue;
         PublishPacket willPacket;
+        SemaphoreSlim qos2Semaphore;
+
         string ChannelId => this.capturedContext.Channel.Id.ToString();
+
+        SemaphoreSlim Qos2Semaphore => this.qos2Semaphore ?? (this.qos2Semaphore = new SemaphoreSlim(1, 1));
 
         public MqttAdapter(
             Settings settings,
@@ -73,6 +77,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             Contract.Requires(sessionStateManager != null);
             Contract.Requires(authProvider != null);
             Contract.Requires(messagingBridgeFactory != null);
+
+            this.lifetimeCancellation = new CancellationTokenSource();
 
             if (qos2StateProvider != null)
             {
@@ -194,12 +200,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             ShutdownOnError(context, ExceptionCaughtScope, exception);
         }
 
-        public override void UserEventTriggered(IChannelHandlerContext context, object @event)
+        public override void UserEventTriggered(IChannelHandlerContext context, object evt)
         {
-            var handshakeCompletionEvent = @event as TlsHandshakeCompletionEvent;
-            if (handshakeCompletionEvent != null && !handshakeCompletionEvent.IsSuccessful)
+            if (evt is TlsHandshakeCompletionEvent handshakeEvent && !handshakeEvent.IsSuccessful)
             {
-                CommonEventSource.Log.Warning("TLS handshake failed.", handshakeCompletionEvent.Exception, this.ChannelId);
+                CommonEventSource.Log.Warning("TLS handshake failed.", handshakeEvent.Exception, this.ChannelId);
             }
         }
 
@@ -446,7 +451,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
                 PerformanceCounters.MessagesReceivedPerSecond.Increment();
 
-                this.PublishToClientAsync(context, messageWithFeedback).OnFault(ShutdownOnPublishFaultAction, context);
+                this.PublishToClientAsync(context, message, sender).OnFault(ShutdownOnPublishFaultAction, context);
                 message = null;
             }
             catch (MessagingException ex)
@@ -475,7 +480,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             PublishPacket packet = null;
             try
             {
-                using (IMessage message = messageWithFeedback.Message)
+                using (message)
                 {
                     message.Properties[TemplateParameters.DeviceIdTemplateParam] = this.DeviceId;
 
@@ -492,7 +497,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     else
                     {
                         // no matching subscription found - complete the message without publishing
-                        await RejectMessageAsync(messageWithFeedback);
+                        await RejectMessageAsync(message.Id, sender);
                         return;
                     }
 
@@ -500,15 +505,15 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     switch (qos)
                     {
                         case QualityOfService.AtMostOnce:
-                            await this.PublishToClientQos0Async(context, messageWithFeedback, packet);
+                            await this.PublishToClientQos0Async(context, message, sender, packet);
                             break;
                         case QualityOfService.AtLeastOnce:
-                            await this.PublishToClientQos1Async(context, messageWithFeedback, packet);
+                            await this.PublishToClientQos1Async(context, message, sender, packet);
                             break;
                         case QualityOfService.ExactlyOnce:
                             if (this.maxSupportedQosToClient >= QualityOfService.ExactlyOnce)
                             {
-                                await this.PublishToClientQos2Async(context, messageWithFeedback, packet);
+                                await this.PublishToClientQos2Async(context, message, sender, packet);
                             }
                             else
                             {
@@ -528,52 +533,69 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             }
         }
 
-        static async Task RejectMessageAsync(MessageWithFeedback messageWithFeedback)
+        static async Task RejectMessageAsync(string messageId, IMessagingServiceClient sender)
         {
-            await messageWithFeedback.FeedbackChannel.RejectAsync(); // awaiting guarantees that we won't complete consecutive message before this is completed.
+            await sender.RejectAsync(messageId); // awaiting guarantees that we won't complete consecutive message before this is completed.
             PerformanceCounters.MessagesRejectedPerSecond.Increment();
         }
 
-        Task PublishToClientQos0Async(IChannelHandlerContext context, MessageWithFeedback messageWithFeedback, PublishPacket packet)
+        Task PublishToClientQos0Async(IChannelHandlerContext context, IMessage message, IMessagingServiceClient sender, PublishPacket packet)
         {
-            if (messageWithFeedback.Message.DeliveryCount == 0)
+            if (message.DeliveryCount == 0)
             {
                 return Task.WhenAll(
-                    messageWithFeedback.FeedbackChannel.CompleteAsync(),
+                    sender.CompleteAsync(message.Id),
                     Util.WriteMessageAsync(context, packet));
             }
             else
             {
-                return messageWithFeedback.FeedbackChannel.CompleteAsync();
+                return sender.CompleteAsync(message.Id);
             }
         }
 
-        Task PublishToClientQos1Async(IChannelHandlerContext context, MessageWithFeedback messageWithFeedback, PublishPacket packet)
+        Task PublishToClientQos1Async(IChannelHandlerContext context, IMessage message, IMessagingServiceClient sender, PublishPacket packet)
         {
             return this.publishPubAckProcessor.SendRequestAsync(context, packet,
-                new AckPendingMessageState(messageWithFeedback, packet));
+                new AckPendingMessageState(message, sender, packet));
         }
 
-        async Task PublishToClientQos2Async(IChannelHandlerContext context, MessageWithFeedback messageWithFeedback, PublishPacket packet)
+        async Task PublishToClientQos2Async(IChannelHandlerContext context, IMessage message, IMessagingServiceClient sender, PublishPacket packet)
         {
-            int packetId = packet.PacketId;
-            IQos2MessageDeliveryState messageInfo = await this.qos2StateProvider.GetMessageAsync(this.identity, packetId);
+            await Qos2Semaphore.WaitAsync(this.lifetimeCancellation.Token); // this ensures proper ordering of messages
 
-            if (messageInfo != null && messageWithFeedback.Message.SequenceNumber != messageInfo.SequenceNumber)
+            Task deliveryTask;
+            try
             {
-                await this.qos2StateProvider.DeleteMessageAsync(this.identity, packetId, messageInfo);
-                messageInfo = null;
+                int packetId = packet.PacketId;
+                IQos2MessageDeliveryState messageInfo = await this.qos2StateProvider.GetMessageAsync(this.identity, packetId);
+
+                if (messageInfo != null && message.SequenceNumber != messageInfo.SequenceNumber)
+                {
+                    await this.qos2StateProvider.DeleteMessageAsync(this.identity, packetId, messageInfo);
+                    messageInfo = null;
+                }
+
+                if (messageInfo == null)
+                {
+                    deliveryTask = this.publishPubRecProcessor.SendRequestAsync(context, packet,
+                        new AckPendingMessageState(message, sender, packet));
+                }
+                else
+                {
+                    deliveryTask = this.PublishReleaseToClientAsync(context, packetId, new MessageFeedbackChannel(message.Id, sender), messageInfo, PreciseTimeSpan.FromStart);
+                }
+            }
+            finally
+            {
+                try
+                {
+                    this.Qos2Semaphore.Release();
+                }
+                catch (ObjectDisposedException)
+                { }
             }
 
-            if (messageInfo == null)
-            {
-                await this.publishPubRecProcessor.SendRequestAsync(context, packet,
-                    new AckPendingMessageState(messageWithFeedback, packet));
-            }
-            else
-            {
-                await this.PublishReleaseToClientAsync(context, packetId, messageWithFeedback.FeedbackChannel, messageInfo, PreciseTimeSpan.FromStart);
-            }
+            await deliveryTask;
         }
 
         Task PublishReleaseToClientAsync(IChannelHandlerContext context, int packetId, MessageFeedbackChannel feedbackChannel,
@@ -921,6 +943,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             {
                 return;
             }
+
+            this.lifetimeCancellation.Cancel();
+            this.qos2Semaphore?.Dispose();
 
             try
             {

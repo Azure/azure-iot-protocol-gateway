@@ -6,40 +6,35 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
     using System;
     using System.Collections.Generic;
     using System.Diagnostics.Contracts;
-    using System.IO;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Common.Utilities;
     using Microsoft.Azure.Devices.Client;
-    using Microsoft.Azure.Devices.Client.Exceptions;
-    using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
-    using Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Addressing;
     using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
-    using Microsoft.Azure.Devices.ProtocolGateway.Mqtt;
 
     /// <summary>Dispatches direct method calls as messages to client.</summary>
     public class MethodHandler : IMessagingServiceClient, IMessageDispatcher
     {
         public delegate Task<MethodResponse> MethodHandlerCallback(MethodRequest request, IMessageDispatcher dispatcher);
 
+        readonly string methodName;
         readonly IotHubBridge bridge;
         readonly MethodHandlerCallback dispatchCallback;
         IMessagingChannel messagingChannel;
-
         Dictionary<string, TaskCompletionSource<SendMessageOutcome>> messageMap;
 
-        MethodHandler(IotHubBridge bridge, MethodHandlerCallback dispatchCallback)
+        public MethodHandler(string methodName, IotHubBridge bridge, MethodHandlerCallback dispatchCallback)
         {
+            this.methodName = methodName;
             this.bridge = bridge;
             this.dispatchCallback = dispatchCallback;
         }
 
         public int MaxPendingMessages => this.bridge.Settings.MaxPendingInboundMessages;
 
-        public IMessage CreateMessage(string address, IByteBuffer payload)
-        {
-            throw new InvalidOperationException("Must not receive messages from a client.");
-        }
+        public Dictionary<string, TaskCompletionSource<SendMessageOutcome>> MessageMap => this.messageMap ?? (this.messageMap = new Dictionary<string, TaskCompletionSource<SendMessageOutcome>>(3));
+
+        public IMessage CreateMessage(string address, IByteBuffer payload) => throw new InvalidOperationException("Must not receive messages from a client.");
 
         public async void BindMessagingChannel(IMessagingChannel channel)
         {
@@ -51,7 +46,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
 
                 this.messagingChannel = channel;
                 await this.bridge.DeviceClient.SetMethodHandlerAsync(
-                    null,
+                    this.methodName,
                     (req, self) =>
                     {
                         var handler = (MethodHandler)self;
@@ -65,14 +60,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             }
         }
 
-        public Task SendAsync(IMessage message)
-        {
-            return TaskEx.FromException(new InvalidOperationException("Must not receive messages from a client."));
-        }
+        public Task SendAsync(IMessage message) => TaskEx.FromException(new InvalidOperationException("Must not receive messages from a client."));
 
         Task CompleteMessageAsync(string messageId, SendMessageOutcome outcome)
         {
-            if (this.messageMap.TryGetValue(messageId, out var promise))
+            if (this.MessageMap.TryGetValue(messageId, out var promise))
             {
                 promise.TrySetResult(outcome);
             }
@@ -90,7 +82,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
         Task<SendMessageOutcome> IMessageDispatcher.SendAsync(IMessage message)
         {
             var promise = new TaskCompletionSource<SendMessageOutcome>();
-            this.messageMap[message.Id] = promise;
+            this.MessageMap[message.Id] = promise;
             this.messagingChannel.Handle(message, this);
             return promise.Task;
         }

@@ -7,23 +7,24 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
     using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Common.Utilities;
-    using Microsoft.Azure.Devices.Client;
     using Microsoft.Azure.Devices.Client.Exceptions;
     using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
-    using Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Addressing;
     using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt;
+    using Message = Client.Message;
 
     /// <summary>Provides a way to send messages from client as events to IoT Hub.</summary>
     public class TelemetrySender : IMessagingServiceClient
     {
-        readonly IotHubBridge bridge;
-        readonly IMessageAddressConverter messageAddressConverter;
+        public delegate bool TryProcessMessage(IMessage message);
 
-        public TelemetrySender(IotHubBridge bridge, IMessageAddressConverter messageAddressConverter)
+        readonly IotHubBridge bridge;
+        readonly TryProcessMessage messageProcessor;
+
+        public TelemetrySender(IotHubBridge bridge, TryProcessMessage messageProcessor)
         {
             this.bridge = bridge;
-            this.messageAddressConverter = messageAddressConverter;
+            this.messageProcessor = messageProcessor;
         }
 
         public int MaxPendingMessages => this.bridge.Settings.MaxPendingInboundMessages;
@@ -44,8 +45,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             var clientMessage = (IotHubClientMessage)message;
             try
             {
-                string address = message.Address;
-                if (this.messageAddressConverter.TryParseAddressIntoMessageProperties(address, message))
+                if (this.messageProcessor(message))
                 {
                     string messageDeviceId;
                     if (message.Properties.TryGetValue(TemplateParameters.DeviceIdTemplateParam, out messageDeviceId))
@@ -62,12 +62,12 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
                 {
                     if (!this.bridge.Settings.PassThroughUnmatchedMessages)
                     {
-                        throw new InvalidOperationException($"Topic name `{address}` could not be matched against any of the configured routes.");
+                        throw new InvalidOperationException($"Topic name `{message.Address}` could not be matched against any of the configured routes.");
                     }
 
-                    CommonEventSource.Log.Warning("Topic name could not be matched against any of the configured routes. Falling back to default telemetry settings.", address);
+                    CommonEventSource.Log.Warning("Topic name could not be matched against any of the configured routes. Falling back to default telemetry settings.", message.Address);
                     message.Properties[this.bridge.Settings.ServicePropertyPrefix + MessagePropertyNames.Unmatched] = bool.TrueString;
-                    message.Properties[this.bridge.Settings.ServicePropertyPrefix + MessagePropertyNames.Subject] = address;
+                    message.Properties[this.bridge.Settings.ServicePropertyPrefix + MessagePropertyNames.Subject] = message.Address;
                 }
                 var iotHubMessage = clientMessage.ToMessage();
 

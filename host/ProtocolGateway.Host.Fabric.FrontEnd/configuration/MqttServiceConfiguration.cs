@@ -69,16 +69,6 @@
         public string QoSPropertyName { get; set; }
 
         /// <summary>
-        /// A template that is used to translate inbound Mqtt messages
-        /// </summary>
-        public string[] MqttInboundTemplates { get; set; }
-
-        /// <summary>
-        /// A template that is used to configure outbound Mqtt messages
-        /// </summary>
-        public string[] MqttOutboundTemplates { get; set; }
-
-        /// <summary>
         /// Determines the type of MQTT QoS state store
         /// </summary>
         public enum QosStateType

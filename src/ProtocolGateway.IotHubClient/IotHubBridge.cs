@@ -6,51 +6,50 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
     using System;
     using System.Collections.Generic;
     using System.Diagnostics.Contracts;
-    using System.IO;
+    using System.Threading;
     using System.Threading.Tasks;
-    using DotNetty.Buffers;
     using DotNetty.Common.Utilities;
     using Microsoft.Azure.Devices.Client;
     using Microsoft.Azure.Devices.Client.Exceptions;
-    using Microsoft.Azure.Devices.ProtocolGateway.Identity;
     using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
-    using Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Addressing;
     using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt;
 
     public class IotHubBridge : IMessagingBridge
     {
-        readonly IByteBufferAllocator allocator;
         IMessagingChannel messagingChannel;
-        List<Tuple<Func<string, bool>, IMessagingServiceClient>> routes;
+        readonly List<Tuple<Func<string, bool>, IMessagingServiceClient>> routes;
 
         IotHubBridge(DeviceClient deviceClient, string deviceId, IotHubClientSettings settings)
         {
+            this.routes = new List<Tuple<Func<string, bool>, IMessagingServiceClient>>();
             this.DeviceClient = deviceClient;
             this.DeviceId = deviceId;
             this.Settings = settings;
         }
 
-        public void RegisterRoute(Func<string, bool> topicEvaluator, IMessagingServiceClient handler)
+        public void RegisterRoute(Func<string, bool> routeTopicPredicate, IMessagingServiceClient handler)
         {
-            this.routes.Add(Tuple.Create(topicEvaluator, handler));
+            this.routes.Add(Tuple.Create(routeTopicPredicate, handler));
             if (this.messagingChannel != null)
             {
                 handler.BindMessagingChannel(this.messagingChannel);
             }
         }
 
+        public void RegisterClient(IMessagingServiceClient client) => this.RegisterRoute(topic => false, client);
+
         public static MessagingBridgeFactoryFunc PrepareFactory(string baseConnectionString, int connectionPoolSize,
             TimeSpan? connectionIdleTimeout, IotHubClientSettings settings, Action<IotHubBridge> initHandler)
         {
-            MessagingBridgeFactoryFunc mqttCommunicatorFactory = async deviceIdentity =>
+            MessagingBridgeFactoryFunc mqttCommunicatorFactory = async (deviceIdentity, cancellationToken) =>
             {
-                IotHubConnectionStringBuilder csb = IotHubConnectionStringBuilder.Create(baseConnectionString);
+                var csb = IotHubConnectionStringBuilder.Create(baseConnectionString);
                 var identity = (IotHubDeviceIdentity)deviceIdentity;
                 csb.AuthenticationMethod = DeriveAuthenticationMethod(csb.AuthenticationMethod, identity);
                 csb.HostName = identity.IotHubHostName;
                 string connectionString = csb.ToString();
-                var bridge = await CreateFromConnectionStringAsync(identity.Id, connectionString, connectionPoolSize, connectionIdleTimeout, settings);
+                var bridge = await CreateFromConnectionStringAsync(identity.Id, connectionString, connectionPoolSize, connectionIdleTimeout, settings, cancellationToken);
                 initHandler(bridge);
                 return bridge;
             };
@@ -58,7 +57,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
         }
 
         static async Task<IotHubBridge> CreateFromConnectionStringAsync(string deviceId, string connectionString,
-            int connectionPoolSize, TimeSpan? connectionIdleTimeout, IotHubClientSettings settings)
+            int connectionPoolSize, TimeSpan? connectionIdleTimeout, IotHubClientSettings settings, CancellationToken cancellationToken)
         {
             int maxPendingOutboundMessages = settings.MaxPendingOutboundMessages;
             var tcpSettings = new AmqpTransportSettings(TransportType.Amqp_Tcp_Only);
@@ -78,22 +77,31 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
                 tcpSettings.AmqpConnectionPoolSettings = amqpConnectionPoolSettings;
                 webSocketSettings.AmqpConnectionPoolSettings = amqpConnectionPoolSettings;
             }
-            DeviceClient client = DeviceClient.CreateFromConnectionString(connectionString, new ITransportSettings[]
+            var client = DeviceClient.CreateFromConnectionString(connectionString, new ITransportSettings[]
             {
                 tcpSettings,
                 webSocketSettings
             });
+
+            client.SetRetryPolicy(DeviceClientRetryPolicy.Instance);
 
             // This helps in usage instrumentation at IotHub service.
             client.ProductInfo = $"protocolgateway/poolsize={connectionPoolSize}";
 
             try
             {
-                await client.OpenAsync();
+                await client.OpenAsync(cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested(); // in case SDK does not always honor cancellation token in async operations
             }
             catch (IotHubException ex)
             {
+                client.Dispose();
                 throw ComposeIotHubCommunicationException(ex);
+            }
+            catch (Exception)
+            {
+                client.Dispose();
+                throw;
             }
             return new IotHubBridge(client, deviceId, settings);
         }
