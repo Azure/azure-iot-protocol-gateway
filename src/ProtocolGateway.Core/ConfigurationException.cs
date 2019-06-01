@@ -5,17 +5,17 @@ namespace Microsoft.Azure.Devices.ProtocolGateway
 {
     using System;
 
-    public class ConfigurationErrorsException : Exception
+    public class ConfigurationException : Exception
     {
-        public ConfigurationErrorsException()
+        public ConfigurationException()
         {
         }
 
-        public ConfigurationErrorsException(string message) : base(message)
+        public ConfigurationException(string message) : base(message)
         {
         }
 
-        public ConfigurationErrorsException(string message, Exception innerException) : base(message, innerException)
+        public ConfigurationException(string message, Exception innerException) : base(message, innerException)
         {
         }
     }

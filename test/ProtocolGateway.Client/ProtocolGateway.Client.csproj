@@ -3,19 +3,16 @@
 
   <PropertyGroup>
     <OutputType>exe</OutputType>
-    <TargetFrameworks>netcoreapp1.1</TargetFrameworks>
+    <TargetFrameworks>netcoreapp2.1</TargetFrameworks>
     <ApplicationIcon />
     <OutputTypeEx>exe</OutputTypeEx>
     <StartupObject />
     <AssemblyName>ProtocolGateway.Client</AssemblyName>
     <RootNamespace>ProtocolGateway.Client</RootNamespace>
-    <Version>1.0.0.0</Version>
-    <Company>Microsoft</Company>
-    <Copyright>Copyright © Microsoft 2015</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.Devices.Client" Version="1.18.1" />
+    <PackageReference Include="Microsoft.Azure.Devices.Client" Version="1.20.1" />
   </ItemGroup>
 
 </Project>

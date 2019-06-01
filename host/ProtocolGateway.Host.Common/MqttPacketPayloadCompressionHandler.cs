@@ -49,7 +49,11 @@ namespace ProtocolGateway.Host.Common
 
                     Contract.Assert(outputStream.Length <= int.MaxValue);
 
+#if NETSTANDARD1_3
+                    return Unpooled.WrappedBuffer(outputStream.ToArray());
+#else
                     return Unpooled.WrappedBuffer(outputStream.GetBuffer(), 0, (int)outputStream.Length);
+#endif
                 }
             }
             finally

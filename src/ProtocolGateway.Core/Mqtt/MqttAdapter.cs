@@ -860,7 +860,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         /// <param name="context"><see cref="IChannelHandlerContext" /> instance.</param>
         void CompleteConnect(IChannelHandlerContext context)
         {
-            CommonEventSource.Log.Verbose("Connection established.", this.identity.ToString(), this.ChannelId);
+            CommonEventSource.Log.Info("Connection established.", this.identity.ToString(), this.ChannelId);
 
             if (this.keepAliveTimeout > TimeSpan.Zero)
             {

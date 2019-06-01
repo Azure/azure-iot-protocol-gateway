@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace ProtocolGateway.Host.Console.NetStandard
+namespace ProtocolGateway.Host.Kube
 {
     using System;
     using System.IO;
@@ -9,10 +9,10 @@ namespace ProtocolGateway.Host.Console.NetStandard
     using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.Azure.Devices.ProtocolGateway;
-    using ProtocolGateway.Host.Common;
     using Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage;
     using Microsoft.Diagnostics.EventFlow;
     using Microsoft.Extensions.Configuration;
+    using ProtocolGateway.Host.Common;
 
     class Program
     {
@@ -62,5 +62,4 @@ namespace ProtocolGateway.Host.Console.NetStandard
             }
         }
     }
-
 }

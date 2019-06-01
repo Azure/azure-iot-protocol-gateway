@@ -31,8 +31,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt;
     using Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage;
     using Microsoft.Azure.Devices.ProtocolGateway.Tests.Extensions;
+    using Microsoft.Azure.EventHubs;
+    using Microsoft.Extensions.Configuration;
     using Microsoft.Practices.EnterpriseLibrary.SemanticLogging;
-    using Microsoft.ServiceBus.Messaging;
     using Xunit;
     using Xunit.Abstractions;
     using IotHubConnectionStringBuilder = Microsoft.Azure.Devices.IotHubConnectionStringBuilder;
@@ -66,7 +67,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
             this.eventListener.EnableEvents(DefaultEventSource.Log, EventLevel.Verbose);
             this.eventListener.EnableEvents(BootstrapperEventSource.Log, EventLevel.Verbose);
 
-            this.settingsProvider = new AppConfigSettingsProvider();
+            var config = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
+            this.settingsProvider = new ConfigurationSettingsProvider(config.GetSection("AppSettings"));
 
             this.ProtocolGatewayPort = 8883; // todo: dynamic port choice to parallelize test runs (first free port)
 
@@ -244,11 +246,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
                 }
                     .ToSignature();
 
-            EventHubClient eventHubClient = EventHubClient.CreateFromConnectionString(iotHubConnectionString, "messages/events");
-            EventHubConsumerGroup ehGroup = eventHubClient.GetDefaultConsumerGroup();
+            EventHubClient eventHubClient = EventHubClient.CreateFromConnectionString(iotHubConnectionString + ";EntityPath=messages/events");
+            //EventHubConsumerGroup ehGroup = .GetDefaultConsumerGroup();
 
             string[] partitionIds = (await eventHubClient.GetRuntimeInformationAsync()).PartitionIds;
-            EventHubReceiver[] receivers = await Task.WhenAll(partitionIds.Select(pid => ehGroup.CreateReceiverAsync(pid.Trim(), DateTime.UtcNow)));
+            PartitionReceiver[] receivers = partitionIds.Select(pid => eventHubClient.CreateReceiver(null, pid.Trim(), EventPosition.FromEnqueuedTime(DateTime.UtcNow))).ToArray();
 
             ServiceClient serviceClient = ServiceClient.CreateFromConnectionString(iotHubConnectionString);
 
@@ -408,28 +410,30 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
                 new XUnitLoggingHandler(this.output)));
         }
 
-        static async Task<Tuple<EventData, string>[]> CollectEventHubMessagesAsync(EventHubReceiver[] receivers, int messagesPending)
+        static async Task<Tuple<EventData, string>[]> CollectEventHubMessagesAsync(PartitionReceiver[] receivers, int messagesPending)
         {
-            List<Task<EventData>> receiveTasks = receivers.Select(r => r.ReceiveAsync(TimeSpan.FromMinutes(20))).ToList();
+            var receiveTasks = receivers.Select(r => r.ReceiveAsync(messagesPending, TimeSpan.FromMinutes(3))).ToList();
             var ehMessages = new Tuple<EventData, string>[messagesPending];
             while (true)
             {
-                Task<EventData> receivedTask = await Task.WhenAny(receiveTasks);
-                EventData eventData = receivedTask.Result;
+                var receivedTask = await Task.WhenAny(receiveTasks);
+                IEnumerable<EventData> eventData = receivedTask.Result;
                 if (eventData != null)
                 {
-                    ehMessages[messagesPending - 1] = Tuple.Create(eventData, Encoding.UTF8.GetString(eventData.GetBytes()));
-
-                    if (--messagesPending == 0)
+                    foreach (var data in eventData)
                     {
-                        break;
+                        ehMessages[messagesPending - 1] = Tuple.Create(data, Encoding.UTF8.GetString(data.Body.ToArray()));
+
+                        if (--messagesPending == 0)
+                        {
+                            return ehMessages;
+                        }
                     }
                 }
 
                 int receivedIndex = receiveTasks.IndexOf(receivedTask);
-                receiveTasks[receivedIndex] = receivers[receivedIndex].ReceiveAsync(TimeSpan.FromMinutes(20));
+                receiveTasks[receivedIndex] = receivers[receivedIndex].ReceiveAsync(messagesPending, TimeSpan.FromMinutes(3));
             }
-            return ehMessages;
         }
 
         class ClientScenarios
