@@ -47,11 +47,9 @@ Project("{A07B5EB6-E848-4116-A8D0-A826331D98C6}") = "ProtocolGateway.Host.Fabric
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{1013004F-4062-453A-8F64-390F0CAA2661}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProtocolGateway.Tests", "test\ProtocolGateway.Tests\ProtocolGateway.Tests.csproj", "{6A13DA33-5BCC-4479-9EBA-C96F62AAD974}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProtocolGateway.Tests", "test\ProtocolGateway.Tests\ProtocolGateway.Tests.csproj", "{6A13DA33-5BCC-4479-9EBA-C96F62AAD974}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProtocolGateway.Tests.Load", "test\ProtocolGateway.Tests.Load\ProtocolGateway.Tests.Load.csproj", "{BE074EB4-C7AB-42D4-8841-29117CC44983}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProtocolGateway.Host.Kube", "host\ProtocolGateway.Host.Kube\ProtocolGateway.Host.Kube.csproj", "{75E02109-6388-40B8-9A4F-3A3641EDDCDE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProtocolGateway.Tests.Load", "test\ProtocolGateway.Tests.Load\ProtocolGateway.Tests.Load.csproj", "{BE074EB4-C7AB-42D4-8841-29117CC44983}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -179,14 +177,6 @@ Global
 		{BE074EB4-C7AB-42D4-8841-29117CC44983}.Release|Any CPU.Build.0 = Release|Any CPU
 		{BE074EB4-C7AB-42D4-8841-29117CC44983}.Release|x64.ActiveCfg = Release|Any CPU
 		{BE074EB4-C7AB-42D4-8841-29117CC44983}.Release|x64.Build.0 = Release|Any CPU
-		{75E02109-6388-40B8-9A4F-3A3641EDDCDE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{75E02109-6388-40B8-9A4F-3A3641EDDCDE}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{75E02109-6388-40B8-9A4F-3A3641EDDCDE}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{75E02109-6388-40B8-9A4F-3A3641EDDCDE}.Debug|x64.Build.0 = Debug|Any CPU
-		{75E02109-6388-40B8-9A4F-3A3641EDDCDE}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{75E02109-6388-40B8-9A4F-3A3641EDDCDE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{75E02109-6388-40B8-9A4F-3A3641EDDCDE}.Release|x64.ActiveCfg = Release|Any CPU
-		{75E02109-6388-40B8-9A4F-3A3641EDDCDE}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -210,7 +200,6 @@ Global
 		{A90B33E9-A3EE-402C-B692-63450B876E59} = {856E42C6-09E6-4CDB-9F64-25AF76150A28}
 		{6A13DA33-5BCC-4479-9EBA-C96F62AAD974} = {1013004F-4062-453A-8F64-390F0CAA2661}
 		{BE074EB4-C7AB-42D4-8841-29117CC44983} = {1013004F-4062-453A-8F64-390F0CAA2661}
-		{75E02109-6388-40B8-9A4F-3A3641EDDCDE} = {856E42C6-09E6-4CDB-9F64-25AF76150A28}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {01C3BAD6-4187-4117-82C8-FD5F3871DCC3}

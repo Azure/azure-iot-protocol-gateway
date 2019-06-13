@@ -65,7 +65,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
                         throw new InvalidOperationException($"Topic name `{message.Address}` could not be matched against any of the configured routes.");
                     }
 
-                    CommonEventSource.Log.Warning("Topic name could not be matched against any of the configured routes. Falling back to default telemetry settings.", message.Address);
+                    CommonEventSource.Log.Warning("Topic name could not be matched against any of the configured routes. Falling back to default telemetry settings: " + message.Address, null, this.bridge.DeviceId);
                     message.Properties[this.bridge.Settings.ServicePropertyPrefix + MessagePropertyNames.Unmatched] = bool.TrueString;
                     message.Properties[this.bridge.Settings.ServicePropertyPrefix + MessagePropertyNames.Subject] = message.Address;
                 }
@@ -75,7 +75,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             }
             catch (IotHubException ex)
             {
-                throw ComposeIotHubCommunicationException(ex);
+                throw ex.ToMessagingException();
             }
             finally
             {
@@ -90,10 +90,5 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
         public Task RejectAsync(string messageId) => TaskEx.Completed;
 
         public Task DisposeAsync(Exception cause) => TaskEx.Completed;
-
-        static MessagingException ComposeIotHubCommunicationException(IotHubException ex)
-        {
-            return new MessagingException(ex.Message, ex.InnerException, ex.IsTransient, ex.TrackingId);
-        }
     }
 }

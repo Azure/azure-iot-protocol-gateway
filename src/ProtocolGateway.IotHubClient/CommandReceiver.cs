@@ -106,7 +106,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             }
             catch (IotHubException ex)
             {
-                this.messagingChannel.Close(new MessagingException(ex.Message, ex.InnerException, ex.IsTransient, ex.TrackingId));
+                this.messagingChannel.Close(ex.ToMessagingException());
             }
             catch (Exception ex)
             {
@@ -130,7 +130,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             }
             catch (IotHubException ex)
             {
-                throw ComposeIotHubCommunicationException(ex);
+                throw ex.ToMessagingException();
             }
         }
 
@@ -142,7 +142,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             }
             catch (IotHubException ex)
             {
-                throw ComposeIotHubCommunicationException(ex);
+                throw ex.ToMessagingException();
             }
         }
 
@@ -154,19 +154,14 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             }
             catch (IotHubException ex)
             {
-                throw ComposeIotHubCommunicationException(ex);
+                throw ex.ToMessagingException();
             }
         }
 
         public Task DisposeAsync(Exception cause)
         {
-            this.lifetimeCancellation.Cancel();
+            this.lifetimeCancellation?.Cancel();
             return TaskEx.Completed;
-        }
-
-        static MessagingException ComposeIotHubCommunicationException(IotHubException ex)
-        {
-            return new MessagingException(ex.Message, ex.InnerException, ex.IsTransient, ex.TrackingId);
         }
     }
 }

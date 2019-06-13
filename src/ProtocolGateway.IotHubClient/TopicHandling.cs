@@ -77,7 +77,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
                     {
                         if (CommonEventSource.Log.IsVerboseEnabled)
                         {
-                            CommonEventSource.Log.Verbose("Topic name matches more than one route.", address);
+                            CommonEventSource.Log.Verbose("Topic name matches more than one route: " + address);
                         }
                         break;
                     }
@@ -106,7 +106,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
                 {
                     if (CommonEventSource.Log.IsVerboseEnabled)
                     {
-                        CommonEventSource.Log.Verbose("Topic name matches more than one route.", address);
+                        CommonEventSource.Log.Verbose("Topic name matches more than one route: " + address);
                     }
                 }
 

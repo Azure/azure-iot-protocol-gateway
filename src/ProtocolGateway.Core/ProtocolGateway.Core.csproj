@@ -6,11 +6,10 @@
     <Title>Microsoft Azure IoT protocol gateway framework - Core</Title>
     <Description>This library contains the core components of Azure IoT protocol gateway that enables protocol translation for Azure IoT Hub.</Description>
     <OutputType>Library</OutputType>
-    <NetStandardImplicitPackageVersion Condition=" '$(TargetFramework)' == 'netstandard1.3' ">1.6.1</NetStandardImplicitPackageVersion>
     <AssemblyName>Microsoft.Azure.Devices.ProtocolGateway.Core</AssemblyName>
     <RootNamespace>Microsoft.Azure.Devices.ProtocolGateway.Core</RootNamespace>
-    <Version>2.0.1.0</Version>
-    <PackageVersion>2.0.1</PackageVersion>
+    <Version>3.0.0.0</Version>
+    <PackageVersion>3.0.0</PackageVersion>
     <NeutralLanguage>en-US</NeutralLanguage>
     <Company>Microsoft</Company>
     <Product>Microsoft Azure IoT protocol gateway</Product>

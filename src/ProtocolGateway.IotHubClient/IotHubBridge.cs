@@ -6,6 +6,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
     using System;
     using System.Collections.Generic;
     using System.Diagnostics.Contracts;
+    using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Common.Utilities;
@@ -96,7 +97,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             catch (IotHubException ex)
             {
                 client.Dispose();
-                throw ComposeIotHubCommunicationException(ex);
+                throw ex.ToMessagingException();
             }
             catch (Exception)
             {
@@ -112,12 +113,17 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
 
         public IotHubClientSettings Settings { get; }
 
-        public Task DisposeAsync(Exception cause)
+        public async Task DisposeAsync(Exception cause)
         {
-            CommonEventSource.Log.Info("Shutting down", cause?.ToString(), this.DeviceId);
-            // dispatch to MSCs
-            this.DeviceClient.Dispose();
-            return TaskEx.Completed;
+            CommonEventSource.Log.Info("Shutting down: " + cause?.ToString(), null, this.DeviceId);
+            try
+            {
+                await Task.WhenAll(this.routes.Select(r => r.Item2.DisposeAsync(cause)));
+            }
+            finally
+            {
+                await this.DeviceClient.CloseAsync();
+            }
         }
 
         static IAuthenticationMethod DeriveAuthenticationMethod(IAuthenticationMethod currentAuthenticationMethod, IotHubDeviceIdentity deviceIdentity)
@@ -150,11 +156,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
                 default:
                     throw new InvalidOperationException("Unexpected AuthenticationScope value: " + deviceIdentity.Scope);
             }
-        }
-
-        static MessagingException ComposeIotHubCommunicationException(IotHubException ex)
-        {
-            return new MessagingException(ex.Message, ex.InnerException, ex.IsTransient, ex.TrackingId);
         }
 
         public void BindMessagingChannel(IMessagingChannel channel)

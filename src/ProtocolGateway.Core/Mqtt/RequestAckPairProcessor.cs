@@ -18,12 +18,13 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         Queue<TAckState> pendingAckQueue;
         readonly Func<IChannelHandlerContext, TAckState, Task> processAckFunc;
         readonly bool abortOnOutOfOrderAck;
+        readonly IConnectionIdentityProvider identityProvider;
 
-        public RequestAckPairProcessor(Func<IChannelHandlerContext, TAckState, Task> processAckFunc, bool abortOnOutOfOrderAck, string scope)
-            : base(scope)
+        public RequestAckPairProcessor(Func<IChannelHandlerContext, TAckState, Task> processAckFunc, bool abortOnOutOfOrderAck, IConnectionIdentityProvider identityProvider)
         {
             this.processAckFunc = processAckFunc;
             this.abortOnOutOfOrderAck = abortOnOutOfOrderAck;
+            this.identityProvider = identityProvider;
         }
 
         public TAckState FirstRequestPendingAck => this.RequestPendingAckCount == 0 ? default(TAckState) : this.pendingAckQueue.Peek();
@@ -38,19 +39,19 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             return Util.WriteMessageAsync(context, requestMessage);
         }
 
-        bool TryDequeueMessage(PacketWithId packet, out TAckState message, string scope)
+        bool TryDequeueMessage(PacketWithId packet, out TAckState message)
         {
             TAckState firstRequest = this.FirstRequestPendingAck;
             if (firstRequest == null)
             {
-                CommonEventSource.Log.Warning($"{packet.PacketType.ToString()} #{packet.PacketId.ToString()} was received while not expected.", scope);
+                CommonEventSource.Log.Warning($"{packet.PacketType.ToString()} #{packet.PacketId.ToString()} was received while not expected.", this.identityProvider.ChannelId, this.identityProvider.Id);
                 message = default(TAckState);
                 return false;
             }
 
             if (packet.PacketId != firstRequest.PacketId)
             {
-                CommonEventSource.Log.Warning($"{packet.PacketType.ToString()} #{packet.PacketId.ToString()} was received while #{firstRequest.PacketId.ToString()} was expected.", scope);
+                CommonEventSource.Log.Warning($"{packet.PacketType.ToString()} #{packet.PacketId.ToString()} was received while #{firstRequest.PacketId.ToString()} was expected.", this.identityProvider.ChannelId, this.identityProvider.Id);
                 message = default(TAckState);
                 return false;
             }
@@ -63,10 +64,10 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             return true;
         }
 
-        protected override Task ProcessAsync(IChannelHandlerContext context, PacketWithId packet, string scope)
+        protected override Task ProcessAsync(IChannelHandlerContext context, PacketWithId packet)
         {
             TAckState message;
-            if (this.TryDequeueMessage(packet, out message, scope))
+            if (this.TryDequeueMessage(packet, out message))
             {
                 return this.processAckFunc(context, message);
             }

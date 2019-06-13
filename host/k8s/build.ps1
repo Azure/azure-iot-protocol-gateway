@@ -1,0 +1,2 @@
+dotnet publish -c Release -f netcoreapp2.1 -o $PSScriptRoot\build_output $PSScriptRoot\..\ProtocolGateway.Host.Console\ProtocolGateway.Host.Console.csproj
+docker build --tag azure-iot-pg:0.1 $PSScriptRoot

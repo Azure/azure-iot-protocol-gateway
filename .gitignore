@@ -32,3 +32,4 @@ nuget.exe
 .idea.*/
 .vscode/*
 build_output/
+secrets/

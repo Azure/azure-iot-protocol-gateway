@@ -13,9 +13,19 @@ namespace ProtocolGateway.Host.Console.NetStandard
     using Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage;
     using Microsoft.Diagnostics.EventFlow;
     using Microsoft.Extensions.Configuration;
+    using CommandLine;
 
     class Program
     {
+        public class Options
+        {
+            [Option('c', "config", Required = false, HelpText = "Set location of configuration file.")]
+            public string ConfigPath { get; set; }
+
+            [Option('e', "env", Required = false, HelpText = "Use environment variables as configuration source.")]
+            public bool UseEnvironment { get; set; }
+        }
+
         static void Main(string[] args)
         {
             // optimizing IOCP performance
@@ -24,19 +34,34 @@ namespace ProtocolGateway.Host.Console.NetStandard
             ThreadPool.GetMinThreads(out minWorkerThreads, out minCompletionPortThreads);
             ThreadPool.SetMinThreads(minWorkerThreads, Math.Max(16, minCompletionPortThreads));
 
-            int threadCount = Environment.ProcessorCount;
-            if (args.Length > 0)
+            CommandLine.Parser.Default.ParseArguments<Options>(args)
+                .WithParsed(opts => Run(opts));
+        }
+
+        static void Run(Options options)
+        {
+            var config = new ConfigurationBuilder().AddJsonFile(options.ConfigPath ?? "appSettings.json");
+            if (options.UseEnvironment)
             {
-                threadCount = int.Parse(args[0]);
+                config.AddEnvironmentVariables("ProtocolGateway.");
+            }
+            var settingsProvider = new ConfigurationSettingsProvider(config.Build());
+
+            int threadCount = Environment.ProcessorCount;
+            if (settingsProvider.TryGetIntegerSetting("WorkerCount", out int workers))
+            {
+                threadCount = workers;
+                Console.WriteLine($"Worker count set to {workers}");
             }
 
-            using (var diagnosticsPipeline = DiagnosticPipelineFactory.CreatePipeline("eventFlowConfig.json"))
+            var eventFlowConfigPath = settingsProvider.GetSetting("EventFlowConfigPath", "eventFlowConfig.json");
+            using (var diagnosticsPipeline = DiagnosticPipelineFactory.CreatePipeline(eventFlowConfigPath))
             {
                 var cts = new CancellationTokenSource();
 
-                var certificate = new X509Certificate2(Path.Combine(AppContext.BaseDirectory, "protocol-gateway.contoso.com.pfx"), "password");
-                var config = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
-                var settingsProvider = new ConfigurationSettingsProvider(config.GetSection("AppSettings"));
+                var tlsCertPath = settingsProvider.GetSetting("TlsCertificatePath", "protocol-gateway.contoso.com.pfx");
+                var tlsCertPassword = settingsProvider.GetSetting("TlsCertificatePassword", "password");
+                var certificate = new X509Certificate2(Path.Combine(AppContext.BaseDirectory, tlsCertPath), tlsCertPassword);
                 BlobSessionStatePersistenceProvider blobSessionStateProvider = BlobSessionStatePersistenceProvider.CreateAsync(
                     settingsProvider.GetSetting("BlobSessionStatePersistenceProvider.StorageConnectionString"),
                     settingsProvider.GetSetting("BlobSessionStatePersistenceProvider.StorageContainerName")).Result;
@@ -48,15 +73,7 @@ namespace ProtocolGateway.Host.Console.NetStandard
                 var bootstrapper = new Bootstrapper(settingsProvider, blobSessionStateProvider, tableQos2StateProvider);
                 Task.Run(() => bootstrapper.RunAsync(certificate, threadCount, cts.Token), cts.Token);
 
-                while (true)
-                {
-                    string input = Console.ReadLine();
-                    if (input != null && input.Equals("exit", StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        break;
-                    }
-                }
-
+                Console.ReadLine();
                 cts.Cancel();
                 bootstrapper.CloseCompletion.Wait(TimeSpan.FromSeconds(20));
             }

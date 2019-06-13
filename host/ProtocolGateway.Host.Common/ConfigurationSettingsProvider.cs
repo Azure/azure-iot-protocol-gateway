@@ -8,18 +8,15 @@ namespace ProtocolGateway.Host.Common
 
     public class ConfigurationSettingsProvider : ISettingsProvider
     {
-        readonly IConfigurationSection config;
+        readonly IConfiguration config;
 
-        // static readonly IConfiguration Config = ;
-
-        public ConfigurationSettingsProvider(IConfigurationSection configSection)
+        public ConfigurationSettingsProvider(IConfiguration configSection)
         {
             this.config = configSection;            
         }
 
         public bool TryGetSetting(string name, out string value)
         {
-            // IConfigurationSection appsettings = config.GetSection("AppSettings");
             value = this.config.GetSection(name).Value;
             if (value == null)
             {

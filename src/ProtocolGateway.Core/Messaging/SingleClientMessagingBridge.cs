@@ -37,13 +37,14 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Messaging
         {
             if (cause == null)
             {
-                CommonEventSource.Log.Info($"Closing connection for device: {this.deviceIdentity}", string.Empty, string.Empty);
+                CommonEventSource.Log.Info("Closing connection for device", string.Empty, this.deviceIdentity?.ToString());
             }
             else
             {
                 string operationScope = cause.Data[MqttAdapter.OperationScopeExceptionDataKey]?.ToString();
-                string connectionScope = cause.Data[MqttAdapter.ConnectionScopeExceptionDataKey]?.ToString();
-                CommonEventSource.Log.Warning($"Closing connection for device: {this.deviceIdentity}" + (operationScope == null ? null : ", scope: " + operationScope), cause, connectionScope);
+                string channelId = cause.Data[MqttAdapter.ChannelIdExceptionDataKey]?.ToString();
+                string deviceId = cause.Data[MqttAdapter.DeviceIdExceptionDataKey]?.ToString();
+                CommonEventSource.Log.Warning($"Closing connection: {(operationScope == null ? null : ", scope: " + operationScope)}", cause, channelId, deviceId);
             }
 
             return this.messagingClient.DisposeAsync(cause);

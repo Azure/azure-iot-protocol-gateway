@@ -5,9 +5,8 @@
   "MqttInboundTemplates": [ "devices/{deviceId}/messages/events" ],
   "MqttOutboundTemplates": [ "devices/{deviceId}/messages/devicebound" ],
   "MqttQoSStateProvider": "AzureStorage",
-  "ConnectArrivalTimeout": "00:01:00",
+  "ConnectArrivalTimeout": "00:05:00",
   "MaxPendingInboundAcknowledgements": "16",
-  "DeviceReceiveAckTimeout": "00:00:00",
   "MaxInboundMessageSize": "262144",
   "MaxKeepAliveTimeout": "00:10:00"
 }

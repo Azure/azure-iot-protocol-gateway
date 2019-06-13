@@ -12,14 +12,12 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
     public abstract class MessageAsyncProcessorBase<T>
     {
-        readonly string scope;
         readonly Queue<T> backlogQueue;
         State state;
         readonly TaskCompletionSource completionSource;
 
-        protected MessageAsyncProcessorBase(string scope)
+        protected MessageAsyncProcessorBase()
         {
-            this.scope = scope;
             this.backlogQueue = new Queue<T>();
             this.completionSource = new TaskCompletionSource();
         }
@@ -100,7 +98,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     T message = queue.Dequeue();
                     try
                     {
-                        await this.ProcessAsync(context, message, this.scope);
+                        await this.ProcessAsync(context, message);
                         message = default(T); // dismissing packet reference as it has been successfully handed off in a form of message
                     }
                     finally
@@ -132,7 +130,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             }
         }
 
-        protected abstract Task ProcessAsync(IChannelHandlerContext context, T packet, string scope);
+        protected abstract Task ProcessAsync(IChannelHandlerContext context, T packet);
 
         enum State
         {

@@ -15,7 +15,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         const string RetainPropertyNameSetting = "RetainPropertyName";
         const string DupPropertyNameSetting = "DupPropertyName";
         const string QoSPropertyNameSetting = "QoSPropertyName";
-        const string DeviceReceiveAckTimeoutSetting = "DeviceReceiveAckTimeout";
         const string MaxOutboundRetransmissionCountSetting = "MaxOutboundRetransmissionCount";
         const string ServicePropertyPrefixSetting = "ServicePropertyPrefix";
         const string AbortOnOutOfOrderPubAckSetting = "AbortOnOutOfOrderPubAck";
@@ -25,8 +24,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         const string QoSPropertyNameDefaultValue = "mqtt-qos";
         const int MaxPendingInboundAcknowledgementsDefaultValue = 16;
         const int NoMaxOutboundRetransmissionCountValue = -1;
-
-        readonly TimeSpan? deviceReceiveAckTimeout;
 
         public Settings(ISettingsProvider settingsProvider)
         {
@@ -51,10 +48,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             this.RetainPropertyName = settingsProvider.GetSetting(RetainPropertyNameSetting, RetainPropertyNameDefaultValue);
             this.DupPropertyName = settingsProvider.GetSetting(DupPropertyNameSetting, DupPropertyNameDefaultValue);
             this.QoSPropertyName = settingsProvider.GetSetting(QoSPropertyNameSetting, QoSPropertyNameDefaultValue);
-
-            this.deviceReceiveAckTimeout = settingsProvider.TryGetTimeSpanSetting(DeviceReceiveAckTimeoutSetting, out timeout) && timeout > TimeSpan.Zero
-                ? timeout
-                : (TimeSpan?)null;
 
             this.ServicePropertyPrefix = settingsProvider.GetSetting(ServicePropertyPrefixSetting, string.Empty);
 

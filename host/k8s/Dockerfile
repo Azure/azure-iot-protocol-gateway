@@ -3,4 +3,4 @@ WORKDIR /app
 
 COPY build_output/ ./
 
-CMD ["./dotnet ProtocolGateway.Host.Kube.dll"]
+CMD ["dotnet ProtocolGateway.Host.Console.dll --env"]

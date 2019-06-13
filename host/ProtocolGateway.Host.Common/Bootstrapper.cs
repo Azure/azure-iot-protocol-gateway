@@ -26,6 +26,7 @@ namespace ProtocolGateway.Host.Common
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence;
     using Message = Microsoft.Azure.Devices.ProtocolGateway.Messaging.Message;
+    using Newtonsoft.Json;
 
     public class Bootstrapper
     {
@@ -138,7 +139,7 @@ namespace ProtocolGateway.Host.Common
                 {
                     bridge.RegisterRoute(topic => true, new TelemetrySender(bridge, telemetryProcessing)); // handle all incoming messages with TelemetrySender
                     bridge.RegisterClient(new CommandReceiver(bridge, PooledByteBufferAllocator.Default, commandProcessing)); // handle device command queue
-                    bridge.RegisterClient(new MethodHandler("command", bridge, (request, dispatcher) => DispatchCommands(bridge.DeviceId, request, dispatcher))); // register
+                    bridge.RegisterClient(new MethodHandler("SendMessageToDevice", bridge, (request, dispatcher) => DispatchCommands(bridge.DeviceId, request, dispatcher))); // register
                 });
 
             // bring together
@@ -167,6 +168,19 @@ namespace ProtocolGateway.Host.Common
         {
             try
             {
+                SendMessageToDeviceDirectMethodData sendMessageToDeviceDirectMethodData = null;
+
+                try
+                {
+                    sendMessageToDeviceDirectMethodData = JsonConvert.DeserializeObject<SendMessageToDeviceDirectMethodData>(request.DataAsJson);
+
+                    CommonEventSource.Log.Error("Received request", new Exception(), request.DataAsJson);
+                }
+                catch (Exception ex)
+                {
+                    return Task.FromResult(new MethodResponse(Encoding.UTF8.GetBytes(ex.ToString()), 402));
+                }
+
                 // deserialize request payload and further process it before sending or
                 // just pass it through to message.Payload using Unpooled.WrappedBuffer(request.Data)
                 var message = new Message
@@ -185,5 +199,21 @@ namespace ProtocolGateway.Host.Common
                 return new MethodResponse(Encoding.UTF8.GetBytes($"{{\"message\":\"error sending message: {ex.ToString()}\"}}"), 500);
             }
         }
+    }
+
+    class SendMessageToDeviceDirectMethodData
+    {
+        public string Vin { get; set; }
+
+        public string QoS { get; set; }
+
+        public string Region { get; set; }
+
+        public string TopicName { get; set; }
+
+        public string SubTopic { get; set; }
+
+        public string Data { get; set; }
+
     }
 }

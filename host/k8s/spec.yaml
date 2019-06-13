@@ -1,0 +1,100 @@
+kind: ConfigMap 
+apiVersion: v1 
+metadata:
+  name: pg-config 
+data:
+  settings: | 
+    {
+      "MaxPendingInboundAcknowledgements": 16,
+      "MaxInboundMessageSize": "262144",
+      "ConnectArrivalTimeout": "00:01:00",
+      "MaxKeepAliveTimeout": "00:10:00",
+      "RetainPropertyName": "mqtt-retain",
+      "DupPropertyName": "mqtt-dup",
+      "QoSPropertyName": "mqtt-qos",
+      "IotHubClient.ConnectionString": "<connection_string>",
+      "IotHubClient.MaxPendingInboundMessages": 10,
+      "IotHubClient.MaxPendingOutboundMessages": 10,
+      "IotHubClient.DefaultPublishToClientQoS": 1,
+      "IotHubClient.MaxOutboundRetransmissionCount": 0,
+      "IotHubClient.ConnectionPoolSize": 400,
+      "IotHubClient.ConnectionIdleTimeout": "00:03:30",
+      "BlobSessionStatePersistenceProvider.StorageConnectionString": "UseDevelopmentStorage=true",
+      "BlobSessionStatePersistenceProvider.StorageContainerName": "mqtt-sessions",
+      "TableQos2StatePersistenceProvider.StorageConnectionString": "UseDevelopmentStorage=true",
+      "TableQos2StatePersistenceProvider.StorageTableName": "mqttqos2"
+    }
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: pg-deployment
+spec:
+  selector:
+    matchLabels:
+      app: pg
+  replicas: 2
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  minReadySeconds: 30
+  template:
+    metadata:
+      labels:
+        app: pg
+    spec:
+      containers:
+      - name: pg
+        image: azure-iot-pg:0.1
+        env:
+        # network
+        - name: ProtocolGateway.TlsCertificatePath
+          value: "/etc/tls/certificate"
+        - name: ProtocolGateway.TlsCertificatePassword
+          valueFrom:
+            secretKeyRef:
+              name: pg-tls
+              key: password
+        - name: ProtocolGateway.IotHubClient.ConnectionString
+          valueFrom:
+            secretKeyRef:
+              name: pg-hub
+              key: conn
+        - name: ProtocolGateway.BlobSessionStatePersistenceProvider.StorageConnectionString
+          valueFrom:
+            secretKeyRef:
+              name: pg-sessions
+              key: sessions-blob-conn
+        - name: ProtocolGateway.TableQos2StatePersistenceProvider.StorageConnectionString
+          valueFrom:
+            secretKeyRef:
+              name: pg-sessions
+              key: qos2-table-conn
+        - name: HOST_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        ports:
+        - containerPort: 8883
+        volumeMounts:
+        - name: tls
+          mountPath: "/etc/tls"
+          readOnly: true
+      volumes:
+      - name: tls
+        secret:
+          secretName: pg-tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pg-front
+  namespace: default
+spec:
+  type: LoadBalancer
+  ports:
+  - name: public
+    port: 8883
+  selector:
+    app: pg

@@ -5,7 +5,7 @@
     <RootNamespace>Microsoft.Azure.Devices.ProtocolGateway.Tests</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="appSettings.config.user">
+    <None Include="appSettings.config1.user">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
@@ -31,5 +31,10 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.ServiceModel" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="appSettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>
