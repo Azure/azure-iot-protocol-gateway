@@ -31,3 +31,4 @@ nuget.exe
 *.db
 .idea.*/
 .vscode/*
+secrets/

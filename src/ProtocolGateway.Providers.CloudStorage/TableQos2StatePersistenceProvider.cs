@@ -37,6 +37,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
             }
 
             CloudTableClient tableClient = cloudStorageAccount.CreateCloudTableClient();
+            tableClient.BufferManager = StorageBufferManager.Shared;
             this.table = tableClient.GetTableReference(tableName);
         }
 
