@@ -32,3 +32,4 @@ nuget.exe
 .idea.*/
 .vscode/*
 secrets/
+host/ProtocolGateway.Host.Fabric/pkg/*
