@@ -1,9 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<ServiceManifest Name="ProtocolGateway.Host.Fabric.FrontEndPkg"
-                 Version="1.0.0"
-                 xmlns="http://schemas.microsoft.com/2011/01/fabric"
-                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<ServiceManifest Name="ProtocolGateway.Host.Fabric.FrontEndPkg" Version="1.0.0" 
+  xmlns="http://schemas.microsoft.com/2011/01/fabric" 
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <ServiceTypes>
     <!-- This is the name of your ServiceType. 
          This name must match the string used in RegisterServiceType call in Program.cs. -->
@@ -20,7 +19,8 @@
   <CodePackage Name="Code" Version="1.0.0">
     <SetupEntryPoint>
       <ExeHost>
-        <Program>ProtocolGateway.Host.FabricSetup.CounterSetup.exe</Program>
+        <Program>setup.cmd</Program>
+        <WorkingFolder>CodePackage</WorkingFolder>
       </ExeHost>
     </SetupEntryPoint>
     <EntryPoint>
@@ -33,8 +33,7 @@
        independently-updateable and versioned set of custom configuration settings for your service. -->
   <ConfigPackage Name="Config" Version="1.0.0" />
   <DataPackage Name="Data" Version="1.0.0" />
- 
-  
+
   <Resources>
     <Endpoints>
       <!-- This endpoint is used by the communication listener to obtain the port on which to 

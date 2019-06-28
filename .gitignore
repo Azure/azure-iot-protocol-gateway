@@ -33,5 +33,5 @@ nuget.exe
 .vscode/*
 build_output/
 secrets/
-host/ProtocolGateway.Host.Fabric/pkg
+host/ProtocolGateway.Host.Fabric/pkg/*
 host/ProtocolGateway.Host.Fabric.FrontEnd/PackageRoot/Code/ProtocolGateway.Host.FabricSetup.CounterSetup.*

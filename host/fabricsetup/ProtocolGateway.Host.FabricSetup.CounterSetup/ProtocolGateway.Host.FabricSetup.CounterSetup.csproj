@@ -15,6 +15,14 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net48|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net48|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\ProtocolGateway.Core\ProtocolGateway.Core.csproj" />
     <ProjectReference Include="..\..\fabricshared\ProtocolGateway.Host.Fabric.FabricShared.Logging\ProtocolGateway.Host.Fabric.FabricShared.Logging.csproj" />

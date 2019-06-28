@@ -31,7 +31,8 @@ namespace ProtocolGateway.Host.Common
     public class Bootstrapper
     {
         const int MqttsPort = 8883;
-        const int ListenBacklogSize = 200; // connections allowed pending accept
+        const int ListenBacklogSize = 2000; // connections allowed pending accept
+        const int MaxConcurrentAccepts = 200; // Maximum number of concurrent connections to accept and start TLS handshake with
         const int DefaultConnectionPoolSize = 400; // IoT Hub default connection pool size
         static readonly TimeSpan DefaultConnectionIdleTimeout = TimeSpan.FromSeconds(210); // IoT Hub default connection idle timeout
 
@@ -142,17 +143,21 @@ namespace ProtocolGateway.Host.Common
                     bridge.RegisterClient(new MethodHandler("SendMessageToDevice", bridge, (request, dispatcher) => DispatchCommands(bridge.DeviceId, request, dispatcher))); // register
                 });
 
-            // bring together
+            var acceptLimiter = new AcceptLimiter(MaxConcurrentAccepts);
+
             return new ServerBootstrap()
                 .Group(this.parentEventLoopGroup, this.eventLoopGroup)
                 .Option(ChannelOption.SoBacklog, ListenBacklogSize)
+                .Option(ChannelOption.AutoRead, false)
                 .ChildOption(ChannelOption.Allocator, PooledByteBufferAllocator.Default)
                 .ChildOption(ChannelOption.AutoRead, false)
                 .Channel<TcpServerSocketChannel>()
+                .Handler(acceptLimiter)
                 .ChildHandler(new ActionChannelInitializer<ISocketChannel>(channel =>
                 {
-                    channel.Pipeline.AddLast(TlsHandler.Server(this.tlsCertificate));
                     channel.Pipeline.AddLast(
+                        TlsHandler.Server(this.tlsCertificate),
+                        new AcceptLimiterTlsReleaseHandler(acceptLimiter),
                         MqttEncoder.Instance,
                         new MqttDecoder(true, maxInboundMessageSize),
                         new MqttAdapter(
