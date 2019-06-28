@@ -16,6 +16,13 @@ namespace ProtocolGateway.Host.Common
             this.limiter = limiter;
         }
 
+        public override void ChannelActive(IChannelHandlerContext context)
+        {
+            this.limiter.Claim();
+            base.ChannelActive(context);
+
+        }
+
         public override void ChannelInactive(IChannelHandlerContext context)
         {
             this.ReleaseClaim();

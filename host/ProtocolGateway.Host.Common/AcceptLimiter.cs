@@ -28,7 +28,6 @@ namespace ProtocolGateway.Host.Common
 
         public override void ChannelRead(IChannelHandlerContext context, object message)
         {
-            this.Claim();
             if (Volatile.Read(ref this.available) > 0)
             {
                 context.Read();
@@ -36,7 +35,7 @@ namespace ProtocolGateway.Host.Common
             base.ChannelRead(context, message);
         }
 
-        void Claim() => Interlocked.Decrement(ref this.available);
+        public void Claim() => Interlocked.Decrement(ref this.available);
 
         public void ReleaseClaim()
         {
