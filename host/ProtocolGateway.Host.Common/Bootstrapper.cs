@@ -174,11 +174,15 @@ namespace ProtocolGateway.Host.Common
                 {
                     sendMessageToDeviceDirectMethodData = JsonConvert.DeserializeObject<SendMessageToDeviceDirectMethodData>(request.DataAsJson);
 
-                    CommonEventSource.Log.Error("Received request", new Exception(), request.DataAsJson);
+                    if (CommonEventSource.Log.IsVerboseEnabled)
+                    {
+                        CommonEventSource.Log.Verbose("Received request: " + request.DataAsJson, null, deviceId);
+                    }
                 }
                 catch (Exception ex)
                 {
-                    return Task.FromResult(new MethodResponse(Encoding.UTF8.GetBytes(ex.ToString()), 402));
+                    CommonEventSource.Log.Error("Received malformed method request: " + request.DataAsJson, ex, null, deviceId);
+                    return new MethodResponse(Encoding.UTF8.GetBytes(ex.ToString()), 402);
                 }
 
                 // deserialize request payload and further process it before sending or
@@ -196,6 +200,7 @@ namespace ProtocolGateway.Host.Common
             }
             catch (Exception ex)
             {
+                CommonEventSource.Log.Error("Received malformed method request: " + request.DataAsJson, ex, null, deviceId);
                 return new MethodResponse(Encoding.UTF8.GetBytes($"{{\"message\":\"error sending message: {ex.ToString()}\"}}"), 500);
             }
         }

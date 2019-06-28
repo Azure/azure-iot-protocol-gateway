@@ -1,151 +1,47 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
-    <ProjectGuid>{A4701342-633A-4EEE-BA50-7384156BEBBD}</ProjectGuid>
-    <OutputType>Exe</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ProtocolGateway.Host.Fabric.FrontEnd</RootNamespace>
+    <TargetFrameworks>net48</TargetFrameworks>
+    <Description>ProtocolGateway.Host.Fabric.FrontEnd</Description>
     <AssemblyName>ProtocolGateway.Host.Fabric.FrontEnd</AssemblyName>
-    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <IsServiceFabricServiceProject>True</IsServiceFabricServiceProject>
+    <RootNamespace>ProtocolGateway.Host.Fabric.FrontEnd</RootNamespace>
+    <Version>1.0.0.0</Version>
+    <ApplicationIcon />
+    <OutputType>Exe</OutputType>
+    <StartupObject />
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\x64\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net48|AnyCPU'">
     <PlatformTarget>x64</PlatformTarget>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\x64\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net48|AnyCPU'">
     <PlatformTarget>x64</PlatformTarget>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
-  <PropertyGroup>
-    <AdditionalFileItemNames>$(AdditionalFileItemNames);None</AdditionalFileItemNames>
-  </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="Microsoft.ServiceFabric.Data, Version=6.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=AMD64">
-      <HintPath>..\..\packages\Microsoft.ServiceFabric.Data.3.2.162\lib\net452\Microsoft.ServiceFabric.Data.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.ServiceFabric.Data.Extensions, Version=1.4.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Microsoft.ServiceFabric.Data.Extensions.1.4.162\lib\net452\Microsoft.ServiceFabric.Data.Extensions.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.ServiceFabric.Data.Interfaces, Version=5.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=AMD64">
-      <HintPath>..\..\packages\Microsoft.ServiceFabric.Data.Interfaces.3.2.162\lib\net452\Microsoft.ServiceFabric.Data.Interfaces.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.ServiceFabric.Diagnostics, Version=6.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=AMD64">
-      <HintPath>..\..\packages\Microsoft.ServiceFabric.Diagnostics.Internal.3.2.162\lib\net452\Microsoft.ServiceFabric.Diagnostics.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.ServiceFabric.Internal, Version=6.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=AMD64">
-      <HintPath>..\..\packages\Microsoft.ServiceFabric.6.3.162\lib\net452\Microsoft.ServiceFabric.Internal.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.ServiceFabric.Internal.Strings, Version=6.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=AMD64">
-      <HintPath>..\..\packages\Microsoft.ServiceFabric.6.3.162\lib\net452\Microsoft.ServiceFabric.Internal.Strings.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.ServiceFabric.Preview, Version=6.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=AMD64">
-      <HintPath>..\..\packages\Microsoft.ServiceFabric.6.3.162\lib\net452\Microsoft.ServiceFabric.Preview.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.ServiceFabric.ReliableCollection.Interop, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Microsoft.ServiceFabric.Data.Extensions.1.4.162\lib\net452\Microsoft.ServiceFabric.ReliableCollection.Interop.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.ServiceFabric.Services, Version=6.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=AMD64">
-      <HintPath>..\..\packages\Microsoft.ServiceFabric.Services.3.2.162\lib\net452\Microsoft.ServiceFabric.Services.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Collections.Immutable, Version=1.2.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\System.Collections.Immutable.1.5.0\lib\portable-net45+win8+wp8+wpa81\System.Collections.Immutable.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Core" />
-    <Reference Include="System.Fabric, Version=6.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=AMD64">
-      <HintPath>..\..\packages\Microsoft.ServiceFabric.6.3.162\lib\net452\System.Fabric.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Fabric.Management.ServiceModel, Version=6.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=AMD64">
-      <HintPath>..\..\packages\Microsoft.ServiceFabric.6.3.162\lib\net452\System.Fabric.Management.ServiceModel.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Fabric.Strings, Version=6.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=AMD64">
-      <HintPath>..\..\packages\Microsoft.ServiceFabric.6.3.162\lib\net452\System.Fabric.Strings.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Runtime.Serialization" />
-    <Reference Include="System.ServiceModel" />
+    <PackageReference Include="Microsoft.ServiceFabric.Services" Version="3.2.162" />
+    <PackageReference Include="System.Collections.Immutable" Version="1.5.0" />
   </ItemGroup>
+
   <ItemGroup>
-    <Compile Include="configuration\AzureSessionStateConfiguration.cs" />
-    <Compile Include="configuration\GatewayConfiguration.cs" />
-    <Compile Include="configuration\IoTHubConfiguration.cs" />
-    <Compile Include="configuration\MqttServiceConfiguration.cs" />
-    <Compile Include="configuration\ServiceFabricConfigurationProvider.cs" />
-    <Compile Include="logging\Logger.cs" />
-    <Compile Include="logging\ServiceLogger.cs" />
-    <Compile Include="mqtt\MqttCommunicationListener.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="FrontEnd.cs" />
-    <Compile Include="Program.cs" />
+    <ProjectReference Include="..\..\src\ProtocolGateway.Core\ProtocolGateway.Core.csproj" />
+    <ProjectReference Include="..\..\src\ProtocolGateway.IotHubClient\ProtocolGateway.IotHubClient.csproj" />
+    <ProjectReference Include="..\..\src\ProtocolGateway.Providers.CloudStorage\ProtocolGateway.Providers.CloudStorage.csproj" />
+    <ProjectReference Include="..\fabricshared\ProtocolGateway.Host.Fabric.FabricShared.Configuration\ProtocolGateway.Host.Fabric.FabricShared.Configuration.csproj" />
+    <ProjectReference Include="..\fabricshared\ProtocolGateway.Host.Fabric.FabricShared.Health\ProtocolGateway.Host.Fabric.FabricShared.Health.csproj" />
+    <ProjectReference Include="..\fabricshared\ProtocolGateway.Host.Fabric.FabricShared.Logging\ProtocolGateway.Host.Fabric.FabricShared.Logging.csproj" />
+    <ProjectReference Include="..\fabricshared\ProtocolGateway.Host.Fabric.FabricShared.Security\ProtocolGateway.Host.Fabric.FabricShared.Security.csproj" />
+    <ProjectReference Include="..\ProtocolGateway.Host.Common\ProtocolGateway.Host.Common.csproj" />
   </ItemGroup>
+
   <ItemGroup>
-    <None Include="..\shared\protocol-gateway.contoso.com.pfx">
-      <Link>PackageRoot\Data\protocol-gateway.contoso.com.pfx</Link>
-    </None>
-    <None Include="PackageRoot\Config\FrontEnd.AzureState.json" />
-    <None Include="PackageRoot\Config\FrontEnd.IoTHubClient.json" />
-    <None Include="PackageRoot\Config\FrontEnd.json" />
-    <None Include="PackageRoot\Config\FrontEnd.Mqtt.json" />
-    <None Include="PackageRoot\Config\Settings.xml" />
-    <None Include="PackageRoot\ServiceManifest.xml" />
-    <None Include="App.config" />
-    <None Include="packages.config" />
+    <Folder Include="PackageRoot\Data\" />
+    <Folder Include="Properties\" />
   </ItemGroup>
+
   <ItemGroup>
-    <ProjectReference Include="..\..\src\ProtocolGateway.Core\ProtocolGateway.Core.csproj">
-      <Project>{a41d4c90-05a9-447e-aff7-dd21560d64ec}</Project>
-      <Name>ProtocolGateway.Core</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\src\ProtocolGateway.Providers.CloudStorage\ProtocolGateway.Providers.CloudStorage.csproj">
-      <Project>{ca34a598-eea8-410b-8aa6-30d3d1bb1fe3}</Project>
-      <Name>ProtocolGateway.Providers.CloudStorage</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\fabricshared\ProtocolGateway.Host.Fabric.FabricShared.Configuration\ProtocolGateway.Host.Fabric.FabricShared.Configuration.csproj">
-      <Project>{cedd1f60-e803-476a-9f73-3814cdce3c4b}</Project>
-      <Name>ProtocolGateway.Host.Fabric.FabricShared.Configuration</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\fabricshared\ProtocolGateway.Host.Fabric.FabricShared.Health\ProtocolGateway.Host.Fabric.FabricShared.Health.csproj">
-      <Project>{443e59d8-9395-41f1-aa8f-4895a734c2aa}</Project>
-      <Name>ProtocolGateway.Host.Fabric.FabricShared.Health</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\fabricshared\ProtocolGateway.Host.Fabric.FabricShared.Logging\ProtocolGateway.Host.Fabric.FabricShared.Logging.csproj">
-      <Project>{a2537696-fd02-40cd-b179-2df85cc52a89}</Project>
-      <Name>ProtocolGateway.Host.Fabric.FabricShared.Logging</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\fabricshared\ProtocolGateway.Host.Fabric.FabricShared.Security\ProtocolGateway.Host.Fabric.FabricShared.Security.csproj">
-      <Project>{1cb06c3e-3d1c-4fd4-95e9-037b4361303a}</Project>
-      <Name>ProtocolGateway.Host.Fabric.FabricShared.Security</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\ProtocolGateway.Host.Common\ProtocolGateway.Host.Common.csproj">
-      <Project>{692b767f-7805-4662-83df-ca6771c1612e}</Project>
-      <Name>ProtocolGateway.Host.Common</Name>
-    </ProjectReference>
+    <None Include="..\shared\protocol-gateway.contoso.com.pfx" Link="PackageRoot\Data\protocol-gateway.contoso.com.pfx" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="PackageRoot\Code\" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+
 </Project>

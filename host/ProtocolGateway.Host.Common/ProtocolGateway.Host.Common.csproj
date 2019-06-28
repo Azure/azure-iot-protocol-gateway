@@ -8,14 +8,7 @@
     <AssemblyName>ProtocolGateway.Host.Common</AssemblyName>
     <RootNamespace>ProtocolGateway.Host.Common</RootNamespace>
     <Version>1.0.0.0</Version>
-    <Company>Copyright © Microsoft 2015</Company>
-    <Product>Microsoft.Azure.Devices.ProtocolGateway.Host.Common</Product>
-    <Copyright>Copyright ©  2015</Copyright>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Compile Remove="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="DotNetty.Buffers" Version="0.6.0" />
@@ -25,10 +18,6 @@
     <PackageReference Include="DotNetty.Handlers" Version="0.6.0" />
     <PackageReference Include="DotNetty.Transport" Version="0.6.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="2.0.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Properties\" />
   </ItemGroup>
 
   <ItemGroup>
