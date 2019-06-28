@@ -83,6 +83,9 @@
       <HintPath>..\..\packages\Microsoft.Extensions.Logging.Abstractions.1.1.1\lib\netstandard1.1\Microsoft.Extensions.Logging.Abstractions.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Microsoft.IO.RecyclableMemoryStream, Version=1.2.2.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.IO.RecyclableMemoryStream.1.2.2\lib\net45\Microsoft.IO.RecyclableMemoryStream.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.WindowsAzure.Configuration, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Microsoft.WindowsAzure.ConfigurationManager.3.1.0\lib\net40\Microsoft.WindowsAzure.Configuration.dll</HintPath>
       <Private>True</Private>
@@ -129,6 +132,7 @@
     <Compile Include="BlobSessionState.cs" />
     <Compile Include="BlobSessionStatePersistenceProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="StorageBufferManager.cs" />
     <Compile Include="Subscription.cs" />
     <Compile Include="TableMessageDeliveryState.cs" />
     <Compile Include="TableQos2StatePersistenceProvider.cs" />
@@ -142,9 +146,6 @@
   <ItemGroup>
     <None Include="app.config" />
     <None Include="packages.config">
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="ProtocolGateway.Providers.CloudStorage.nuspec">
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>

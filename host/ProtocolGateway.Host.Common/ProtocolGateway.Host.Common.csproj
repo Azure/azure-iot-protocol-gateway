@@ -151,6 +151,8 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AcceptLimiter.cs" />
+    <Compile Include="AcceptLimiterTlsReleaseHandler.cs" />
     <Compile Include="Bootstrapper.cs" />
     <Compile Include="BootstrapperEventSource.cs" />
     <Compile Include="MqttPacketPayloadCompressionHandler.cs" />

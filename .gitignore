@@ -31,3 +31,5 @@ nuget.exe
 *.db
 .idea.*/
 .vscode/*
+secrets/
+host/ProtocolGateway.Host.Fabric/pkg/*

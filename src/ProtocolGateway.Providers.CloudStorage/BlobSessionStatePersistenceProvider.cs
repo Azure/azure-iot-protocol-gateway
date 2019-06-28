@@ -9,6 +9,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
     using System.Threading.Tasks;
     using Microsoft.Azure.Devices.ProtocolGateway.Identity;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence;
+    using Microsoft.IO;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Blob;
     using Newtonsoft.Json;
@@ -16,6 +17,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
 
     public class BlobSessionStatePersistenceProvider : ISessionStatePersistenceProvider
     {
+        static readonly RecyclableMemoryStreamManager StreamMemoryManager = new RecyclableMemoryStreamManager();
+
         static readonly JsonSerializerSettings SerializerSettings = new JsonSerializerSettings
         {
             Converters =
@@ -37,6 +40,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
             }
 
             CloudBlobClient blobClient = cloudStorageAccount.CreateCloudBlobClient();
+            blobClient.BufferManager = StorageBufferManager.Shared;
             this.container = blobClient.GetContainerReference(containerName);
         }
 
@@ -73,21 +77,17 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
 
             try
             {
-                using (Stream stream = await blob.OpenReadAsync())
+                using (var stream = new RecyclableMemoryStream(StreamMemoryManager))
                 {
-                    using (var memoryStream = new MemoryStream(new byte[blob.Properties.Length])) // we don't expect it to be big (i.e. bigger than 85KB leading to LOH alloc)
+                    await blob.DownloadToStreamAsync(stream);
+                    stream.Position = 0;
+                    using (var streamReader = new StreamReader(stream))
+                    using (var jsonReader = new JsonTextReader(streamReader))
                     {
-                        await stream.CopyToAsync(memoryStream);
+                        var sessionState = serializer.Deserialize<BlobSessionState>(jsonReader);
+                        sessionState.ETag = blob.Properties.ETag;
 
-                        memoryStream.Position = 0;
-                        using (var streamReader = new StreamReader(memoryStream))
-                        using (var jsonReader = new JsonTextReader(streamReader))
-                        {
-                            var sessionState = serializer.Deserialize<BlobSessionState>(jsonReader);
-                            sessionState.ETag = blob.Properties.ETag;
-
-                            return sessionState;
-                        }
+                        return sessionState;
                     }
                 }
             }

@@ -6,6 +6,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
     using System;
     using System.Diagnostics.Contracts;
     using System.IO;
+    using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Common.Utilities;
@@ -25,6 +26,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
         readonly IByteBufferAllocator allocator;
         readonly IMessageAddressConverter messageAddressConverter;
         IMessagingChannel<IMessage> messagingChannel;
+        CancellationTokenSource lifetimeCancellation;
 
         IotHubClient(DeviceClient deviceClient, string deviceId, IotHubClientSettings settings, IByteBufferAllocator allocator, IMessageAddressConverter messageAddressConverter)
         {
@@ -107,6 +109,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             Contract.Assert(this.messagingChannel == null);
 
             this.messagingChannel = channel;
+            this.lifetimeCancellation = new CancellationTokenSource();
             this.Receive();
         }
 
@@ -162,7 +165,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             {
                 while (true)
                 {
-                    message = await this.deviceClient.ReceiveAsync(TimeSpan.MaxValue);
+                    message = await this.deviceClient.ReceiveAsync(this.lifetimeCancellation.Token);
                     if (message == null)
                     {
                         this.messagingChannel.Close(null);
@@ -263,10 +266,10 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             }
         }
 
-        public Task DisposeAsync(Exception cause)
+        public async Task DisposeAsync(Exception cause)
         {
-            this.deviceClient.Dispose();
-            return Task.FromResult(0);
+            this.lifetimeCancellation?.Cancel();
+            await this.deviceClient.CloseAsync();
         }
 
         internal static IAuthenticationMethod DeriveAuthenticationMethod(IAuthenticationMethod currentAuthenticationMethod, IotHubDeviceIdentity deviceIdentity)
