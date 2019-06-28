@@ -123,8 +123,10 @@
     <Compile Include="Instrumentation\CommonEventSource.cs" />
     <Compile Include="Extensions\TaskExtensions.cs" />
     <Compile Include="Messaging\IMessagingBridge.cs" />
+    <Compile Include="Messaging\Message.cs" />
     <Compile Include="Messaging\MessageFeedbackChannel.cs" />
     <Compile Include="Messaging\MessagingException.cs" />
+    <Compile Include="Messaging\MessagingServiceClientExtensions.cs" />
     <Compile Include="Messaging\SingleClientMessagingBridge.cs" />
     <Compile Include="Messaging\MessageWithFeedback.cs" />
     <Compile Include="Mqtt\AckPendingMessageState.cs" />

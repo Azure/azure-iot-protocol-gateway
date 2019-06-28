@@ -9,7 +9,7 @@
     /// Simple buffer manager intended for use with Azure Storage SDK and compression code.
     /// It is not intended to be robust enough for external use.
     /// </summary>
-    class StorageBufferManager : IBufferManager
+    public sealed class StorageBufferManager : IBufferManager
     {
         internal const int MaxBufferSize = 1024 * 1024; //  1 MB
         const int DefaultBufferSize = 64 * 1024;        // 64 KB

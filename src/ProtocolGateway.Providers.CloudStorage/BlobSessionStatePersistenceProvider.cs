@@ -17,7 +17,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
 
     public class BlobSessionStatePersistenceProvider : ISessionStatePersistenceProvider
     {
-        static readonly RecyclableMemoryStreamManager StreamMemoryManager = new RecyclableMemoryStreamManager();
+        public static readonly RecyclableMemoryStreamManager StreamMemoryManager = new RecyclableMemoryStreamManager();
 
         static readonly JsonSerializerSettings SerializerSettings = new JsonSerializerSettings
         {

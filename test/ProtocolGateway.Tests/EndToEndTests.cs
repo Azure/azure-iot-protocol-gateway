@@ -30,7 +30,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
     using Microsoft.Azure.Devices.Common.Security;
     using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
     using Microsoft.Azure.Devices.ProtocolGateway.IotHubClient;
-    using Microsoft.Azure.Devices.ProtocolGateway.IotHubClient.Addressing;
     using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt;
     using Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage;
@@ -102,11 +101,16 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
             var settings = new Settings(this.settingsProvider);
             var iotHubClientSettings = new IotHubClientSettings(this.settingsProvider);
             var authProvider = new SasTokenDeviceIdentityProvider();
-            var topicNameRouter = new ConfigurableMessageAddressConverter();
 
-            var iotHubClientFactory = IotHubClient.PreparePoolFactory(iotHubClientSettings.IotHubConnectionString, 400, TimeSpan.FromMinutes(5),
-                iotHubClientSettings, PooledByteBufferAllocator.Default, topicNameRouter);
-            MessagingBridgeFactoryFunc bridgeFactory = async identity => new SingleClientMessagingBridge(identity, await iotHubClientFactory(identity));
+            var telemetryProcessing = TopicHandling.CompileParserFromUriTemplates(new[] { "devices/{deviceId}/messages/events" });
+            var commandProcessing = TopicHandling.CompileFormatterFromUriTemplate("devices/{deviceId}/messages/devicebound");
+            MessagingBridgeFactoryFunc bridgeFactory = IotHubBridge.PrepareFactory(iotHubClientSettings.IotHubConnectionString, 400, TimeSpan.FromMinutes(5),
+                iotHubClientSettings, bridge =>
+                {
+                    bridge.RegisterRoute(topic => true, new TelemetrySender(bridge, telemetryProcessing)); // handle all incoming messages with TelemetrySender
+                    bridge.RegisterClient(new CommandReceiver(bridge, PooledByteBufferAllocator.Default, commandProcessing)); // handle device command queue
+                    bridge.RegisterClient(new MethodHandler("command", bridge, (request, dispatcher) => DispatchCommands(bridge.DeviceId, request, dispatcher))); // register
+                });
 
             ServerBootstrap server = new ServerBootstrap()
                 .Group(executorGroup)
@@ -137,6 +141,29 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
                 await executorGroup.ShutdownGracefullyAsync();
             });
             this.ServerAddress = IPAddress.Loopback;
+        }
+
+        static async Task<MethodResponse> DispatchCommands(string deviceId, MethodRequest request, IMessageDispatcher dispatcher)
+        {
+            try
+            {
+                // deserialize request payload and further process it before sending or
+                // just pass it through to message.Payload using Unpooled.WrappedBuffer(request.Data)
+                var message = new Messaging.Message
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Address = "devices/" + deviceId + "/messages/command",
+                    Properties = { { "extra", "property" } },
+                    Payload = Unpooled.WrappedBuffer(request.Data)
+                };
+
+                var outcome = await dispatcher.SendAsync(message);
+                return new MethodResponse(200); // no-op on the wire
+            }
+            catch (Exception ex)
+            {
+                return new MethodResponse(Encoding.UTF8.GetBytes($"{{\"message\":\"error sending message: {ex.ToString()}\"}}"), 500);
+            }
         }
 
         void ScheduleCleanup(Func<Task> cleanupFunc)
