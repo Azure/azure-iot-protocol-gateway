@@ -1,7 +1,7 @@
 .\ProtocolGateway.Host.FabricSetup.CounterSetup.exe
 
 # Installing .NET Framework 4.8
-.\InstallDotNet48.ps1 -norestart
+#.\InstallDotNet48.ps1 -norestart
 
 # Tweaking SChannel User Reference Context settings to prevent excessive contention on SChannel context lookup
 $listCount = 4096;
