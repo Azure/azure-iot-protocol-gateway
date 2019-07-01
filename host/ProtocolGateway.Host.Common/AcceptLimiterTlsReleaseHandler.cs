@@ -20,7 +20,6 @@ namespace ProtocolGateway.Host.Common
         {
             this.limiter.Claim();
             base.ChannelActive(context);
-
         }
 
         public override void ChannelInactive(IChannelHandlerContext context)
