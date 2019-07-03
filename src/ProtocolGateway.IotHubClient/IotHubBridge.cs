@@ -9,7 +9,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
-    using DotNetty.Common.Utilities;
     using Microsoft.Azure.Devices.Client;
     using Microsoft.Azure.Devices.Client.Exceptions;
     using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
@@ -18,6 +17,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
 
     public class IotHubBridge : IMessagingBridge
     {
+        Exception closedCause;
         IMessagingChannel messagingChannel;
         readonly List<Tuple<Func<string, bool>, IMessagingServiceClient>> routes;
 
@@ -85,6 +85,17 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             });
 
             client.SetRetryPolicy(DeviceClientRetryPolicy.Instance);
+            var bridge = new IotHubBridge(client, deviceId, settings);
+            client.SetConnectionStatusChangesHandler((status, reason) => {
+                if (status != ConnectionStatus.Connected)
+                {
+                    var cause = new IotHubCommunicationException("Connection to IoT Hub is closed");
+                    if (Interlocked.CompareExchange(ref bridge.closedCause, cause, null) == null)
+                    {
+                        bridge.messagingChannel?.Close(cause);
+                    }
+                }
+            });
 
             // This helps in usage instrumentation at IotHub service.
             client.ProductInfo = $"protocolgateway/poolsize={connectionPoolSize}";
@@ -104,7 +115,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
                 client.Dispose();
                 throw;
             }
-            return new IotHubBridge(client, deviceId, settings);
+            return bridge;
         }
 
         public string DeviceId { get; }
@@ -164,6 +175,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             Contract.Assert(this.messagingChannel == null);
 
             this.messagingChannel = channel;
+            var closedCause = Volatile.Read(ref this.closedCause);
+            if (closedCause != null)
+            {
+                channel.Close(closedCause);
+            }
             foreach (var route in this.routes)
             {
                 route.Item2.BindMessagingChannel(channel);

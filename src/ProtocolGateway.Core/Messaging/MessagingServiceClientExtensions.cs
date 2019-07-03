@@ -3,10 +3,6 @@
 
 namespace Microsoft.Azure.Devices.ProtocolGateway.Messaging
 {
-    using System;
-    using System.Threading.Tasks;
-    using DotNetty.Buffers;
-
     public static class MessagingServiceClientExtensions
     {
         public static MessageWithFeedback AttachFeedbackChannel(this IMessagingServiceClient client, IMessage message)

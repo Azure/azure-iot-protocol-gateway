@@ -68,6 +68,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         Queue<Packet> connectPendingQueue;
         PublishPacket willPacket;
         SemaphoreSlim qos2Semaphore;
+        event EventHandler capabilitiesChanged;
 
         public string ChannelId => this.capturedContext.Channel.Id.ToString();
 
@@ -347,7 +348,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     }
 
                     this.sessionState = newState;
-                    this.CapabilitiesChanged?.Invoke(this, EventArgs.Empty);
+                    this.capabilitiesChanged?.Invoke(this, EventArgs.Empty);
 
                     // release ACKs
 
@@ -451,7 +452,19 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
         #region PUBLISH Server -> Client handling
 
-        public void Handle(IMessage message, IMessagingServiceClient sender)
+        void IMessagingChannel.Handle(IMessage message, IMessagingServiceClient sender)
+        {
+            if (this.capturedContext.Executor.InEventLoop)
+            {
+                this.HandleInternal(message, sender);
+            }
+            else
+            {
+                this.capturedContext.Executor.Execute((s, m) => this.HandleInternal((IMessage)m, (IMessagingServiceClient)s), sender, message);
+            }
+        }
+
+        void HandleInternal(IMessage message, IMessagingServiceClient sender)
         {
             IChannelHandlerContext context = this.capturedContext;
             try
@@ -459,7 +472,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 Contract.Assert(message != null);
 
                 PerformanceCounters.MessagesReceivedPerSecond.Increment();
-
                 this.PublishToClientAsync(context, message, sender).OnFault(ShutdownOnPublishFaultAction, context);
                 message = null;
             }
@@ -473,16 +485,27 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             }
             finally
             {
-                if (message != null)
-                {
-                    ReferenceCountUtil.SafeRelease(message.Payload);
-                }
+                message?.Payload.SafeRelease();
             }
         }
 
-        public void Close(Exception cause) => this.ShutdownOnReceiveError(cause);
+        void IMessagingChannel.Close(Exception cause)
+        {
+            if (this.capturedContext.Executor.InEventLoop)
+            {
+                this.ShutdownOnReceiveError(cause);
+            }
+            else
+            {
+                this.capturedContext.Executor.Execute(() => this.ShutdownOnReceiveError(cause));
+            }
+        }
 
-        public event EventHandler CapabilitiesChanged;
+        event EventHandler IMessagingChannel.CapabilitiesChanged
+        {
+            add { this.capabilitiesChanged += value; }
+            remove { this.capabilitiesChanged -= value; }
+        }
 
         async Task PublishToClientAsync(IChannelHandlerContext context, IMessage message, IMessagingServiceClient sender)
         {

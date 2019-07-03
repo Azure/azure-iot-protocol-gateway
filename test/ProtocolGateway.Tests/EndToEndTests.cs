@@ -18,8 +18,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
     using DotNetty.Buffers;
     using DotNetty.Codecs.Mqtt;
     using DotNetty.Codecs.Mqtt.Packets;
-    using DotNetty.Common.Concurrency;
     using DotNetty.Common.Internal.Logging;
+    using DotNetty.Common.Utilities;
     using DotNetty.Handlers.Logging;
     using DotNetty.Handlers.Tls;
     using DotNetty.Transport.Bootstrapping;
@@ -27,10 +27,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
     using DotNetty.Transport.Channels.Sockets;
     using global::ProtocolGateway.Host.Common;
     using Microsoft.Azure.Devices.Client;
-    using Microsoft.Azure.Devices.Common.Security;
     using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
     using Microsoft.Azure.Devices.ProtocolGateway.IotHubClient;
-    using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt;
     using Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage;
     using Microsoft.Azure.Devices.ProtocolGateway.Tests.Extensions;
@@ -49,6 +47,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
         const string NotificationQoS1Content = "{\"test\": \"notify (at least once)\"}";
         const string NotificationQoS2Content = "{\"test\": \"exactly once\"}";
         const string NotificationQoS2Content2 = "{\"test\": \"exactly once (2)\"}";
+        const string MethodCallContent = "{\"test\":\"method (at least once)\"}";
 
         readonly ITestOutputHelper output;
         readonly ISettingsProvider settingsProvider;
@@ -57,8 +56,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
         string deviceId;
         string deviceSas;
         readonly X509Certificate2 tlsCertificate;
-        static readonly TimeSpan CommunicationTimeout = TimeSpan.FromSeconds(20);
-        static readonly TimeSpan TestTimeout = TimeSpan.FromMinutes(2);
+        static readonly TimeSpan CommunicationTimeout = TimeSpan.FromSeconds(200);
+        static readonly TimeSpan TestTimeout = TimeSpan.FromMinutes(20);
 
         public EndToEndTests(ITestOutputHelper output)
         {
@@ -103,7 +102,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
             var authProvider = new SasTokenDeviceIdentityProvider();
 
             var telemetryProcessing = TopicHandling.CompileParserFromUriTemplates(new[] { "devices/{deviceId}/messages/events" });
-            var commandProcessing = TopicHandling.CompileFormatterFromUriTemplate("devices/{deviceId}/messages/devicebound");
+            var commandProcessing = TopicHandling.CompileFormatterFromUriTemplate("devices/{deviceId}/messages/devicebound/{subTopic=}");
             MessagingBridgeFactoryFunc bridgeFactory = IotHubBridge.PrepareFactory(iotHubClientSettings.IotHubConnectionString, 400, TimeSpan.FromMinutes(5),
                 iotHubClientSettings, bridge =>
                 {
@@ -152,13 +151,24 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
                 var message = new Messaging.Message
                 {
                     Id = Guid.NewGuid().ToString(),
-                    Address = "devices/" + deviceId + "/messages/command",
+                    CreatedTimeUtc = DateTime.UtcNow,
+                    Address = "devices/" + deviceId + "/messages/devicebound/commands",
                     Properties = { { "extra", "property" } },
                     Payload = Unpooled.WrappedBuffer(request.Data)
                 };
 
                 var outcome = await dispatcher.SendAsync(message);
-                return new MethodResponse(200); // no-op on the wire
+                switch (outcome)
+                {
+                    case SendMessageOutcome.Completed:
+                        return new MethodResponse(200);
+                    case SendMessageOutcome.Rejected:
+                        return new MethodResponse(Encoding.UTF8.GetBytes("{\"message\":\"Could not dispatch the call. Device is not subscribed.\"}"), 404);
+                    case SendMessageOutcome.Abandonded:
+                        return new MethodResponse(Encoding.UTF8.GetBytes("{\"message\":\"Call was abandoned.\"}"), 503);
+                    default:
+                        return new MethodResponse(Encoding.UTF8.GetBytes("{\"message\":\"Unexpected outcome.\"}"), 500);
+                }
             }
             catch (Exception ex)
             {
@@ -257,6 +267,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
 
             Stopwatch sw = Stopwatch.StartNew();
 
+            // making sure device has no outstanding messages in c2d queue
             await this.CleanupDeviceQueueAsync(hubConnectionStringBuilder.HostName, device);
 
             var clientScenarios = new ClientScenarios(hubConnectionStringBuilder.HostName, this.deviceId, this.deviceSas);
@@ -272,6 +283,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
                 .Handler(this.ComposeClientChannelInitializer(targetHost, readHandler1));
             IChannel clientChannel = await bootstrap.ConnectAsync(this.ServerAddress, protocolGatewayPort);
             this.ScheduleCleanup(() => clientChannel.CloseAsync());
+
+            var responsePromise = new TaskCompletionSource<CloudToDeviceMethodResult>();
 
             Task testWorkTask = Task.Run(async () =>
             {
@@ -298,10 +311,16 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
                 var qos2Notification2 = new Message(Encoding.UTF8.GetBytes(NotificationQoS2Content2));
                 qos2Notification2.Properties[qosPropertyName] = "2";
                 await serviceClient.SendAsync(this.deviceId, qos2Notification2);
+
+                var methodCommand = new CloudToDeviceMethod("command", TimeSpan.FromMinutes(1))
+                    .SetPayloadJson(MethodCallContent);
+                serviceClient.InvokeDeviceMethodAsync(this.deviceId, methodCommand).LinkOutcome(responsePromise);
             });
 
             await clientScenarios.RunPart1StepsAsync(clientChannel, readHandler1).WithTimeout(TestTimeout);
             await testWorkTask.WithTimeout(TestTimeout);
+
+            await responsePromise.Task;
 
             this.output.WriteLine($"part 1 completed in {sw.Elapsed}");
             await this.EnsureDeviceQueueLengthAsync(hubConnectionStringBuilder.HostName, device, 1);
@@ -350,7 +369,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
                         Assert.True(leftToTarget >= 0, $"actual device queue length is greater than expected ({expectedLength}).");
                     }
                 }
-                Assert.True(leftToTarget == 0, $"actual device length is less than expected ({expectedLength}).");
+                Assert.True(leftToTarget == 0, $"actual device queue length is less than expected ({expectedLength}).");
             }
             finally
             {
@@ -413,7 +432,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
 
         static async Task<Tuple<EventData, string>[]> CollectEventHubMessagesAsync(EventHubReceiver[] receivers, int messagesPending)
         {
-            List<Task<EventData>> receiveTasks = receivers.Select(r => r.ReceiveAsync(TimeSpan.FromMinutes(20))).ToList();
+            List<Task<EventData>> receiveTasks = receivers.Select(r => r.ReceiveAsync(TimeSpan.FromMinutes(2))).ToList();
             var ehMessages = new Tuple<EventData, string>[messagesPending];
             while (true)
             {
@@ -430,7 +449,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
                 }
 
                 int receivedIndex = receiveTasks.IndexOf(receivedTask);
-                receiveTasks[receivedIndex] = receivers[receivedIndex].ReceiveAsync(TimeSpan.FromMinutes(20));
+                receiveTasks[receivedIndex] = receivers[receivedIndex].ReceiveAsync(TimeSpan.FromMinutes(2));
             }
             return ehMessages;
         }
@@ -457,7 +476,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
 
             async Task GetPart1SpecificSteps(IChannel channel, ReadListeningHandler readHandler)
             {
-                int publishQoS1PacketId = GetRandomPacketId();
+                int publishQoS1PacketId = 1003;
                 await channel.WriteAndFlushManyAsync(
                     new PublishPacket(QualityOfService.AtMostOnce, false, false)
                     {
@@ -472,7 +491,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
                         Payload = Unpooled.WrappedBuffer(Encoding.UTF8.GetBytes("{\"test\": \"telemetry\"}"))
                     });
 
-                Packet[] packets = (await Task.WhenAll(Enumerable.Repeat(0, 5).Select(_ => readHandler.ReceiveAsync())))
+                Packet[] packets = (await Task.WhenAll(Enumerable.Repeat(0, 6).Select(_ => readHandler.ReceiveAsync())))
                     .Select(Assert.IsAssignableFrom<Packet>)
                     .ToArray();
 
@@ -480,20 +499,25 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
                 Assert.Equal(publishQoS1PacketId, pubAckPacket.PacketId);
 
                 PublishPacket publishQoS0Packet = Assert.Single(packets.OfType<PublishPacket>().Where(x => x.QualityOfService == QualityOfService.AtMostOnce));
-                this.AssertPacketCoreValue(publishQoS0Packet, NotificationQoS0Content);
+                this.AssertPacketCoreValue(publishQoS0Packet, "tips", NotificationQoS0Content);
 
-                PublishPacket publishQoS1Packet = Assert.Single(packets.OfType<PublishPacket>().Where(x => x.QualityOfService == QualityOfService.AtLeastOnce));
-                this.AssertPacketCoreValue(publishQoS1Packet, NotificationQoS1Content);
+                PublishPacket[] publishQoS1Packets = packets.OfType<PublishPacket>().Where(x => x.QualityOfService == QualityOfService.AtLeastOnce).ToArray();
+                Assert.Equal(2, publishQoS1Packets.Length);
+                var qos1Notification = Assert.Single(publishQoS1Packets, x => x.TopicName.EndsWith("firmware-update"));
+                this.AssertPacketCoreValue(qos1Notification, "firmware-update", NotificationQoS1Content);
+                var methodCall = Assert.Single(publishQoS1Packets, x => x.TopicName.EndsWith("commands"));
+                this.AssertPacketCoreValue(methodCall, "commands", MethodCallContent);
 
                 PublishPacket[] publishQoS2Packets = packets.OfType<PublishPacket>().Where(x => x.QualityOfService == QualityOfService.ExactlyOnce).ToArray();
                 Assert.Equal(2, publishQoS2Packets.Length);
                 PublishPacket publishQoS2Packet1 = publishQoS2Packets[0];
-                this.AssertPacketCoreValue(publishQoS2Packet1, NotificationQoS2Content);
+                this.AssertPacketCoreValue(publishQoS2Packet1, "critical-alert", NotificationQoS2Content);
                 PublishPacket publishQoS2Packet2 = publishQoS2Packets[1];
-                this.AssertPacketCoreValue(publishQoS2Packet2, NotificationQoS2Content2);
+                this.AssertPacketCoreValue(publishQoS2Packet2, string.Empty, NotificationQoS2Content2);
 
                 await channel.WriteAndFlushManyAsync(
-                    PubAckPacket.InResponseTo(publishQoS1Packet),
+                    PubAckPacket.InResponseTo(qos1Notification),
+                    PubAckPacket.InResponseTo(methodCall),
                     PubRecPacket.InResponseTo(publishQoS2Packet1),
                     PubRecPacket.InResponseTo(publishQoS2Packet2));
 
@@ -527,7 +551,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
                 PublishPacket qos1Packet = Assert.Single(packets.OfType<PublishPacket>());
 
                 Assert.Equal(QualityOfService.AtLeastOnce, qos1Packet.QualityOfService);
-                this.AssertPacketCoreValue(qos1Packet, Encoding.ASCII.GetString(qos1Packet.Payload.ToArray()));
+                this.AssertPacketCoreValue(qos1Packet, "", Encoding.ASCII.GetString(qos1Packet.Payload.ToArray()));
 
                 PubRelPacket pubRelQos2Packet = Assert.Single(packets.OfType<PubRelPacket>());
 
@@ -537,9 +561,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
                     DisconnectPacket.Instance);
             }
 
-            void AssertPacketCoreValue(PublishPacket packet, string expectedPayload)
+            void AssertPacketCoreValue(PublishPacket packet, string subTopic, string expectedPayload)
             {
-                Assert.Equal($"devices/{this.clientId}/messages/devicebound", packet.TopicName);
+                Assert.Equal($"devices/{this.clientId}/messages/devicebound/{subTopic}", packet.TopicName);
                 Assert.Equal(expectedPayload, Encoding.UTF8.GetString(packet.Payload.ToArray()));
             }
 
@@ -564,8 +588,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
 
             async Task SubscribeAsync(IChannel channel, ReadListeningHandler readHandler)
             {
-                int subscribePacket1Id = GetRandomPacketId();
-                int subscribePacket2Id = GetRandomPacketId();
+                int subscribePacket1Id = 31000;
+                int subscribePacket2Id = 20192;
                 await channel.WriteAndFlushManyAsync(
                     new SubscribePacket(subscribePacket1Id, new SubscriptionRequest($"devices/{this.clientId}/messages/devicebound/#", QualityOfService.ExactlyOnce)),
                     new SubscribePacket(subscribePacket2Id, new SubscriptionRequest("multi/subscribe/check", QualityOfService.AtMostOnce)));
@@ -580,8 +604,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
                 Assert.Equal(1, subAck2Packet.ReturnCodes.Count);
                 Assert.Equal(QualityOfService.AtMostOnce, subAck2Packet.ReturnCodes[0]);
             }
-
-            static int GetRandomPacketId() => Guid.NewGuid().GetHashCode() & ushort.MaxValue;
 
             static IEnumerable<T> Flatten<T>(IEnumerable<IEnumerable<T>> source) => source.SelectMany(_ => _);
         }

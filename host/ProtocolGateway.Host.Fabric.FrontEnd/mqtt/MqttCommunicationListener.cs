@@ -2,7 +2,6 @@
 {
     #region Using Clauses
     using System;
-    using System.Collections.Generic;
     using System.Threading.Tasks;
     using System.Threading;
     using Microsoft.ServiceFabric.Services.Communication.Runtime;

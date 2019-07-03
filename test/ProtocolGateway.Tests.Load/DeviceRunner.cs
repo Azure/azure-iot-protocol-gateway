@@ -4,7 +4,6 @@
 namespace Microsoft.Azure.Devices.ProtocolGateway.Tests.Load
 {
     using System;
-    using System.Collections.Generic;
     using System.Diagnostics.Contracts;
     using System.Linq;
     using System.Net;

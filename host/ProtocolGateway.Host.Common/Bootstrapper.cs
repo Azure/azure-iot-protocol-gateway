@@ -26,7 +26,6 @@ namespace ProtocolGateway.Host.Common
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence;
     using Message = Microsoft.Azure.Devices.ProtocolGateway.Messaging.Message;
-    using Newtonsoft.Json;
 
     public class Bootstrapper
     {
@@ -178,13 +177,24 @@ namespace ProtocolGateway.Host.Common
                 var message = new Message
                 {
                     Id = Guid.NewGuid().ToString(),
-                    Address = "devices/" + deviceId + "/messages/command",
+                    CreatedTimeUtc = DateTime.UtcNow,
+                    Address = "devices/" + deviceId + "/messages/commands",
                     Properties = { { "extra", "property" } },
                     Payload = Unpooled.WrappedBuffer(request.Data)
                 };
 
                 var outcome = await dispatcher.SendAsync(message);
-                return new MethodResponse(200); // no-op on the wire
+                switch (outcome)
+                {
+                    case SendMessageOutcome.Completed:
+                        return new MethodResponse(200);
+                    case SendMessageOutcome.Rejected:
+                        return new MethodResponse(Encoding.UTF8.GetBytes("{\"message\":\"Could not dispatch the call. Device is not subscribed.\"}"), 404);
+                    case SendMessageOutcome.Abandonded:
+                        return new MethodResponse(Encoding.UTF8.GetBytes("{\"message\":\"Call was abandoned.\"}"), 503);
+                    default:
+                        return new MethodResponse(Encoding.UTF8.GetBytes("{\"message\":\"Unexpected outcome.\"}"), 500);
+                }
             }
             catch (Exception ex)
             {

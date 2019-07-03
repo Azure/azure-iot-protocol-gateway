@@ -7,7 +7,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
     using System.Collections.Generic;
     using DotNetty.Buffers;
     using DotNetty.Common.Utilities;
-    using Microsoft.Azure.Devices.Client;
     using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
     using Message = Client.Message;
 
