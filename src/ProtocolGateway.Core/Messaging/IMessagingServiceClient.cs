@@ -17,8 +17,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Messaging
 
         Task SendAsync(IMessage message);
 
-        Task AbandonAsync(string messageId);
-
         Task CompleteAsync(string messageId);
 
         Task RejectAsync(string messageId);

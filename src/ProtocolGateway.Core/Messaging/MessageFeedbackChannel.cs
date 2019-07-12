@@ -16,8 +16,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Messaging
             this.client = client;
         }
 
-        public Task AbandonAsync() => this.client.AbandonAsync(this.messageId);
-
         public Task CompleteAsync() => this.client.CompleteAsync(this.messageId);
 
         public Task RejectAsync() => this.client.RejectAsync(this.messageId);

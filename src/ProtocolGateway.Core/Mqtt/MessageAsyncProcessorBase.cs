@@ -14,15 +14,15 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
     {
         readonly Queue<T> backlogQueue;
         State state;
-        readonly TaskCompletionSource completionSource;
+        readonly TaskCompletionSource closedPromise;
 
         protected MessageAsyncProcessorBase()
         {
             this.backlogQueue = new Queue<T>();
-            this.completionSource = new TaskCompletionSource();
+            this.closedPromise = new TaskCompletionSource();
         }
 
-        public Task Completion => this.completionSource.Task;
+        public Task Closed => this.closedPromise.Task;
 
         public int BacklogSize => this.backlogQueue.Count;
 
@@ -36,10 +36,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     this.StartQueueProcessingAsync(context);
                     break;
                 case State.Processing:
-                case State.FinalProcessing:
                     this.backlogQueue.Enqueue(packet);
                     break;
-                case State.Aborted:
+                case State.Closed:
                     ReferenceCountUtil.Release(packet);
                     break;
                 default:
@@ -47,33 +46,16 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             }
         }
 
-        public void Complete()
+        public void Close()
         {
             switch (this.state)
             {
                 case State.Idle:
-                    this.completionSource.TryComplete();
+                    this.state = State.Closed;
+                    this.closedPromise.TryComplete();
                     break;
                 case State.Processing:
-                    this.state = State.FinalProcessing;
-                    break;
-                case State.FinalProcessing:
-                case State.Aborted:
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-        }
-
-        public void Abort()
-        {
-            switch (this.state)
-            {
-                case State.Idle:
-                case State.Processing:
-                case State.FinalProcessing:
-                    this.state = State.Aborted;
-
+                    this.state = State.Closed;
                     Queue<T> queue = this.backlogQueue;
                     while (queue.Count > 0)
                     {
@@ -81,7 +63,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                         ReferenceCountUtil.SafeRelease(packet);
                     }
                     break;
-                case State.Aborted:
+                case State.Closed:
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -93,7 +75,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             try
             {
                 Queue<T> queue = this.backlogQueue;
-                while (queue.Count > 0 && this.state != State.Aborted)
+                while (queue.Count > 0 && this.state != State.Closed)
                 {
                     T message = queue.Dequeue();
                     try
@@ -115,9 +97,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     case State.Processing:
                         this.state = State.Idle;
                         break;
-                    case State.FinalProcessing:
-                    case State.Aborted:
-                        this.completionSource.TryComplete();
+                    case State.Closed:
+                        this.closedPromise.TryComplete();
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
@@ -125,8 +106,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             }
             catch (Exception ex)
             {
-                this.Abort();
-                this.completionSource.TrySetException(new ChannelMessageProcessingException(ex, context));
+                this.closedPromise.TrySetException(new ChannelMessageProcessingException(ex, context));
+                this.Close();
             }
         }
 
@@ -136,8 +117,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         {
             Idle,
             Processing,
-            FinalProcessing,
-            Aborted
+            Closed
         }
     }
 }

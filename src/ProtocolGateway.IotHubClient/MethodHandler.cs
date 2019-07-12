@@ -71,8 +71,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             return TaskEx.Completed;
         }
 
-        public Task AbandonAsync(string messageId) => this.CompleteMessageAsync(messageId, SendMessageOutcome.Abandonded);
-
         public Task CompleteAsync(string messageId) => this.CompleteMessageAsync(messageId, SendMessageOutcome.Completed);
 
         public Task RejectAsync(string messageId) => this.CompleteMessageAsync(messageId, SendMessageOutcome.Rejected);

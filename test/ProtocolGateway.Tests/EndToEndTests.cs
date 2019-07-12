@@ -164,8 +164,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
                         return new MethodResponse(200);
                     case SendMessageOutcome.Rejected:
                         return new MethodResponse(Encoding.UTF8.GetBytes("{\"message\":\"Could not dispatch the call. Device is not subscribed.\"}"), 404);
-                    case SendMessageOutcome.Abandonded:
-                        return new MethodResponse(Encoding.UTF8.GetBytes("{\"message\":\"Call was abandoned.\"}"), 503);
                     default:
                         return new MethodResponse(Encoding.UTF8.GetBytes("{\"message\":\"Unexpected outcome.\"}"), 500);
                 }

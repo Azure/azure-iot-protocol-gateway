@@ -7,6 +7,5 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
     {
         Completed,
         Rejected,
-        Abandonded
     }
 }

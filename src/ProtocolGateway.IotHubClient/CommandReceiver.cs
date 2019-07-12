@@ -122,18 +122,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             }
         }
 
-        public async Task AbandonAsync(string messageId)
-        {
-            try
-            {
-                await this.bridge.DeviceClient.AbandonAsync(messageId);
-            }
-            catch (IotHubException ex)
-            {
-                throw ex.ToMessagingException();
-            }
-        }
-
         public async Task CompleteAsync(string messageId)
         {
             try

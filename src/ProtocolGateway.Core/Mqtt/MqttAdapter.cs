@@ -126,11 +126,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             bool abortOnOutOfOrderAck = this.settings.AbortOnOutOfOrderPubAck;
 
             this.publishPubAckProcessor = new RequestAckPairProcessor<AckPendingMessageState, PublishPacket>(this.AcknowledgePublishAsync, abortOnOutOfOrderAck, this);
-            this.publishPubAckProcessor.Completion.OnFault(ShutdownOnPubAckFaultAction, this);
+            this.publishPubAckProcessor.Closed.OnFault(ShutdownOnPubAckFaultAction, this);
             this.publishPubRecProcessor = new RequestAckPairProcessor<AckPendingMessageState, PublishPacket>(this.AcknowledgePublishReceiveAsync, abortOnOutOfOrderAck, this);
-            this.publishPubRecProcessor.Completion.OnFault(ShutdownOnPubRecFaultAction, this);
+            this.publishPubRecProcessor.Closed.OnFault(ShutdownOnPubRecFaultAction, this);
             this.pubRelPubCompProcessor = new RequestAckPairProcessor<CompletionPendingMessageState, PubRelPacket>(this.AcknowledgePublishCompleteAsync, abortOnOutOfOrderAck, this);
-            this.pubRelPubCompProcessor.Completion.OnFault(ShutdownOnPubCompFaultAction, this);
+            this.pubRelPubCompProcessor.Closed.OnFault(ShutdownOnPubCompFaultAction, this);
 
             this.stateFlags = StateFlags.WaitingForConnect;
             TimeSpan? timeout = this.settings.ConnectArrivalTimeout;
@@ -279,7 +279,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             if (!this.publishProcessors.TryGetValue(sendingClient, out publishProcessor))
             {
                 publishProcessor = new MessageAsyncProcessor<PublishPacket>((c, p) => this.PublishToServerAsync(c, sendingClient, p, null));
-                publishProcessor.Completion.OnFault(ShutdownOnPublishToServerFaultAction, this);
+                publishProcessor.Closed.OnFault(ShutdownOnPublishToServerFaultAction, this);
                 this.publishProcessors[sendingClient] = publishProcessor;
             }
 
@@ -718,13 +718,13 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
         async void ShutdownOnReceiveError(Exception cause)
         {
-            this.publishPubAckProcessor.Abort();
+            this.publishPubAckProcessor.Close();
             foreach (var publishProcessor in this.publishProcessors)
             {
-                publishProcessor.Value.Abort();
+                publishProcessor.Value.Close();
             }
-            this.publishPubRecProcessor.Abort();
-            this.pubRelPubCompProcessor.Abort();
+            this.publishPubRecProcessor.Close();
+            this.pubRelPubCompProcessor.Close();
 
             IMessagingBridge bridge = this.messagingBridge;
             if (bridge != null)
@@ -1021,15 +1021,15 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
             try
             {
-                this.publishPubAckProcessor.Complete();
-                this.publishPubRecProcessor.Complete();
-                this.pubRelPubCompProcessor.Complete();
+                this.publishPubAckProcessor.Close();
+                this.publishPubRecProcessor.Close();
+                this.pubRelPubCompProcessor.Close();
 
                 await Task.WhenAll(
                     this.CompletePublishAsync(context, will),
-                    this.publishPubAckProcessor.Completion,
-                    this.publishPubRecProcessor.Completion,
-                    this.pubRelPubCompProcessor.Completion);
+                    this.publishPubAckProcessor.Closed,
+                    this.publishPubRecProcessor.Closed,
+                    this.pubRelPubCompProcessor.Closed);
             }
             catch (Exception ex)
             {
@@ -1056,8 +1056,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             var completionTasks = new List<Task>();
             foreach (var publishProcessorRecord in this.publishProcessors)
             {
-                publishProcessorRecord.Value.Complete();
-                completionTasks.Add(publishProcessorRecord.Value.Completion);
+                publishProcessorRecord.Value.Close();
+                completionTasks.Add(publishProcessorRecord.Value.Closed);
             }
             await Task.WhenAll(completionTasks);
 
