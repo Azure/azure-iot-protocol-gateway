@@ -36,10 +36,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             return message;
         }
 
-        public void BindMessagingChannel(IMessagingChannel channel)
-        {
-        }
-
         public async Task SendAsync(IMessage message)
         {
             var clientMessage = (IotHubClientMessage)message;
@@ -82,10 +78,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
                 clientMessage.Dispose();
             }
         }
-
-        public Task CompleteAsync(string messageId) => TaskEx.Completed;
-
-        public Task RejectAsync(string messageId) => TaskEx.Completed;
 
         public Task DisposeAsync(Exception cause) => TaskEx.Completed;
     }

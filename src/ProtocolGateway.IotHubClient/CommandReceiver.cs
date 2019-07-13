@@ -15,7 +15,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt;
     using Message = Client.Message;
 
-    public class CommandReceiver : IMessagingServiceClient
+    public class CommandReceiver : IMessagingSource
     {
         public delegate bool TryFormatAddress(IMessage message, out string address);
 
@@ -46,8 +46,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             this.lifetimeCancellation = new CancellationTokenSource();
             this.Receive();
         }
-
-        public Task SendAsync(IMessage message) => TaskEx.FromException(new InvalidOperationException("Must not receive messages from a client."));
 
         async void Receive()
         {

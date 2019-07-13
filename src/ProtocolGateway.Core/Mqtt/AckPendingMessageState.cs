@@ -9,12 +9,12 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
     sealed class AckPendingMessageState : IPacketReference // todo: recycle?
     {
-        public AckPendingMessageState(IMessage message, IMessagingServiceClient sender, PublishPacket packet)
+        public AckPendingMessageState(IMessage message, IMessagingSource callback, PublishPacket packet)
         {
             this.SequenceNumber = message.SequenceNumber;
             this.PacketId = packet.PacketId;
             this.QualityOfService = packet.QualityOfService;
-            this.FeedbackChannel = new MessageFeedbackChannel(message.Id, sender);
+            this.FeedbackChannel = new MessageFeedbackChannel(message.Id, callback);
             this.StartTimestamp = PreciseTimeSpan.FromStart;
         }
 

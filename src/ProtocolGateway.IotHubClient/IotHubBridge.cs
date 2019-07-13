@@ -20,10 +20,12 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
         Exception closedCause;
         IMessagingChannel messagingChannel;
         readonly List<Tuple<Func<string, bool>, IMessagingServiceClient>> routes;
+        readonly List<IMessagingSource> sources;
 
         IotHubBridge(DeviceClient deviceClient, string deviceId, IotHubClientSettings settings)
         {
             this.routes = new List<Tuple<Func<string, bool>, IMessagingServiceClient>>();
+            this.sources = new List<IMessagingSource>();
             this.DeviceClient = deviceClient;
             this.DeviceId = deviceId;
             this.Settings = settings;
@@ -32,13 +34,18 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
         public void RegisterRoute(Func<string, bool> routeTopicPredicate, IMessagingServiceClient handler)
         {
             this.routes.Add(Tuple.Create(routeTopicPredicate, handler));
-            if (this.messagingChannel != null)
-            {
-                handler.BindMessagingChannel(this.messagingChannel);
-            }
         }
 
-        public void RegisterClient(IMessagingServiceClient client) => this.RegisterRoute(topic => false, client);
+        public void RegisterSource(IMessagingSource source)
+        {
+            {
+                this.sources.Add(source);
+                if (this.messagingChannel != null)
+                {
+                    source.BindMessagingChannel(this.messagingChannel);
+                }
+            }
+        }
 
         public static MessagingBridgeFactoryFunc PrepareFactory(string baseConnectionString, int connectionPoolSize,
             TimeSpan? connectionIdleTimeout, IotHubClientSettings settings, Action<IotHubBridge> initHandler)
@@ -180,9 +187,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             {
                 channel.Close(closedCause);
             }
-            foreach (var route in this.routes)
+            foreach (var source in this.sources)
             {
-                route.Item2.BindMessagingChannel(channel);
+                source.BindMessagingChannel(channel);
             }
         }
 

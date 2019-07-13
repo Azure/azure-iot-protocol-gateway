@@ -7,7 +7,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Messaging
 
     public interface IMessagingChannel
     {
-        void Handle(IMessage message, IMessagingServiceClient sender);
+        void Handle(IMessage message, IMessagingSource sender);
 
         void Close(Exception cause);
 

@@ -8,16 +8,16 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Messaging
     public struct MessageFeedbackChannel
     {
         readonly string messageId;
-        readonly IMessagingServiceClient client;
+        readonly IMessagingSource callback;
 
-        public MessageFeedbackChannel(string messageId, IMessagingServiceClient client)
+        public MessageFeedbackChannel(string messageId, IMessagingSource callback)
         {
             this.messageId = messageId;
-            this.client = client;
+            this.callback = callback;
         }
 
-        public Task CompleteAsync() => this.client.CompleteAsync(this.messageId);
+        public Task CompleteAsync() => this.callback.CompleteAsync(this.messageId);
 
-        public Task RejectAsync() => this.client.RejectAsync(this.messageId);
+        public Task RejectAsync() => this.callback.RejectAsync(this.messageId);
     }
 }

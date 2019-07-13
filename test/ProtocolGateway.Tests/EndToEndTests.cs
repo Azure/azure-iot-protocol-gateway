@@ -107,8 +107,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Tests
                 iotHubClientSettings, bridge =>
                 {
                     bridge.RegisterRoute(topic => true, new TelemetrySender(bridge, telemetryProcessing)); // handle all incoming messages with TelemetrySender
-                    bridge.RegisterClient(new CommandReceiver(bridge, PooledByteBufferAllocator.Default, commandProcessing)); // handle device command queue
-                    bridge.RegisterClient(new MethodHandler("command", bridge, (request, dispatcher) => DispatchCommands(bridge.DeviceId, request, dispatcher))); // register
+                    bridge.RegisterSource(new CommandReceiver(bridge, PooledByteBufferAllocator.Default, commandProcessing)); // handle device command queue
+                    bridge.RegisterSource(new MethodHandler("command", bridge, (request, dispatcher) => DispatchCommands(bridge.DeviceId, request, dispatcher))); // register
                 });
 
             ServerBootstrap server = new ServerBootstrap()

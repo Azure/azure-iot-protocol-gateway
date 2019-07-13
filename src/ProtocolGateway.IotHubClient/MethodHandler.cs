@@ -13,7 +13,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
     using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
 
     /// <summary>Dispatches direct method calls as messages to client.</summary>
-    public class MethodHandler : IMessagingServiceClient, IMessageDispatcher
+    public class MethodHandler : IMessagingSource, IMessageDispatcher
     {
         public delegate Task<MethodResponse> MethodHandlerCallback(MethodRequest request, IMessageDispatcher dispatcher);
 
@@ -59,8 +59,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
                 this.messagingChannel.Close(ex);
             }
         }
-
-        public Task SendAsync(IMessage message) => TaskEx.FromException(new InvalidOperationException("Must not receive messages from a client."));
 
         Task CompleteMessageAsync(string messageId, SendMessageOutcome outcome)
         {

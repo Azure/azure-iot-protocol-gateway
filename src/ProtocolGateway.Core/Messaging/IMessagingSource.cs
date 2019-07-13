@@ -1,19 +1,18 @@
-// Copyright (c) Microsoft. All rights reserved.
+﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 namespace Microsoft.Azure.Devices.ProtocolGateway.Messaging
 {
     using System;
     using System.Threading.Tasks;
-    using DotNetty.Buffers;
 
-    public interface IMessagingServiceClient
+    public interface IMessagingSource
     {
-        int MaxPendingMessages { get; }
+        void BindMessagingChannel(IMessagingChannel channel);
 
-        IMessage CreateMessage(string address, IByteBuffer payload);
+        Task CompleteAsync(string messageId);
 
-        Task SendAsync(IMessage message);
+        Task RejectAsync(string messageId);
 
         Task DisposeAsync(Exception cause);
     }

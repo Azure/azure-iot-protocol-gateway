@@ -452,19 +452,19 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
         #region PUBLISH Server -> Client handling
 
-        void IMessagingChannel.Handle(IMessage message, IMessagingServiceClient sender)
+        void IMessagingChannel.Handle(IMessage message, IMessagingSource callback)
         {
             if (this.capturedContext.Executor.InEventLoop)
             {
-                this.HandleInternal(message, sender);
+                this.HandleInternal(message, callback);
             }
             else
             {
-                this.capturedContext.Executor.Execute((s, m) => this.HandleInternal((IMessage)m, (IMessagingServiceClient)s), sender, message);
+                this.capturedContext.Executor.Execute((s, m) => this.HandleInternal((IMessage)m, (IMessagingSource)s), callback, message);
             }
         }
 
-        void HandleInternal(IMessage message, IMessagingServiceClient sender)
+        void HandleInternal(IMessage message, IMessagingSource sender)
         {
             IChannelHandlerContext context = this.capturedContext;
             try
@@ -507,7 +507,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             remove { this.capabilitiesChanged -= value; }
         }
 
-        async Task PublishToClientAsync(IChannelHandlerContext context, IMessage message, IMessagingServiceClient sender)
+        async Task PublishToClientAsync(IChannelHandlerContext context, IMessage message, IMessagingSource callback)
         {
             PublishPacket packet = null;
             try
@@ -529,7 +529,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     else
                     {
                         // no matching subscription found - complete the message without publishing
-                        await RejectMessageAsync(message.Id, sender);
+                        await RejectMessageAsync(message.Id, callback);
                         return;
                     }
 
@@ -537,15 +537,15 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     switch (qos)
                     {
                         case QualityOfService.AtMostOnce:
-                            await this.PublishToClientQos0Async(context, message, sender, packet);
+                            await this.PublishToClientQos0Async(context, message, callback, packet);
                             break;
                         case QualityOfService.AtLeastOnce:
-                            await this.PublishToClientQos1Async(context, message, sender, packet);
+                            await this.PublishToClientQos1Async(context, message, callback, packet);
                             break;
                         case QualityOfService.ExactlyOnce:
                             if (this.maxSupportedQosToClient >= QualityOfService.ExactlyOnce)
                             {
-                                await this.PublishToClientQos2Async(context, message, sender, packet);
+                                await this.PublishToClientQos2Async(context, message, callback, packet);
                             }
                             else
                             {
@@ -565,33 +565,33 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             }
         }
 
-        static async Task RejectMessageAsync(string messageId, IMessagingServiceClient sender)
+        static async Task RejectMessageAsync(string messageId, IMessagingSource callback)
         {
-            await sender.RejectAsync(messageId); // awaiting guarantees that we won't complete consecutive message before this is completed.
+            await callback.RejectAsync(messageId); // awaiting guarantees that we won't complete consecutive message before this is completed.
             PerformanceCounters.MessagesRejectedPerSecond.Increment();
         }
 
-        Task PublishToClientQos0Async(IChannelHandlerContext context, IMessage message, IMessagingServiceClient sender, PublishPacket packet)
+        Task PublishToClientQos0Async(IChannelHandlerContext context, IMessage message, IMessagingSource callback, PublishPacket packet)
         {
             if (message.DeliveryCount == 0)
             {
                 return Task.WhenAll(
-                    sender.CompleteAsync(message.Id),
+                    callback.CompleteAsync(message.Id),
                     Util.WriteMessageAsync(context, packet));
             }
             else
             {
-                return sender.CompleteAsync(message.Id);
+                return callback.CompleteAsync(message.Id);
             }
         }
 
-        Task PublishToClientQos1Async(IChannelHandlerContext context, IMessage message, IMessagingServiceClient sender, PublishPacket packet)
+        Task PublishToClientQos1Async(IChannelHandlerContext context, IMessage message, IMessagingSource callback, PublishPacket packet)
         {
             return this.publishPubAckProcessor.SendRequestAsync(context, packet,
-                new AckPendingMessageState(message, sender, packet));
+                new AckPendingMessageState(message, callback, packet));
         }
 
-        async Task PublishToClientQos2Async(IChannelHandlerContext context, IMessage message, IMessagingServiceClient sender, PublishPacket packet)
+        async Task PublishToClientQos2Async(IChannelHandlerContext context, IMessage message, IMessagingSource callback, PublishPacket packet)
         {
             await Qos2Semaphore.WaitAsync(this.lifetimeCancellation.Token); // this ensures proper ordering of messages
 
@@ -610,11 +610,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 if (messageInfo == null)
                 {
                     deliveryTask = this.publishPubRecProcessor.SendRequestAsync(context, packet,
-                        new AckPendingMessageState(message, sender, packet));
+                        new AckPendingMessageState(message, callback, packet));
                 }
                 else
                 {
-                    deliveryTask = this.PublishReleaseToClientAsync(context, packetId, new MessageFeedbackChannel(message.Id, sender), messageInfo, PreciseTimeSpan.FromStart);
+                    deliveryTask = this.PublishReleaseToClientAsync(context, packetId, new MessageFeedbackChannel(message.Id, callback), messageInfo, PreciseTimeSpan.FromStart);
                 }
             }
             finally

@@ -117,6 +117,7 @@
     <Compile Include="Instrumentation\IPerformanceCounter.cs" />
     <Compile Include="Instrumentation\IPerformanceCounterManager.cs" />
     <Compile Include="Instrumentation\WindowsPerformanceCounterManager.cs" />
+    <Compile Include="Messaging\IMessagingSource.cs" />
     <Compile Include="Messaging\IMessagingChannel.cs" />
     <Compile Include="Messaging\IMessage.cs" />
     <Compile Include="Instrumentation\AveragePerformanceCounter.cs" />
@@ -126,8 +127,6 @@
     <Compile Include="Messaging\Message.cs" />
     <Compile Include="Messaging\MessageFeedbackChannel.cs" />
     <Compile Include="Messaging\MessagingException.cs" />
-    <Compile Include="Messaging\MessagingServiceClientExtensions.cs" />
-    <Compile Include="Messaging\SingleClientMessagingBridge.cs" />
     <Compile Include="Messaging\MessageWithFeedback.cs" />
     <Compile Include="Mqtt\AckPendingMessageState.cs" />
     <Compile Include="Identity\IDeviceIdentity.cs" />
