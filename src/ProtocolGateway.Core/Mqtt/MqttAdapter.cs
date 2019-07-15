@@ -49,7 +49,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         IChannelHandlerContext capturedContext;
         readonly Settings settings;
         StateFlags stateFlags;
-        CancellationTokenSource lifetimeCancellation;
+        readonly CancellationTokenSource lifetimeCancellation;
         DateTime lastClientActivityTime;
         ISessionState sessionState;
         Dictionary<IMessagingServiceClient, MessageAsyncProcessor<PublishPacket>> publishProcessors;

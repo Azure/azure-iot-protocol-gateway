@@ -125,9 +125,8 @@
     <Compile Include="Extensions\TaskExtensions.cs" />
     <Compile Include="Messaging\IMessagingBridge.cs" />
     <Compile Include="Messaging\Message.cs" />
-    <Compile Include="Messaging\MessageFeedbackChannel.cs" />
+    <Compile Include="Mqtt\MessageFeedbackChannel.cs" />
     <Compile Include="Messaging\MessagingException.cs" />
-    <Compile Include="Messaging\MessageWithFeedback.cs" />
     <Compile Include="Mqtt\AckPendingMessageState.cs" />
     <Compile Include="Identity\IDeviceIdentity.cs" />
     <Compile Include="Mqtt\MessagePropertyNames.cs" />
