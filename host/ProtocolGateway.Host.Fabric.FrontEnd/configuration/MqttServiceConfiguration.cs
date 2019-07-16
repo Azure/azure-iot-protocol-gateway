@@ -24,13 +24,6 @@
         public int MaxPendingInboundAcknowledgements { get; set; }
 
         /// <summary>
-        /// If specified, indicates timeout for acknowledgement. If an acknowledgement times out for any of the acknowledgement queues 
-        /// (PUBACK, PUBREC, PUBCOMP), the device connection will be put in retransmission mode until all outstanding acknowledgements 
-        /// are received. If not specified or is less than or equal to 00:00:00, acknowledgement is awaited without a timeout. Default value: 00:00:00
-        /// </summary>
-        public TimeSpan DeviceReceiveAckTimeout { get; set; }
-
-        /// <summary>
         /// REQUIRED Maximum message size allowed for publishing from a device to the gateway. If a device publishes a bigger message, the protocol gateway 
         /// will close the connection. The max supported value is 262144 (256 KB). Default value: 262144
         /// </summary>
@@ -67,16 +60,6 @@
         /// from the device. Default value: mqtt-qos
         /// </summary>
         public string QoSPropertyName { get; set; }
-
-        /// <summary>
-        /// A template that is used to translate inbound Mqtt messages
-        /// </summary>
-        public string[] MqttInboundTemplates { get; set; }
-
-        /// <summary>
-        /// A template that is used to configure outbound Mqtt messages
-        /// </summary>
-        public string[] MqttOutboundTemplates { get; set; }
 
         /// <summary>
         /// Determines the type of MQTT QoS state store

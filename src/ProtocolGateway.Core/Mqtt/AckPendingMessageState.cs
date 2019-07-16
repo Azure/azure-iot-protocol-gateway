@@ -3,19 +3,18 @@
 
 namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 {
-    using System;
     using DotNetty.Codecs.Mqtt.Packets;
     using DotNetty.Common;
     using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
 
     sealed class AckPendingMessageState : IPacketReference // todo: recycle?
     {
-        public AckPendingMessageState(MessageWithFeedback messageWithFeedback, PublishPacket packet)
+        public AckPendingMessageState(IMessage message, IMessagingSource callback, PublishPacket packet)
         {
-            this.SequenceNumber = messageWithFeedback.Message.SequenceNumber;
+            this.SequenceNumber = message.SequenceNumber;
             this.PacketId = packet.PacketId;
             this.QualityOfService = packet.QualityOfService;
-            this.FeedbackChannel = messageWithFeedback.FeedbackChannel;
+            this.FeedbackChannel = new MessageFeedbackChannel(message.Id, callback);
             this.StartTimestamp = PreciseTimeSpan.FromStart;
         }
 

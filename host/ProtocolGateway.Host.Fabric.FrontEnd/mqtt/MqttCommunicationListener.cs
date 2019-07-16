@@ -2,7 +2,6 @@
 {
     #region Using Clauses
     using System;
-    using System.Collections.Generic;
     using System.Threading.Tasks;
     using System.Threading;
     using Microsoft.ServiceFabric.Services.Communication.Runtime;
@@ -181,16 +180,13 @@
             
             if (mqttConfiguration != null)
             {
-                var mqttInboundTemplates = new List<string>(mqttConfiguration.MqttInboundTemplates);
-                var mqttOutboundTemplates = new List<string>(mqttConfiguration.MqttOutboundTemplates);
-
                 ISessionStatePersistenceProvider qosSessionProvider = await this.GetSessionStateProviderAsync(traceId, mqttConfiguration).ConfigureAwait(false);
                 IQos2StatePersistenceProvider qos2SessionProvider = await this.GetQos2StateProvider(traceId, mqttConfiguration).ConfigureAwait(false);
 
                 this.logger.Informational(traceId, this.componentName, "QOS Providers instantiated.");
 
                 var settingsProvider = new ServiceFabricConfigurationProvider(traceId, this.componentName, this.logger, configuration, iotHubConfiguration, mqttConfiguration);
-                this.bootStrapper = new Bootstrapper(settingsProvider, qosSessionProvider, qos2SessionProvider, mqttInboundTemplates, mqttOutboundTemplates);
+                this.bootStrapper = new Bootstrapper(settingsProvider, qosSessionProvider, qos2SessionProvider);
                 this.runTask = this.bootStrapper.RunAsync(certificate, threadCount, this.serverControl.Token);
 
                 publishAddress = this.BuildPublishAddress(configuration);
