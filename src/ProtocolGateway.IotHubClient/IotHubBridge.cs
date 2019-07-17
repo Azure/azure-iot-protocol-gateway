@@ -140,7 +140,10 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             }
             finally
             {
-                await this.DeviceClient.CloseAsync();
+                using (this.DeviceClient)
+                {
+                    await this.DeviceClient.CloseAsync();
+                }
             }
         }
 
