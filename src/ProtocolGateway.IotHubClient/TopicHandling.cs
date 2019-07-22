@@ -33,7 +33,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
 
         sealed class TelemetryTemplateParser
         {
-#if NETSTANDARD1_3
+#if NETSTANDARD2_0
             readonly IList<UriPathTemplate> topicTemplateTable;
 #else
             readonly UriTemplateTable topicTemplateTable;
@@ -41,7 +41,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
 
             public TelemetryTemplateParser(IEnumerable<string> inboundTemplates)
             {
-#if NETSTANDARD1_3
+#if NETSTANDARD2_0
                 this.topicTemplateTable = (from template in inboundTemplates select new UriPathTemplate(template)).ToList();
 #else
                 this.topicTemplateTable = new UriTemplateTable(
@@ -53,14 +53,14 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
 
             public bool TryProcessMessage(IMessage message)
             {
-#if NETSTANDARD1_3
+#if NETSTANDARD2_0
             return TryParseAddressIntoMessagePropertiesWithRegex(message.Address, message);
 #else
                 return TryParseAddressIntoMessagePropertiesDefault(message.Address, message);
 #endif
             }
 
-#if NETSTANDARD1_3
+#if NETSTANDARD2_0
             bool TryParseAddressIntoMessagePropertiesWithRegex(string address, IMessage message)
             {
                 bool matched = false;

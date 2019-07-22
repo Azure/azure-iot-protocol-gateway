@@ -1,22 +1,31 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace ProtocolGateway.Host.Console
+namespace ProtocolGateway.Host.Console.NetStandard
 {
     using System;
-    using System.Diagnostics.Tracing;
+    using System.IO;
     using System.Security.Cryptography.X509Certificates;
     using System.Threading;
     using System.Threading.Tasks;
-    using DotNetty.Common.Internal.Logging;
     using Microsoft.Azure.Devices.ProtocolGateway;
-    using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
-    using Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage;
-    using Microsoft.Practices.EnterpriseLibrary.SemanticLogging;
     using ProtocolGateway.Host.Common;
+    using Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage;
+    using Microsoft.Diagnostics.EventFlow;
+    using Microsoft.Extensions.Configuration;
+    using CommandLine;
 
     class Program
     {
+        public class Options
+        {
+            [Option('c', "config", Required = false, HelpText = "Set location of configuration file.")]
+            public string ConfigPath { get; set; }
+
+            [Option('e', "env", Required = false, HelpText = "Use environment variables as configuration source.")]
+            public bool UseEnvironment { get; set; }
+        }
+
         static void Main(string[] args)
         {
             // optimizing IOCP performance
@@ -25,24 +34,34 @@ namespace ProtocolGateway.Host.Console
             ThreadPool.GetMinThreads(out minWorkerThreads, out minCompletionPortThreads);
             ThreadPool.SetMinThreads(minWorkerThreads, Math.Max(16, minCompletionPortThreads));
 
-            int threadCount = Environment.ProcessorCount;
-            if (args.Length > 0)
+            CommandLine.Parser.Default.ParseArguments<Options>(args)
+                .WithParsed(opts => Run(opts));
+        }
+
+        static void Run(Options options)
+        {
+            var config = new ConfigurationBuilder().AddJsonFile(options.ConfigPath ?? "appSettings.json");
+            if (options.UseEnvironment)
             {
-                threadCount = int.Parse(args[0]);
+                config.AddEnvironmentVariables("ProtocolGateway.");
+            }
+            var settingsProvider = new ConfigurationSettingsProvider(config.Build());
+
+            int threadCount = Environment.ProcessorCount;
+            if (settingsProvider.TryGetIntegerSetting("WorkerCount", out int workers))
+            {
+                threadCount = workers;
+                Console.WriteLine($"Worker count set to {workers}");
             }
 
-            var eventListener = new ObservableEventListener();
-            eventListener.LogToConsole();
-            eventListener.EnableEvents(BootstrapperEventSource.Log, EventLevel.Verbose);
-            eventListener.EnableEvents(CommonEventSource.Log, EventLevel.Verbose);
-            eventListener.EnableEvents(DefaultEventSource.Log, EventLevel.Verbose);
-            
-            try
+            var eventFlowConfigPath = settingsProvider.GetSetting("EventFlowConfigPath", "eventFlowConfig.json");
+            using (var diagnosticsPipeline = DiagnosticPipelineFactory.CreatePipeline(eventFlowConfigPath))
             {
                 var cts = new CancellationTokenSource();
 
-                var certificate = new X509Certificate2("protocol-gateway.contoso.com.pfx", "password");
-                var settingsProvider = new AppConfigSettingsProvider();
+                var tlsCertPath = settingsProvider.GetSetting("TlsCertificatePath", "protocol-gateway.contoso.com.pfx");
+                var tlsCertPassword = settingsProvider.GetSetting("TlsCertificatePassword", "password");
+                var certificate = new X509Certificate2(Path.Combine(AppContext.BaseDirectory, tlsCertPath), tlsCertPassword);
                 BlobSessionStatePersistenceProvider blobSessionStateProvider = BlobSessionStatePersistenceProvider.CreateAsync(
                     settingsProvider.GetSetting("BlobSessionStatePersistenceProvider.StorageConnectionString"),
                     settingsProvider.GetSetting("BlobSessionStatePersistenceProvider.StorageContainerName")).Result;
@@ -54,22 +73,11 @@ namespace ProtocolGateway.Host.Console
                 var bootstrapper = new Bootstrapper(settingsProvider, blobSessionStateProvider, tableQos2StateProvider);
                 Task.Run(() => bootstrapper.RunAsync(certificate, threadCount, cts.Token), cts.Token);
 
-                while (true)
-                {
-                    string input = Console.ReadLine();
-                    if (input != null && input.ToLowerInvariant() == "exit")
-                    {
-                        break;
-                    }
-                }
-
+                Console.ReadLine();
                 cts.Cancel();
                 bootstrapper.CloseCompletion.Wait(TimeSpan.FromSeconds(20));
             }
-            finally
-            {
-                eventListener.Dispose();
-            }
         }
     }
+
 }
