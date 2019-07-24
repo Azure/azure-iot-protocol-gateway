@@ -342,7 +342,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     queue.Clear();
 
                     // save updated session state, make it current once successfully set
-                    // we let the session manager decide how to handle transient state...
+                    // we let the session manager decide how to handle transient state.
                     await this.sessionStateManager.SetAsync(this.identity, newState);
 
                     this.sessionState = newState;
