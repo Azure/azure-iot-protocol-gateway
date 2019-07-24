@@ -341,11 +341,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     }
                     queue.Clear();
 
-                    if (!this.sessionState.IsTransient)
-                    {
-                        // save updated session state, make it current once successfully set
-                        await this.sessionStateManager.SetAsync(this.identity, newState);
-                    }
+                    // save updated session state, make it current once successfully set
+                    // we let the session manager decide how to handle transient state...
+                    await this.sessionStateManager.SetAsync(this.identity, newState);
 
                     this.sessionState = newState;
                     this.capabilitiesChanged?.Invoke(this, EventArgs.Empty);
@@ -843,30 +841,18 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         async Task<bool> EstablishSessionStateAsync(bool cleanSession)
         {
             ISessionState existingSessionState = await this.sessionStateManager.GetAsync(this.identity);
-            if (cleanSession)
+            if (existingSessionState != null && !cleanSession && !existingSessionState.IsTransient)
             {
-                if (existingSessionState != null)
-                {
-                    await this.sessionStateManager.DeleteAsync(this.identity, existingSessionState);
-                    // todo: loop in case of concurrent access? how will we resolve conflict with concurrent connections?
-                }
-
-                this.sessionState = this.sessionStateManager.Create(true);
-                return false;
+                this.sessionState = existingSessionState;
+                return true;
             }
-            else
+            else if (existingSessionState != null && (cleanSession || existingSessionState.IsTransient))
             {
-                if (existingSessionState == null)
-                {
-                    this.sessionState = this.sessionStateManager.Create(false);
-                    return false;
-                }
-                else
-                {
-                    this.sessionState = existingSessionState;
-                    return true;
-                }
+                await this.sessionStateManager.DeleteAsync(this.identity, existingSessionState);
+                // todo: loop in case of concurrent access? how will we resolve conflict with concurrent connections?
             }
+            this.sessionState = this.sessionStateManager.Create(cleanSession);
+            return false;
         }
 
         TimeSpan DeriveKeepAliveTimeout(IChannelHandlerContext context, ConnectPacket packet)

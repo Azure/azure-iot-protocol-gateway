@@ -115,7 +115,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
 
             if (state.IsTransient)
             {
-                throw new ArgumentException("Cannot persist transient Session State object.", "sessionState");
+                return;
             }
 
             CloudBlockBlob blob = this.container.GetBlockBlobReference(identity.Id);
