@@ -1,5 +1,5 @@
 #### 3.0.0 July 24, 2019
-- Change the way `MqttAdapter` handles transient sessions. `MqttAdapter.ProcessPendingSubscriptionChanges` will now always call `ISessionStatePersistenceProvider.SetAsync` irrespective of the session being transient or not. State handling of transient sessions is not left to the implementation of '`ISessionStatePersistenceProvider`
+- Change the way `MqttAdapter` handles transient sessions. `MqttAdapter.ProcessPendingSubscriptionChanges` will now always call `ISessionStatePersistenceProvider.SetAsync` irrespective of the session being transient or not. State handling of transient sessions is now left to the implementation of '`ISessionStatePersistenceProvider`
 -  `MqttAdapter.EstablishSessionStateAsync` also now checks if the existing session is transient and deletes it when true.
 - `BlobSessionStatePersistenceProvider.SetAsync` will return instead of throwing if the state is transient 
 
