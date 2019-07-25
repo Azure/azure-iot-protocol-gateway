@@ -1,3 +1,7 @@
+#### 3.0.0 July 24, 2019
+- Change the way `MqttAdapter` handles transient sessions. `MqttAdapter.ProcessPendingSubscriptionChanges` will now always call `ISessionStatePersistenceProvider.SetAsync` irrespective of the session being transient or not. State handling of transient sessions is now left to the implementation of '`ISessionStatePersistenceProvider`
+- `BlobSessionStatePersistenceProvider.SetAsync` will return instead of throwing if the state is transient 
+
 #### 1.0.1 March 12
 - Azure Table QoS 2 persistence provider uses proper query API to retrieve only relevant row.
 - QoS 2 persistence provider API is modified to work with SequenceNumber instead of MessageId.

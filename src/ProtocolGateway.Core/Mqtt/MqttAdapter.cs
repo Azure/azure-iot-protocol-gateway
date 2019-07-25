@@ -341,11 +341,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     }
                     queue.Clear();
 
-                    if (!this.sessionState.IsTransient)
-                    {
-                        // save updated session state, make it current once successfully set
-                        await this.sessionStateManager.SetAsync(this.identity, newState);
-                    }
+                    // save updated session state, make it current once successfully set
+                    // we let the session manager decide how to handle transient state.
+                    await this.sessionStateManager.SetAsync(this.identity, newState);
 
                     this.sessionState = newState;
                     this.capabilitiesChanged?.Invoke(this, EventArgs.Empty);
