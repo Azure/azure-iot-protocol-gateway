@@ -841,18 +841,30 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         async Task<bool> EstablishSessionStateAsync(bool cleanSession)
         {
             ISessionState existingSessionState = await this.sessionStateManager.GetAsync(this.identity);
-            if (existingSessionState != null && !cleanSession && !existingSessionState.IsTransient)
+            if (cleanSession)
             {
-                this.sessionState = existingSessionState;
-                return true;
+                if (existingSessionState != null)
+                {
+                    await this.sessionStateManager.DeleteAsync(this.identity, existingSessionState);
+                    // todo: loop in case of concurrent access? how will we resolve conflict with concurrent connections?
+                }
+
+                this.sessionState = this.sessionStateManager.Create(true);
+                return false;
             }
-            else if (existingSessionState != null && (cleanSession || existingSessionState.IsTransient))
+            else
             {
-                await this.sessionStateManager.DeleteAsync(this.identity, existingSessionState);
-                // todo: loop in case of concurrent access? how will we resolve conflict with concurrent connections?
+                if (existingSessionState == null)
+                {
+                    this.sessionState = this.sessionStateManager.Create(false);
+                    return false;
+                }
+                else
+                {
+                    this.sessionState = existingSessionState;
+                    return true;
+                }
             }
-            this.sessionState = this.sessionStateManager.Create(cleanSession);
-            return false;
         }
 
         TimeSpan DeriveKeepAliveTimeout(IChannelHandlerContext context, ConnectPacket packet)
