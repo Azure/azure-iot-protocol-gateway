@@ -948,18 +948,16 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         /// <param name="error">Exception describing the error leading to closure.</param>
         static void ShutdownOnError(IChannelHandlerContext context, string scope, Exception error)
         {
-            Contract.Requires(error != null);
-
-            if (error != null && !string.IsNullOrEmpty(scope))
-            {
-                error.Data[OperationScopeExceptionDataKey] = scope;
-                error.Data[ChannelIdExceptionDataKey] = context.Channel.Id.ToString();
-                error.Data[DeviceIdExceptionDataKey] = context.Channel.Pipeline.Get<MqttAdapter>().Id;
-            }
-
             var self = (MqttAdapter)context.Handler;
             if (!self.IsInState(StateFlags.Closed))
             {
+                if (error != null && !string.IsNullOrEmpty(scope))
+                {
+                    error.Data[OperationScopeExceptionDataKey] = scope;
+                    error.Data[ChannelIdExceptionDataKey] = context.Channel.Id.ToString();
+                    error.Data[DeviceIdExceptionDataKey] = self.Id;
+                }
+
                 PerformanceCounters.ConnectionFailedOperationalPerSecond.Increment();
                 self.Shutdown(context, error);
             }
