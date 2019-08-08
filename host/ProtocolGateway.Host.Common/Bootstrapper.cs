@@ -75,6 +75,8 @@ namespace ProtocolGateway.Host.Common
 
                 PerformanceCounters.ConnectionsEstablishedTotal.RawValue = 0;
                 PerformanceCounters.ConnectionsCurrent.RawValue = 0;
+                PerformanceCounters.TotalCommandsSent.RawValue = 0;
+                PerformanceCounters.TotalMethodsInvoked.RawValue = 0;
 
                 this.tlsCertificate = certificate;
                 this.parentEventLoopGroup = new MultithreadEventLoopGroup(1);
@@ -170,6 +172,9 @@ namespace ProtocolGateway.Host.Common
 
         static async Task<MethodResponse> DispatchCommands(string deviceId, MethodRequest request, IMessageDispatcher dispatcher)
         {
+            PerformanceCounters.TotalMethodsInvoked.Increment();
+            PerformanceCounters.MethodsInvokedPerSecond.Increment();
+
             try
             {
                 // deserialize request payload and further process it before sending or

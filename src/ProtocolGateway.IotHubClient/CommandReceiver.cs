@@ -11,6 +11,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
     using DotNetty.Buffers;
     using DotNetty.Common.Utilities;
     using Microsoft.Azure.Devices.Client.Exceptions;
+    using Microsoft.Azure.Devices.ProtocolGateway.Instrumentation;
     using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
     using Microsoft.Azure.Devices.ProtocolGateway.Mqtt;
     using Message = Client.Message;
@@ -61,6 +62,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
                         this.messagingChannel.Close(null);
                         return;
                     }
+
+                    PerformanceCounters.TotalCommandsSent.Increment();
+                    PerformanceCounters.CommandsSentPerSecond.Increment();
 
                     if (this.bridge.Settings.MaxOutboundRetransmissionEnforced && message.DeliveryCount > this.bridge.Settings.MaxOutboundRetransmissionCount)
                     {

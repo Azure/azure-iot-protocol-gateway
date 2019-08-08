@@ -30,6 +30,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
         const string InboundMessageProcessingTimeCounterName = "Inbound Message Processing Time, msec"; // from received to completed (incl roundtrip to ack)
         const string InboundMessageProcessingTimeBaseCounterName = "Inbound Message Processing Time Base";
 
+        const string TotalMethodsInvokedCounterName = "Methods Invoked Total";
+        const string MethodsInvokedPerSecondCounterName = "Methods Invoked Per Second";
+        const string TotalCommandsSentCounterName = "Commands Sent Total";
+        const string CommandsSentPerSecondCounterName = "Commands Sent Per Second";
+
         static readonly IPerformanceCounterManager ManagerInstance = GetPerformanceCounterManager();
         public static readonly IPerformanceCounter ConnectionsEstablishedTotal = ManagerInstance.GetCounter(CategoryName, ConnectionsEstablishedTotalCounterName);
         public static readonly IPerformanceCounter ConnectionsCurrent = ManagerInstance.GetCounter(CategoryName, ConnectionsCurrentCounterName);
@@ -43,6 +48,10 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
         public static readonly IPerformanceCounter MessagesReceivedPerSecond = ManagerInstance.GetCounter(CategoryName, MessagesReceivedPerSecondCounterName);
         public static readonly IPerformanceCounter MessagesRejectedPerSecond = ManagerInstance.GetCounter(CategoryName, MessagesRejectedPerSecondCounterName);
         public static readonly IPerformanceCounter MessagesSentPerSecond = ManagerInstance.GetCounter(CategoryName, MessagesSentPerSecondCounterName);
+        public static readonly IPerformanceCounter TotalMethodsInvoked = ManagerInstance.GetCounter(CategoryName, TotalMethodsInvokedCounterName);
+        public static readonly IPerformanceCounter MethodsInvokedPerSecond = ManagerInstance.GetCounter(CategoryName, MethodsInvokedPerSecondCounterName);
+        public static readonly IPerformanceCounter TotalCommandsSent = ManagerInstance.GetCounter(CategoryName, TotalCommandsSentCounterName);
+        public static readonly IPerformanceCounter CommandsSentPerSecond = ManagerInstance.GetCounter(CategoryName, CommandsSentPerSecondCounterName);
 
         public static readonly AveragePerformanceCounter OutboundMessageProcessingTime = new AveragePerformanceCounter(
            ManagerInstance.GetCounter(CategoryName, OutboundMessageProcessingTimeCounterName),
@@ -91,7 +100,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
                             new CounterCreationData(OutboundMessageProcessingTimeCounterName, "", PerformanceCounterType.AverageCount64),
                             new CounterCreationData(OutboundMessageProcessingTimeBaseCounterName, "", PerformanceCounterType.AverageBase),
                             new CounterCreationData(InboundMessageProcessingTimeCounterName, "", PerformanceCounterType.AverageCount64),
-                            new CounterCreationData(InboundMessageProcessingTimeBaseCounterName, "", PerformanceCounterType.AverageBase)
+                            new CounterCreationData(InboundMessageProcessingTimeBaseCounterName, "", PerformanceCounterType.AverageBase),
+                            new CounterCreationData(TotalMethodsInvokedCounterName, "", PerformanceCounterType.NumberOfItems64),
+                            new CounterCreationData(MethodsInvokedPerSecondCounterName, "", PerformanceCounterType.RateOfCountsPerSecond64),
+                            new CounterCreationData(TotalCommandsSentCounterName, "", PerformanceCounterType.NumberOfItems64),
+                            new CounterCreationData(CommandsSentPerSecondCounterName, "", PerformanceCounterType.RateOfCountsPerSecond64),
                         }
                     }
                 })
