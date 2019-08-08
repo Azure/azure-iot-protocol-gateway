@@ -103,7 +103,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
                             new CounterCreationData(InboundMessageProcessingTimeBaseCounterName, "", PerformanceCounterType.AverageBase),
                             new CounterCreationData(TotalMethodsInvokedCounterName, "", PerformanceCounterType.NumberOfItems64),
                             new CounterCreationData(MethodsInvokedPerSecondCounterName, "", PerformanceCounterType.RateOfCountsPerSecond64),
-                            new CounterCreationData(TotalCommandsSentCounterName, "", PerformanceCounterType.NumberOfItems64),
+                            new CounterCreationData(TotalCommandsReceivedCounterName, "", PerformanceCounterType.NumberOfItems64),
                             new CounterCreationData(CommandsReceivedPerSecondCounterName, "", PerformanceCounterType.RateOfCountsPerSecond64),
                         }
                     }
