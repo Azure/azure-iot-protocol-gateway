@@ -63,8 +63,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
                         return;
                     }
 
-                    PerformanceCounters.TotalCommandsSent.Increment();
-                    PerformanceCounters.CommandsSentPerSecond.Increment();
+                    PerformanceCounters.TotalCommandsReceived.Increment();
+                    PerformanceCounters.CommandsReceivedPerSecond.Increment();
 
                     if (this.bridge.Settings.MaxOutboundRetransmissionEnforced && message.DeliveryCount > this.bridge.Settings.MaxOutboundRetransmissionCount)
                     {

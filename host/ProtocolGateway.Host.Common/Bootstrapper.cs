@@ -75,7 +75,7 @@ namespace ProtocolGateway.Host.Common
 
                 PerformanceCounters.ConnectionsEstablishedTotal.RawValue = 0;
                 PerformanceCounters.ConnectionsCurrent.RawValue = 0;
-                PerformanceCounters.TotalCommandsSent.RawValue = 0;
+                PerformanceCounters.TotalCommandsReceived.RawValue = 0;
                 PerformanceCounters.TotalMethodsInvoked.RawValue = 0;
 
                 this.tlsCertificate = certificate;
