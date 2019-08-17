@@ -68,8 +68,10 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
 
                     if (this.bridge.Settings.MaxOutboundRetransmissionEnforced && message.DeliveryCount > this.bridge.Settings.MaxOutboundRetransmissionCount)
                     {
+                        CommonEventSource.Log.Info("Rejected message: high delivery count: " + message.DeliveryCount, null, this.bridge.DeviceId);
                         await this.RejectAsync(message.LockToken);
                         message.Dispose();
+                        message = null;
                         continue;
                     }
 
@@ -93,9 +95,12 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
                     string address;
                     if (!this.addressFormatter(msg, out address))
                     {
+                        CommonEventSource.Log.Info("Rejected message: could not format topic", null, this.bridge.DeviceId);
                         messagePayload.Release();
                         await this.RejectAsync(message.LockToken); // todo: fork await
                         message.Dispose();
+                        message = null;
+                        messagePayload = null;
                         continue;
                     }
                     msg.Address = address;

@@ -150,7 +150,7 @@ namespace ProtocolGateway.Host.Common
                 .Group(this.parentEventLoopGroup, this.eventLoopGroup)
                 .Option(ChannelOption.SoBacklog, ListenBacklogSize)
                 .Option(ChannelOption.AutoRead, false)
-                .ChildOption(ChannelOption.Allocator, PooledByteBufferAllocator.Default)
+                .ChildOption(ChannelOption.Allocator, UnpooledByteBufferAllocator.Default)
                 .ChildOption(ChannelOption.AutoRead, false)
                 .Channel<TcpServerSocketChannel>()
                 .Handler(acceptLimiter)
