@@ -69,10 +69,10 @@
       <HintPath>..\..\packages\DotNetty.Transport.0.6.0\lib\net45\DotNetty.Transport.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Azure.Amqp, Version=2.4.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Microsoft.Azure.Amqp.2.4.1\lib\net45\Microsoft.Azure.Amqp.dll</HintPath>
+      <HintPath>..\..\packages\Microsoft.Azure.Amqp.2.4.2\lib\net45\Microsoft.Azure.Amqp.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.Azure.Devices.Client, Version=1.20.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Microsoft.Azure.Devices.Client.1.20.0\lib\net451\Microsoft.Azure.Devices.Client.dll</HintPath>
+    <Reference Include="Microsoft.Azure.Devices.Client, Version=1.21.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.Azure.Devices.Client.1.21.1\lib\net451\Microsoft.Azure.Devices.Client.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Azure.Devices.Shared, Version=1.16.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Microsoft.Azure.Devices.Shared.1.16.0\lib\net451\Microsoft.Azure.Devices.Shared.dll</HintPath>
