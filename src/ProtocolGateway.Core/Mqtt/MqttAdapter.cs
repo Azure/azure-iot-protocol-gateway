@@ -897,9 +897,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 CheckKeepAlive(context);
             }
 
-            this.stateFlags = StateFlags.Connected;
-
             this.messagingBridge.BindMessagingChannel(this);
+            this.stateFlags = StateFlags.Connected;
 
             PerformanceCounters.ConnectionsEstablishedTotal.Increment();
             PerformanceCounters.ConnectionsCurrent.Increment();

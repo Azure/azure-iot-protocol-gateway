@@ -140,25 +140,15 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             }
             finally
             {
-                using (this.DeviceClient)
-                {
-                    var forked = Task.Run(async () =>
+                var forked = Task.Run(async () => {
+                    using (this.DeviceClient)
                     {
-                        try
-                        {
-                            await this.DeviceClient.CloseAsync();
-                        }
-                        finally
-                        {
-                            this.DeviceClient.Dispose();
-                        }
-                    })
-                    .ContinueWith(
-                        t => CommonEventSource.Log.Info("Failed to shutdown cleanly: " + t.Exception?.ToString(), null, this.DeviceId),
-                        CancellationToken.None,
-                        TaskContinuationOptions.OnlyOnFaulted,
-                        TaskScheduler.Default);
-                }
+                        await this.DeviceClient.CloseAsync();
+                    }
+                })
+                .ContinueWith(
+                    t => CommonEventSource.Log.Info("Failed to shutdown cleanly: " + t.Exception?.ToString(), null, this.DeviceId),
+                    TaskScheduler.Default);
             }
         }
 
