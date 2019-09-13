@@ -716,12 +716,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
         async void ShutdownOnReceiveError(Exception cause)
         {
-            //added log fro SDN purpose
-            if (cause != null)
-            { 
-                CommonEventSource.Log.Warning("Closing Connection On ReceiveError.", cause, this.GetUserContext());
-            }
-
             this.publishPubAckProcessor.Close();
             foreach (var publishProcessor in this.publishProcessors)
             {
