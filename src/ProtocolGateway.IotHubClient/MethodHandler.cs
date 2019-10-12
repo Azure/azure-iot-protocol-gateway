@@ -30,8 +30,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             this.dispatchCallback = dispatchCallback;
         }
 
-        public int MaxPendingMessages => this.bridge.Settings.MaxPendingInboundMessages;
-
         public Dictionary<string, TaskCompletionSource<SendMessageOutcome>> MessageMap => this.messageMap ?? (this.messageMap = new Dictionary<string, TaskCompletionSource<SendMessageOutcome>>(3));
 
         public IMessage CreateMessage(string address, IByteBuffer payload) => throw new InvalidOperationException("Must not receive messages from a client.");

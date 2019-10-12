@@ -9,6 +9,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
     public class Settings
     {
         const string ConnectArrivalTimeoutSetting = "ConnectArrivalTimeout"; // timeout to close the network connection in absence of CONNECT packet
+        const string MaxPendingInboundMessagesSetting = "MaxPendingInboundMessages"; // number of messages after which driver stops reading from network. Reading from network will resume once one of the accepted messages is completely processed.
         const string MaxPendingInboundAcknowledgementsSetting = "MaxPendingInboundAcknowledgements"; // number of messages after which driver stops reading from network. Reading from network will resume once one of the accepted messages is completely processed.
         const string MaxKeepAliveTimeoutSetting = "MaxKeepAliveTimeout";
         const string DefaultPublishToClientQoSSetting = "DefaultPublishToClientQoS";
@@ -22,17 +23,25 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         const string RetainPropertyNameDefaultValue = "mqtt-retain";
         const string DupPropertyNameDefaultValue = "mqtt-dup";
         const string QoSPropertyNameDefaultValue = "mqtt-qos";
+        const int MaxPendingInboundMessagesDefaultValue = 16;
         const int MaxPendingInboundAcknowledgementsDefaultValue = 16;
         const int NoMaxOutboundRetransmissionCountValue = -1;
 
         public Settings(ISettingsProvider settingsProvider)
         {
             int inboundMessages;
-            if (!settingsProvider.TryGetIntegerSetting(MaxPendingInboundAcknowledgementsSetting, out inboundMessages) || inboundMessages <= 0)
+            if (!settingsProvider.TryGetIntegerSetting(MaxPendingInboundMessagesSetting, out inboundMessages) || inboundMessages <= 0)
             {
-                inboundMessages = MaxPendingInboundAcknowledgementsDefaultValue;
+                inboundMessages = MaxPendingInboundMessagesDefaultValue;
             }
-            this.MaxPendingInboundAcknowledgements = Math.Min(inboundMessages, ushort.MaxValue); // reflects packet id domain per MQTT spec.
+            this.MaxPendingInboundMessages = Math.Min(inboundMessages, ushort.MaxValue); // reflects packet id domain per MQTT spec.
+
+            int inboundAcks;
+            if (!settingsProvider.TryGetIntegerSetting(MaxPendingInboundAcknowledgementsSetting, out inboundAcks) || inboundAcks <= 0)
+            {
+                inboundAcks = MaxPendingInboundAcknowledgementsDefaultValue;
+            }
+            this.MaxPendingInboundAcknowledgements = Math.Min(inboundAcks, ushort.MaxValue); // reflects packet id domain per MQTT spec.
 
             TimeSpan timeout;
             this.ConnectArrivalTimeout = settingsProvider.TryGetTimeSpanSetting(ConnectArrivalTimeoutSetting, out timeout) && timeout > TimeSpan.Zero
@@ -55,6 +64,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             settingsProvider.TryGetBooleanSetting(AbortOnOutOfOrderPubAckSetting, out abortOnOutOfOrderPubAck);
             this.AbortOnOutOfOrderPubAck = abortOnOutOfOrderPubAck;
         }
+
+        public int MaxPendingInboundMessages { get; private set; }
 
         public int MaxPendingInboundAcknowledgements { get; private set; }
 
