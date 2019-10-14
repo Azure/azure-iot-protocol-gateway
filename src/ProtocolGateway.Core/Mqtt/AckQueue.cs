@@ -59,8 +59,10 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 }
 
             }
-            catch (Exception ex)
-            { }
+            catch (Exception)
+            { 
+                // Queue does not handle failures, they must be tracked elsewhere
+            }
         }
     }
 }
