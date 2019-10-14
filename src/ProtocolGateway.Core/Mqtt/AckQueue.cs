@@ -7,6 +7,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
     using System.Collections.Generic;
     using System.Threading.Tasks;
 
+    /// <summary>
+    /// Tracks message order upon arrival and triggers completion action in the same order as messages had arrived.
+    /// </summary>
     public sealed class AckQueue
     {
         sealed class Entry
