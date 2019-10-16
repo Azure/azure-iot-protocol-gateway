@@ -441,8 +441,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     {
                         CommonEventSource.Log.Verbose("Resuming reading from channel as queue freed up.", $"deviceId: {this.identity}", this.ChannelId);
                     }
+                    context.Read();
                 }
-                context.Read();
             }
         }
 
