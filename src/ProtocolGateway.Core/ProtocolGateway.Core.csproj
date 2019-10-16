@@ -125,15 +125,15 @@
     <Compile Include="Extensions\TaskExtensions.cs" />
     <Compile Include="Messaging\IMessagingBridge.cs" />
     <Compile Include="Messaging\Message.cs" />
+    <Compile Include="Mqtt\AckQueue.cs" />
+    <Compile Include="Mqtt\IConnectionIdentityProvider.cs" />
     <Compile Include="Mqtt\MessageFeedbackChannel.cs" />
     <Compile Include="Messaging\MessagingException.cs" />
     <Compile Include="Mqtt\AckPendingMessageState.cs" />
     <Compile Include="Identity\IDeviceIdentity.cs" />
     <Compile Include="Mqtt\MessagePropertyNames.cs" />
     <Compile Include="Mqtt\MessageTypes.cs" />
-    <Compile Include="Mqtt\MessageAsyncProcessorBase.cs" />
     <Compile Include="Mqtt\ChannelMessageProcessingException.cs" />
-    <Compile Include="Mqtt\MessageAsyncProcessor.cs" />
     <Compile Include="Mqtt\CompletionPendingMessageState.cs" />
     <Compile Include="Messaging\IMessagingServiceClient.cs" />
     <Compile Include="Mqtt\MessagingBridgeFactoryFunc.cs" />

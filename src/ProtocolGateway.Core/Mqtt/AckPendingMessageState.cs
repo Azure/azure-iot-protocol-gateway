@@ -7,7 +7,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
     using DotNetty.Common;
     using Microsoft.Azure.Devices.ProtocolGateway.Messaging;
 
-    sealed class AckPendingMessageState : IPacketReference // todo: recycle?
+    sealed class AckPendingMessageState : IPacketReference
     {
         public AckPendingMessageState(IMessage message, IMessagingSource callback, PublishPacket packet)
         {

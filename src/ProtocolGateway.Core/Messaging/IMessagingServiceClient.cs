@@ -9,8 +9,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Messaging
 
     public interface IMessagingServiceClient
     {
-        int MaxPendingMessages { get; }
-
         IMessage CreateMessage(string address, IByteBuffer payload);
 
         Task SendAsync(IMessage message);

@@ -120,8 +120,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             return message;
         }
 
-        public static PublishPacket ComposePublishPacket(IChannelHandlerContext context, IMessage message,
-            QualityOfService qos, IByteBufferAllocator allocator)
+        public static PublishPacket ComposePublishPacket(IChannelHandlerContext context, IMessage message, QualityOfService qos)
         {
             bool duplicate = message.DeliveryCount > 0;
 

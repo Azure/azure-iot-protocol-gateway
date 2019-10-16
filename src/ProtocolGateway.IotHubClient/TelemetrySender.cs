@@ -27,8 +27,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.IotHubClient
             this.messageProcessor = messageProcessor;
         }
 
-        public int MaxPendingMessages => this.bridge.Settings.MaxPendingInboundMessages;
-
         public IMessage CreateMessage(string address, IByteBuffer payload)
         {
             var message = new IotHubClientMessage(new Message(payload.IsReadable() ? new ReadOnlyByteBufferStream(payload, false) : null), payload);
