@@ -849,14 +849,14 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     // todo: loop in case of concurrent access? how will we resolve conflict with concurrent connections?
                 }
 
-                this.sessionState = this.sessionStateManager.Create(true);
+                this.sessionState = await this.sessionStateManager.CreateAsync(true);
                 return false;
             }
             else
             {
                 if (existingSessionState == null)
                 {
-                    this.sessionState = this.sessionStateManager.Create(false);
+                    this.sessionState = await this.sessionStateManager.CreateAsync(false);
                     return false;
                 }
                 else

@@ -63,9 +63,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Providers.CloudStorage
             }
         }
 
-        public ISessionState Create(bool transient)
+        public Task<ISessionState> CreateAsync(bool transient)
         {
-            return new BlobSessionState(transient);
+            return Task.FromResult((ISessionState)new BlobSessionState(transient));
         }
 
         public async Task<ISessionState> GetAsync(IDeviceIdentity identity)

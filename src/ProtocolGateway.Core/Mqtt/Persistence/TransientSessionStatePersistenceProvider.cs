@@ -9,9 +9,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence
 
     public sealed class TransientSessionStatePersistenceProvider : ISessionStatePersistenceProvider
     {
-        public ISessionState Create(bool transient)
+        public Task<ISessionState> CreateAsync(bool transient)
         {
-            return new TransientSessionState(transient);
+            return Task.FromResult((ISessionState)new TransientSessionState(transient));
         }
 
         public Task<ISessionState> GetAsync(IDeviceIdentity identity)

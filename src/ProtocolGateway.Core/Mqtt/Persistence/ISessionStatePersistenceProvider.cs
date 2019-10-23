@@ -8,7 +8,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence
 
     public interface ISessionStatePersistenceProvider
     {
-        ISessionState Create(bool transient);
+        Task<ISessionState> CreateAsync(bool transient);
 
         Task<ISessionState> GetAsync(IDeviceIdentity identity);
 
