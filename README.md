@@ -40,7 +40,7 @@ There is also an end-to-end test which exercises the following:
 Please follow these steps in order to run the end-to-end test for the protocol gateway:
 
 1. Update the test configuration file (`test\ProtocolGateway.Tests\appSettings.config.user`) by providing the following settings:
-	- `IotHubClient.ConnectionString` - connection string for your IoT hub that will be used for the test. For this test specifically you need to provide the connection string for the device policy in the `Shared access policies` settings of the IoT hub.
+	- `IotHubClient.ConnectionString` - connection string for your IoT hub that will be used for the test. For this test specifically you need to provide the connection string for the iothubowner policy in the `Shared access policies` settings of the IoT hub, as you will be registering a new device.
 		Note: It is recommended to use an IoT hub instance specifically created for the tests. The test will register a device in the IoT hub and will use it for to exchange messages between the device and the simulated app back end.
 	- `End2End.DeviceName` - identity of the device that will be used during the test. If the device name is not specified, a new device will be created for the test.
 	- If you want to run the test against an already running protocol gateway, uncomment the `End2End.ServerAddress` setting in the test configuration file and provide the IP-address of the protocol gateway you want to use. Otherwise, the test will start a new in-process protocol gateway. If you want to connect to a running protocol gateway on the same machine you can use 127.0.0.1 as the IP address.
