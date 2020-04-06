@@ -828,6 +828,13 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                         }
                     }
                 }
+                else
+                {
+                    if (CommonEventSource.Log.IsVerboseEnabled)
+                    {
+                        CommonEventSource.Log.Verbose("Error sending 'Connection Accepted' CONNACK:" + exception, this.ChannelId, this.Id);
+                    }
+                }
 
                 ShutdownOnError(context, ConnectProcessingScope, exception);
             }
