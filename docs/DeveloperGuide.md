@@ -51,7 +51,7 @@ As defined by the MQTT 3.1.1 protocol, the gateway provides an in order message 
 ### Authentication Provider
 When a device connects to the protocol gateway, it provides credentials through the client ID, user name, and password fields in the CONNECT packet.
 The gateway defines an Authentication Provider component in order to validate device credentials and also to return credentials for connecting to IoT Hub on behalf of the device.
-The default implementation of the gateway uses `SasTokenAuthenticationProvider` which:
+The default implementation of the gateway uses `SasTokenDeviceIdentityProvider` which:
 - verifies that the user name is equal to client ID
 - uses the client ID as the device ID
 - assumes that the password contains a well-formed IoT Hub SAS Token
@@ -59,7 +59,7 @@ The default implementation of the gateway uses `SasTokenAuthenticationProvider` 
 If you require custom authentication (for example, to lookup the device in a custom registry), you need to:
 
 1. Implement the [`IDeviceIdentityProvider` interface](../src/ProtocolGateway.Core/Identity/IDeviceIdentityProvider.cs).
-See [SasTokenAuthenticationProvider](../src/ProtocolGateway.Core/Mqtt/Auth/SasTokenAuthenticationProvider.cs) for a reference implementation.
+See [SasTokenDeviceIdentityProvider](../src/ProtocolGateway.IotHubClient/SasTokenDeviceIdentityProvider.cs) for a reference implementation.
 2. Change `Bootstrapper`'s constructor to use your custom Authentication Provider implementation:
 ```
 this.authProvider = new MyCustomAuthenticationProvider(...);
