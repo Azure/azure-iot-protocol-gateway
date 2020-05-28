@@ -258,7 +258,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                         .OnFault(ShutdownOnWriteFaultAction, context);
                     break;
                 case PacketType.DISCONNECT:
-                    CommonEventSource.Log.Verbose("Disconnecting gracefully.", this.identity.ToString(), this.ChannelId);
+                    CommonEventSource.Log.Verbose("Disconnecting gracefully.", this.ChannelId, this.Id);
                     this.Shutdown(context, null);
                     break;
                 default:
@@ -331,6 +331,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                         {
                             case PacketType.SUBSCRIBE:
                                 acks.Add(Util.AddSubscriptions(newState, (SubscribePacket)packet, this.maxSupportedQosToClient));
+                                CommonEventSource.Log.Info("Received SUBSCRIBE packet.", this.ChannelId, this.Id);
                                 break;
                             case PacketType.UNSUBSCRIBE:
                                 acks.Add(Util.RemoveSubscriptions(newState, (UnsubscribePacket)packet));
@@ -840,9 +841,11 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         /// <returns></returns>
         async Task<bool> EstablishSessionStateAsync(bool cleanSession)
         {
+
             ISessionState existingSessionState = await this.sessionStateManager.GetAsync(this.identity);
             if (cleanSession)
             {
+                CommonEventSource.Log.Info("Establishing session state. It is clean session.", this.ChannelId, this.Id);
                 if (existingSessionState != null)
                 {
                     await this.sessionStateManager.DeleteAsync(this.identity, existingSessionState);
@@ -854,6 +857,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             }
             else
             {
+                CommonEventSource.Log.Info("Establishing session state. It is not clean session.", this.ChannelId, this.Id);
                 if (existingSessionState == null)
                 {
                     this.sessionState = this.sessionStateManager.Create(false);
@@ -974,6 +978,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
             this.lifetimeCancellation.Cancel();
             this.qos2Semaphore?.Dispose();
+
+            CommonEventSource.Log.Info("Shutting down channel.", this.ChannelId, this.Id);
 
             try
             {
