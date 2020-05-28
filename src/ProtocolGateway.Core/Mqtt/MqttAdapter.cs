@@ -841,7 +841,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         /// <returns></returns>
         async Task<bool> EstablishSessionStateAsync(bool cleanSession)
         {
-
             ISessionState existingSessionState = await this.sessionStateManager.GetAsync(this.identity);
             if (cleanSession)
             {
@@ -976,10 +975,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 return;
             }
 
+            CommonEventSource.Log.Info("Shutting down channel.", this.ChannelId, this.Id);
             this.lifetimeCancellation.Cancel();
             this.qos2Semaphore?.Dispose();
-
-            CommonEventSource.Log.Info("Shutting down channel.", this.ChannelId, this.Id);
 
             try
             {
