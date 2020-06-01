@@ -1013,7 +1013,13 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 // closure happened before IoT Hub connection was established or it was initiated due to disconnect
                 if (cause != null)
                 {
-                    CommonEventSource.Log.Error("Connection was unexpectedly closed or not established.", cause, this.ChannelId, this.Id);
+                    string causeScope = "unknown";
+                    if (cause.Data.Contains(OperationScopeExceptionDataKey) && cause.Data[OperationScopeExceptionDataKey] != null)
+                    {
+                        causeScope = cause.Data[OperationScopeExceptionDataKey].ToString();
+                    }
+
+                    CommonEventSource.Log.Error($"Connection closed while not fully connected. Scope: {causeScope}", cause, this.ChannelId, this.Id);
                 }
 
                 return;
