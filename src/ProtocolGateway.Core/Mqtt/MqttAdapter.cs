@@ -844,7 +844,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             ISessionState existingSessionState = await this.sessionStateManager.GetAsync(this.identity);
             if (cleanSession)
             {
-                CommonEventSource.Log.Info("Establishing session state. It is clean session.", this.ChannelId, this.Id);
                 if (existingSessionState != null)
                 {
                     await this.sessionStateManager.DeleteAsync(this.identity, existingSessionState);
@@ -856,7 +855,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             }
             else
             {
-                CommonEventSource.Log.Info("Establishing session state. It is not clean session.", this.ChannelId, this.Id);
                 if (existingSessionState == null)
                 {
                     this.sessionState = this.sessionStateManager.Create(false);
@@ -975,7 +973,6 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 return;
             }
 
-            CommonEventSource.Log.Info("Shutting down channel.", this.ChannelId, this.Id);
             this.lifetimeCancellation.Cancel();
             this.qos2Semaphore?.Dispose();
 
