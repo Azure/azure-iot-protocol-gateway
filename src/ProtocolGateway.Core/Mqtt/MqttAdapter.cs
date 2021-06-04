@@ -1107,7 +1107,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                 var ex = task.Exception.InnerException as ChannelMessageProcessingException;
                 if (ex != null)
                 {
-                    ShutdownOnError(ex.Context, scope, task.Exception);
+                    // we need to unmask the ChannelMessageProcessingException to get the real exception
+                    ShutdownOnError(ex.Context, scope, ex.InnerException);
                 }
                 else
                 {
