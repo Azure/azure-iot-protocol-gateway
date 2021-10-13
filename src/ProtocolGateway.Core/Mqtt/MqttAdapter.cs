@@ -409,9 +409,9 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
                 await sendingClient.SendBatchAsync(messages);
 
-                messages.Clear();
-
                 PerformanceCounters.MessagesSentPerSecond.IncrementBy(messages.Count);
+
+                messages.Clear();
 
                 if (!this.IsInState(StateFlags.Closed))
                 {
