@@ -7,7 +7,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
     using System.Threading.Tasks;
     using DotNetty.Transport.Channels;
 
-    public sealed class MessageAsyncProcessor<T> : MessageAsyncProcessorBase<T>
+    public sealed class MessageAsyncProcessor<T> : MessageAsyncProcessorBase<T>, IMessageProcessor<T>
     {
         readonly Func<IChannelHandlerContext, T, Task> processFunc;
 
