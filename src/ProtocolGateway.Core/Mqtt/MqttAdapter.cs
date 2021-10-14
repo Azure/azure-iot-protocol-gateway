@@ -52,7 +52,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         readonly CancellationTokenSource lifetimeCancellation;
         DateTime lastClientActivityTime;
         ISessionState sessionState;
-        Dictionary<IMessagingServiceClient, MessageAsyncProcessor<PublishPacket>> publishProcessors;
+        Dictionary<IMessagingServiceClient, IMessageProcessor<PublishPacket>> publishProcessors;
         RequestAckPairProcessor<AckPendingMessageState, PublishPacket> publishPubAckProcessor;
         RequestAckPairProcessor<AckPendingMessageState, PublishPacket> publishPubRecProcessor;
         RequestAckPairProcessor<CompletionPendingMessageState, PubRelPacket> pubRelPubCompProcessor;
@@ -121,7 +121,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         {
             this.capturedContext = context;
 
-            this.publishProcessors = new Dictionary<IMessagingServiceClient, MessageAsyncProcessor<PublishPacket>>(1);
+            this.publishProcessors = new Dictionary<IMessagingServiceClient, IMessageProcessor<PublishPacket>>(1);
 
             bool abortOnOutOfOrderAck = this.settings.AbortOnOutOfOrderPubAck;
 
@@ -275,10 +275,18 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             }
 
             IMessagingServiceClient sendingClient = this.ResolveSendingClient(packet.TopicName);
-            MessageAsyncProcessor<PublishPacket> publishProcessor;
+            IMessageProcessor<PublishPacket> publishProcessor;
             if (!this.publishProcessors.TryGetValue(sendingClient, out publishProcessor))
             {
-                publishProcessor = new MessageAsyncProcessor<PublishPacket>((c, p) => this.PublishToServerAsync(c, sendingClient, p, null));
+                var batchClient = sendingClient as IBatchAwareMessagingServiceClient;
+                if (batchClient != null)
+                {
+                    publishProcessor = new MessageBatchAsyncProcessor(batchClient.MaxBatchSize, (c, ps) => this.PublishBatchToServerAsync(c, batchClient, ps, null));
+                }
+                else
+                {
+                    publishProcessor = new MessageAsyncProcessor<PublishPacket>((c, p) => this.PublishToServerAsync(c, sendingClient, p, null));
+                }
                 publishProcessor.Closed.OnFault(ShutdownOnPublishToServerFaultAction, this);
                 this.publishProcessors[sendingClient] = publishProcessor;
             }
@@ -375,6 +383,53 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
 
         #region PUBLISH Client -> Server handling
 
+        async Task PublishBatchToServerAsync(IChannelHandlerContext context, IBatchAwareMessagingServiceClient sendingClient, IReadOnlyCollection<PublishPacket> packets, string messageType)
+        {
+            if (!this.ConnectedToService)
+            {
+                foreach (var packet in packets)
+                {
+                    packet.Release();
+                }
+                return;
+            }
+
+            PreciseTimeSpan startedTimestamp = PreciseTimeSpan.FromStart;
+
+            this.ResumeReadingIfNecessary(context);
+
+            List<IMessage> messages = new List<IMessage>(packets.Count);
+            try
+            {
+                foreach (var packet in packets)
+                {
+                    IMessage message = this.ConvertPacketToMessage(sendingClient, packet, messageType);
+                    messages.Add(message);
+                }
+
+                await sendingClient.SendBatchAsync(messages);
+
+                PerformanceCounters.MessagesSentPerSecond.IncrementBy(messages.Count);
+
+                messages.Clear();
+
+                if (!this.IsInState(StateFlags.Closed))
+                {
+                    foreach (var packet in packets)
+                    {
+                        CompletePublishToServer(context, startedTimestamp, packet);
+                    }
+                }
+            }
+            finally
+            {
+                foreach (var message in messages)
+                {
+                    message.Dispose();
+                }
+            }
+        }
+
         async Task PublishToServerAsync(IChannelHandlerContext context, IMessagingServiceClient sendingClient, PublishPacket packet, string messageType)
         {
             if (!this.ConnectedToService)
@@ -390,43 +445,56 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             IMessage message = null;
             try
             {
-                message = sendingClient.CreateMessage(packet.TopicName, packet.Payload);
-                Util.CompleteMessageFromPacket(message, packet, this.settings);
-
-                if (messageType != null)
-                {
-                    message.Properties[this.settings.ServicePropertyPrefix + MessagePropertyNames.MessageType] = messageType;
-                }
+                message = ConvertPacketToMessage(sendingClient, packet, messageType);
 
                 await sendingClient.SendAsync(message);
+
+                message = null;
 
                 PerformanceCounters.MessagesSentPerSecond.Increment();
 
                 if (!this.IsInState(StateFlags.Closed))
                 {
-                    switch (packet.QualityOfService)
-                    {
-                        case QualityOfService.AtMostOnce:
-                            // no response necessary
-                            PerformanceCounters.InboundMessageProcessingTime.Register(startedTimestamp);
-                            break;
-                        case QualityOfService.AtLeastOnce:
-                            Util.WriteMessageAsync(context, PubAckPacket.InResponseTo(packet))
-                                .OnFault(ShutdownOnWriteFaultAction, context);
-                            PerformanceCounters.InboundMessageProcessingTime.Register(startedTimestamp); // todo: assumes PUBACK is written out sync
-                            break;
-                        case QualityOfService.ExactlyOnce:
-                            ShutdownOnError(context, InboundPublishProcessingScope, new ProtocolGatewayException(ErrorCode.ExactlyOnceQosNotSupported, "QoS 2 is not supported."));
-                            break;
-                        default:
-                            throw new ProtocolGatewayException(ErrorCode.UnknownQosType, "Unexpected QoS level: " + packet.QualityOfService.ToString());
-                    }
+                    CompletePublishToServer(context, startedTimestamp, packet);
                 }
-                message = null;
             }
             finally
             {
                 message?.Dispose();
+            }
+        }
+
+        IMessage ConvertPacketToMessage(IMessagingServiceClient sendingClient, PublishPacket packet, string messageType)
+        {
+            var message = sendingClient.CreateMessage(packet.TopicName, packet.Payload);
+            Util.CompleteMessageFromPacket(message, packet, this.settings);
+
+            if (messageType != null)
+            {
+                message.Properties[this.settings.ServicePropertyPrefix + MessagePropertyNames.MessageType] = messageType;
+            }
+
+            return message;
+        }
+
+        static void CompletePublishToServer(IChannelHandlerContext context, PreciseTimeSpan startedTimestamp, PublishPacket packet)
+        {
+            switch (packet.QualityOfService)
+            {
+                case QualityOfService.AtMostOnce:
+                    // no response necessary
+                    PerformanceCounters.InboundMessageProcessingTime.Register(startedTimestamp);
+                    break;
+                case QualityOfService.AtLeastOnce:
+                    Util.WriteMessageAsync(context, PubAckPacket.InResponseTo(packet))
+                        .OnFault(ShutdownOnWriteFaultAction, context);
+                    PerformanceCounters.InboundMessageProcessingTime.Register(startedTimestamp); // assumes PUBACK is written out sync
+                    break;
+                case QualityOfService.ExactlyOnce:
+                    ShutdownOnError(context, InboundPublishProcessingScope, new ProtocolGatewayException(ErrorCode.ExactlyOnceQosNotSupported, "QoS 2 is not supported."));
+                    break;
+                default:
+                    throw new ProtocolGatewayException(ErrorCode.UnknownQosType, "Unexpected QoS level: " + packet.QualityOfService.ToString());
             }
         }
 
