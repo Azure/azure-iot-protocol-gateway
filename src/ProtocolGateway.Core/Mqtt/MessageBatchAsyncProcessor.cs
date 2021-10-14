@@ -88,7 +88,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     {
                         PublishPacket message = queue.Peek();
                         int messageSize = message.Payload?.ReadableBytes ?? 0 + message.TopicName.Length;
-                        if (messageSize + batchSize <= this.maxBatchSizeInBytes)
+                        if (messageSize + batchSize <= this.maxBatchSizeInBytes || messages.Count == 0)
                         {
                             queue.Dequeue();
                             messages.Add(message);

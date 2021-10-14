@@ -117,6 +117,7 @@
     <Compile Include="Instrumentation\IPerformanceCounter.cs" />
     <Compile Include="Instrumentation\IPerformanceCounterManager.cs" />
     <Compile Include="Instrumentation\WindowsPerformanceCounterManager.cs" />
+    <Compile Include="Messaging\IBatchAwareMessagingServiceClient.cs" />
     <Compile Include="Messaging\IMessagingSource.cs" />
     <Compile Include="Messaging\IMessagingChannel.cs" />
     <Compile Include="Messaging\IMessage.cs" />
@@ -125,6 +126,8 @@
     <Compile Include="Extensions\TaskExtensions.cs" />
     <Compile Include="Messaging\IMessagingBridge.cs" />
     <Compile Include="Messaging\Message.cs" />
+    <Compile Include="Mqtt\IMessageProcessor.cs" />
+    <Compile Include="Mqtt\MessageBatchAsyncProcessor.cs" />
     <Compile Include="Mqtt\MessageFeedbackChannel.cs" />
     <Compile Include="Messaging\MessagingException.cs" />
     <Compile Include="Mqtt\AckPendingMessageState.cs" />
