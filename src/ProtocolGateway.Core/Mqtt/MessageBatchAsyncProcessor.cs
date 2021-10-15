@@ -79,18 +79,18 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         {
             try
             {
-                Queue<PublishPacket> queue = this.backlogQueue;
-                while (queue.Count > 0 && this.state != State.Closed)
+                List<PublishPacket> messages = new List<PublishPacket>(this.backlogQueue.Count);
+                while (this.backlogQueue.Count > 0 && this.state != State.Closed)
                 {
                     int batchSize = 0;
-                    List<PublishPacket> messages = new List<PublishPacket>();
                     do
                     {
-                        PublishPacket message = queue.Peek();
+                        PublishPacket message = this.backlogQueue.Peek();
                         int messageSize = message.Payload?.ReadableBytes ?? 0 + message.TopicName.Length;
                         if (messageSize + batchSize <= this.maxBatchSizeInBytes || messages.Count == 0)
                         {
-                            queue.Dequeue();
+                            batchSize += messageSize;
+                            this.backlogQueue.Dequeue();
                             messages.Add(message);
                         }
                         else
@@ -98,12 +98,12 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                             break;
                         }
                     }
-                    while (queue.Count > 0);
+                    while (this.backlogQueue.Count > 0);
 
                     try
                     {
                         await this.ProcessAsync(context, messages);
-                        messages.Clear(); // dismissing packet reference as it has been successfully handed off in a form of message
+                        messages.Clear(); // dismissing packet reference as it has been successfully handed off for processing
                     }
                     finally
                     {
