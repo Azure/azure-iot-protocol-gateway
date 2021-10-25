@@ -8,8 +8,8 @@
     <OutputType>Library</OutputType>
     <AssemblyName>Microsoft.Azure.Devices.ProtocolGateway.Core</AssemblyName>
     <RootNamespace>Microsoft.Azure.Devices.ProtocolGateway.Core</RootNamespace>
-    <Version>3.0.0.0</Version>
-    <PackageVersion>3.0.0</PackageVersion>
+    <Version>3.1.0.0</Version>
+    <PackageVersion>3.1.0</PackageVersion>
     <NeutralLanguage>en-US</NeutralLanguage>
     <Company>Microsoft</Company>
     <Product>Microsoft Azure IoT protocol gateway</Product>
