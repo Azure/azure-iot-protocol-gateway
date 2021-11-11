@@ -890,7 +890,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
         /// <param name="context"><see cref="IChannelHandlerContext" /> instance.</param>
         void CompleteConnect(IChannelHandlerContext context)
         {
-            CommonEventSource.Log.Info($"Connection established. Keep-alive timeout {this.keepAliveTimeout}.", this.ChannelId, this.Id);
+            CommonEventSource.Log.Info($"Connection established. Keep-Alive timeout: {this.keepAliveTimeout}", this.ChannelId, this.Id);
 
             if (this.keepAliveTimeout > TimeSpan.Zero)
             {
@@ -932,7 +932,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             TimeSpan elapsedSinceLastActive = DateTime.UtcNow - self.lastClientActivityTime;
             if (elapsedSinceLastActive > self.keepAliveTimeout)
             {
-                ShutdownOnError(context, string.Empty, new ProtocolGatewayException(ErrorCode.KeepAliveTimedOut, $"Keep Alive timed out {self.keepAliveTimeout}."));
+                ShutdownOnError(context, string.Empty, new ProtocolGatewayException(ErrorCode.KeepAliveTimedOut, $"Keep-Alive time out occurred. Timeout: {self.keepAliveTimeout}"));
                 return;
             }
 
