@@ -332,16 +332,21 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     Queue<Packet> queue = this.subscriptionChangeQueue;
                     Contract.Assert(queue != null);
 
+                    bool stateChanged = false;
                     var acks = new List<Packet>(queue.Count);
                     foreach (Packet packet in queue) // todo: if can queue be null here, don't force creation
                     {
                         switch (packet.PacketType)
                         {
                             case PacketType.SUBSCRIBE:
-                                acks.Add(Util.AddSubscriptions(newState, (SubscribePacket)packet, this.maxSupportedQosToClient));
+                                stateChanged |= Util.AddSubscriptions(
+                                    newState, (SubscribePacket)packet, this.maxSupportedQosToClient, out var subAck);
+                                acks.Add(subAck);
                                 break;
                             case PacketType.UNSUBSCRIBE:
-                                acks.Add(Util.RemoveSubscriptions(newState, (UnsubscribePacket)packet));
+                                stateChanged |= Util.RemoveSubscriptions(
+                                    newState, (UnsubscribePacket)packet, out var unsubAck);
+                                acks.Add(unsubAck);
                                 break;
                             default:
                                 throw new ArgumentOutOfRangeException();
@@ -349,9 +354,12 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
                     }
                     queue.Clear();
 
-                    // save updated session state, make it current once successfully set
-                    // we let the session manager decide how to handle transient state.
-                    await this.sessionStateManager.SetAsync(this.identity, newState);
+                    if (stateChanged)
+                    {
+                        // save updated session state, make it current once successfully set
+                        // we let the session manager decide how to handle transient state.
+                        await this.sessionStateManager.SetAsync(this.identity, newState);
+                    }
 
                     this.sessionState = newState;
                     this.capabilitiesChanged?.Invoke(this, EventArgs.Empty);

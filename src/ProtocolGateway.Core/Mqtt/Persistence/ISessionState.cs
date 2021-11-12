@@ -14,7 +14,7 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence
 
         ISessionState Copy();
 
-        void AddOrUpdateSubscription(string topicFilter, QualityOfService qos);
+        bool AddOrUpdateSubscription(string topicFilter, QualityOfService qos);
 
         bool RemoveSubscription(string topicFilter);
     }

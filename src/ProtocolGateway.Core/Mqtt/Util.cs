@@ -147,37 +147,39 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt
             return packet;
         }
 
-        public static SubAckPacket AddSubscriptions(ISessionState session, SubscribePacket packet, QualityOfService maxSupportedQos)
+        public static bool AddSubscriptions(ISessionState session, SubscribePacket packet, QualityOfService maxSupportedQos, out SubAckPacket ack)
         {
+            bool stateChanged = false;
             IReadOnlyList<ISubscription> subscriptions = session.Subscriptions;
             var returnCodes = new List<QualityOfService>(subscriptions.Count);
             foreach (SubscriptionRequest request in packet.Requests)
             {
                 QualityOfService finalQos = request.QualityOfService < maxSupportedQos ? request.QualityOfService : maxSupportedQos;
 
-                session.AddOrUpdateSubscription(request.TopicFilter, finalQos);
+                stateChanged |= session.AddOrUpdateSubscription(request.TopicFilter, finalQos);
 
                 returnCodes.Add(finalQos);
             }
-            var ack = new SubAckPacket
+            ack = new SubAckPacket
             {
                 PacketId = packet.PacketId,
                 ReturnCodes = returnCodes
             };
-            return ack;
+            return stateChanged;
         }
 
-        public static UnsubAckPacket RemoveSubscriptions(ISessionState session, UnsubscribePacket packet)
+        public static bool RemoveSubscriptions(ISessionState session, UnsubscribePacket packet, out UnsubAckPacket ack)
         {
+            bool stateChanged = false;
             foreach (string topicToRemove in packet.TopicFilters)
             {
-                session.RemoveSubscription(topicToRemove);
+                stateChanged |= session.RemoveSubscription(topicToRemove);
             }
-            var ack = new UnsubAckPacket
+            ack = new UnsubAckPacket
             {
                 PacketId = packet.PacketId
             };
-            return ack;
+            return stateChanged;
         }
 
         public static async Task WriteMessageAsync(IChannelHandlerContext context, object message)
