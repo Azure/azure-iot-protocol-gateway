@@ -1,9 +1,11 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Threading;
+
 namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
 {
-#if !NETSTANDARD1_3
+#if !NETSTANDARD2_0
     using System.Diagnostics;
     using System.Collections.Generic;
 #endif
@@ -35,7 +37,8 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
         const string TotalCommandsReceivedCounterName = "Commands Received Total";
         const string CommandsReceivedPerSecondCounterName = "Commands Received Per Second";
 
-        static readonly IPerformanceCounterManager ManagerInstance = GetPerformanceCounterManager();
+        static volatile IPerformanceCounterManager managerInstance;
+        static IPerformanceCounterManager ManagerInstance => GetPerformanceCounterManager();
         public static readonly IPerformanceCounter ConnectionsEstablishedTotal = ManagerInstance.GetCounter(CategoryName, ConnectionsEstablishedTotalCounterName);
         public static readonly IPerformanceCounter ConnectionsCurrent = ManagerInstance.GetCounter(CategoryName, ConnectionsCurrentCounterName);
         public static readonly IPerformanceCounter ConnectionsEstablishedPerSecond = ManagerInstance.GetCounter(CategoryName, ConnectionsEstablishedPerSecondCounterName);
@@ -68,15 +71,23 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Instrumentation
 
         private static IPerformanceCounterManager GetPerformanceCounterManager()
         {
-#if NETSTANDARD1_3
-            return new EmptyPerformanceCounterManager();
+            if (managerInstance == null)
+            {
+#if NETSTANDARD2_0
+                managerInstance = new EmptyPerformanceCounterManager();
 #else
-            return new Manager();
+                managerInstance = new Manager();
 #endif
-
+            }
+            return managerInstance;
         }
 
-#if !NETSTANDARD1_3
+        public static void SetPerformanceCounterManager(IPerformanceCounterManager manager)
+        {
+            managerInstance = manager;
+        }
+
+#if !NETSTANDARD2_0
         class Manager : WindowsPerformanceCounterManager
         {
             public Manager() : base(new Dictionary<PerformanceCounterCategoryInfo, CounterCreationData[]>

@@ -1,183 +1,41 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
-  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), External.props))\External.props" Condition="Exists('$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), External.props))\External.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{ED3D19E8-E6A4-41F2-A667-5E543C3BCEE2}</ProjectGuid>
+    <TargetFrameworks>netstandard2.0;net472</TargetFrameworks>
+    <PackageId>Microsoft.Azure.Devices.ProtocolGateway.Core</PackageId>
+    <Title>Microsoft Azure IoT protocol gateway framework - Core</Title>
+    <Description>This library contains the core components of Azure IoT protocol gateway that enables protocol translation for Azure IoT Hub.</Description>
     <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Microsoft.Azure.Devices.ProtocolGateway</RootNamespace>
     <AssemblyName>Microsoft.Azure.Devices.ProtocolGateway.Core</AssemblyName>
-    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
-    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <RootNamespace>Microsoft.Azure.Devices.ProtocolGateway.Core</RootNamespace>
+    <Version>3.2.0.0</Version>
+    <PackageVersion>3.2.0</PackageVersion>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <Company>Microsoft</Company>
+    <Product>Microsoft Azure IoT protocol gateway</Product>
+    <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
+    <Authors>Microsoft</Authors>
+    <PackageIconUrl>http://go.microsoft.com/fwlink/?LinkID=288890</PackageIconUrl>
+    <PackageLicenseUrl>https://github.com/Azure/azure-iot-protocol-gateway/blob/master/LICENSE.txt</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/Azure/azure-iot-protocol-gateway/</PackageProjectUrl>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <AssemblyTitle>Microsoft.Azure.Devices.ProtocolGateway.Core</AssemblyTitle>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x64\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <DebugType>full</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
-    <OutputPath>bin\x64\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="DotNetty.Buffers, Version=0.6.0.0, Culture=neutral, PublicKeyToken=bc13ca065fa06c29, processorArchitecture=MSIL">
-      <HintPath>$(SolutionDir)packages\DotNetty.Buffers.0.6.0\lib\net45\DotNetty.Buffers.dll</HintPath>
-    </Reference>
-    <Reference Include="DotNetty.Codecs, Version=0.6.0.0, Culture=neutral, PublicKeyToken=bc13ca065fa06c29, processorArchitecture=MSIL">
-      <HintPath>$(SolutionDir)packages\DotNetty.Codecs.0.6.0\lib\net45\DotNetty.Codecs.dll</HintPath>
-    </Reference>
-    <Reference Include="DotNetty.Codecs.Mqtt, Version=0.6.0.0, Culture=neutral, PublicKeyToken=bc13ca065fa06c29, processorArchitecture=MSIL">
-      <HintPath>$(SolutionDir)packages\DotNetty.Codecs.Mqtt.0.6.0\lib\net45\DotNetty.Codecs.Mqtt.dll</HintPath>
-    </Reference>
-    <Reference Include="DotNetty.Common, Version=0.6.0.0, Culture=neutral, PublicKeyToken=bc13ca065fa06c29, processorArchitecture=MSIL">
-      <HintPath>$(SolutionDir)packages\DotNetty.Common.0.6.0\lib\net45\DotNetty.Common.dll</HintPath>
-    </Reference>
-    <Reference Include="DotNetty.Handlers, Version=0.6.0.0, Culture=neutral, PublicKeyToken=bc13ca065fa06c29, processorArchitecture=MSIL">
-      <HintPath>$(SolutionDir)packages\DotNetty.Handlers.0.6.0\lib\net45\DotNetty.Handlers.dll</HintPath>
-    </Reference>
-    <Reference Include="DotNetty.Transport, Version=0.6.0.0, Culture=neutral, PublicKeyToken=bc13ca065fa06c29, processorArchitecture=MSIL">
-      <HintPath>$(SolutionDir)packages\DotNetty.Transport.0.6.0\lib\net45\DotNetty.Transport.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="Microsoft.Extensions.DependencyInjection.Abstractions, Version=1.1.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
-      <HintPath>$(SolutionDir)packages\Microsoft.Extensions.DependencyInjection.Abstractions.1.1.0\lib\netstandard1.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Microsoft.Extensions.Logging, Version=1.1.1.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
-      <HintPath>$(SolutionDir)packages\Microsoft.Extensions.Logging.1.1.1\lib\netstandard1.1\Microsoft.Extensions.Logging.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Microsoft.Extensions.Logging.Abstractions, Version=1.1.1.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
-      <HintPath>$(SolutionDir)packages\Microsoft.Extensions.Logging.Abstractions.1.1.1\lib\netstandard1.1\Microsoft.Extensions.Logging.Abstractions.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Collections.Immutable, Version=1.2.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>$(SolutionDir)packages\System.Collections.Immutable.1.5.0\lib\portable-net45+win8+wp8+wpa81\System.Collections.Immutable.dll</HintPath>
-    </Reference>
-    <Reference Include="System.ComponentModel.Composition" />
-    <Reference Include="System.Configuration" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.IO.Compression" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Numerics" />
-    <Reference Include="System.Runtime" />
-    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=4.0.4.1, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\System.Runtime.CompilerServices.Unsafe.4.5.2\lib\netstandard1.0\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Runtime.InteropServices.RuntimeInformation, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>$(SolutionDir)packages\System.Runtime.InteropServices.RuntimeInformation.4.3.0\lib\net45\System.Runtime.InteropServices.RuntimeInformation.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\System.Threading.Tasks.Extensions.4.5.1\lib\portable-net45+win8+wp8+wpa81\System.Threading.Tasks.Extensions.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Xml" />
-    <Reference Include="System.Xml.Linq" />
+
+  <ItemGroup Condition="'$(TargetFramework)'=='netstandard2.0'">
+    <Compile Remove="Instrumentation\PerformanceCounterCategoryInfo.cs" Link="Instrumentation\PerformanceCounterCategoryInfo.cs" />
+    <Compile Remove="Instrumentation\WindowsPerformanceCounterManager.cs" Link="Instrumentation\WindowsPerformanceCounterManager.cs" />
+    <Compile Remove="ConfigManagerReader.cs" Link="ConfigManagerReader.cs" />
+    <Compile Remove="Instrumentation\SafePerformanceCounter.cs" Link="Instrumentation\SafePerformanceCounter.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="..\SharedAssemblyInfo.cs">
-      <Link>Properties\SharedAssemblyInfo.cs</Link>
-    </Compile>
-    <Compile Include="IAppConfigReader.cs" />
-    <Compile Include="ConfigManagerReader.cs" />
-    <Compile Include="ErrorCode.cs" />
-    <Compile Include="Instrumentation\IPerformanceCounter.cs" />
-    <Compile Include="Instrumentation\IPerformanceCounterManager.cs" />
-    <Compile Include="Instrumentation\WindowsPerformanceCounterManager.cs" />
-    <Compile Include="Messaging\IBatchAwareMessagingServiceClient.cs" />
-    <Compile Include="Messaging\IMessagingSource.cs" />
-    <Compile Include="Messaging\IMessagingChannel.cs" />
-    <Compile Include="Messaging\IMessage.cs" />
-    <Compile Include="Instrumentation\AveragePerformanceCounter.cs" />
-    <Compile Include="Instrumentation\CommonEventSource.cs" />
-    <Compile Include="Extensions\TaskExtensions.cs" />
-    <Compile Include="Messaging\IMessagingBridge.cs" />
-    <Compile Include="Messaging\Message.cs" />
-    <Compile Include="Mqtt\IMessageProcessor.cs" />
-    <Compile Include="Mqtt\MessageBatchAsyncProcessor.cs" />
-    <Compile Include="Mqtt\MessageFeedbackChannel.cs" />
-    <Compile Include="Messaging\MessagingException.cs" />
-    <Compile Include="Mqtt\AckPendingMessageState.cs" />
-    <Compile Include="Identity\IDeviceIdentity.cs" />
-    <Compile Include="Mqtt\MessagePropertyNames.cs" />
-    <Compile Include="Mqtt\MessageTypes.cs" />
-    <Compile Include="Mqtt\MessageAsyncProcessorBase.cs" />
-    <Compile Include="Mqtt\ChannelMessageProcessingException.cs" />
-    <Compile Include="Mqtt\MessageAsyncProcessor.cs" />
-    <Compile Include="Mqtt\CompletionPendingMessageState.cs" />
-    <Compile Include="Messaging\IMessagingServiceClient.cs" />
-    <Compile Include="Mqtt\MessagingBridgeFactoryFunc.cs" />
-    <Compile Include="Mqtt\Persistence\ISubscription.cs" />
-    <Compile Include="Mqtt\Persistence\TransientSessionState.cs" />
-    <Compile Include="Mqtt\Persistence\TransientSessionStatePersistenceProvider.cs" />
-    <Compile Include="Mqtt\Persistence\IQos2StatePersistenceProvider.cs" />
-    <Compile Include="Mqtt\IPacketReference.cs" />
-    <Compile Include="Mqtt\Persistence\IQos2MessageDeliveryState.cs" />
-    <Compile Include="Mqtt\RequestAckPairProcessor.cs" />
-    <Compile Include="Instrumentation\PerformanceCounterCategoryInfo.cs" />
-    <Compile Include="Instrumentation\PerformanceCounters.cs" />
-    <Compile Include="Mqtt\TemplateParameters.cs" />
-    <Compile Include="Mqtt\Persistence\TransientSubscription.cs" />
-    <Compile Include="ProtocolGatewayException.cs" />
-    <Compile Include="AppConfigSettingsProvider.cs" />
-    <Compile Include="Properties\Friends.cs" />
-    <Compile Include="ISettingsProvider.cs" />
-    <Compile Include="Identity\UnauthenticatedDeviceIdentity.cs" />
-    <Compile Include="Mqtt\MqttAdapter.cs" />
-    <Compile Include="Identity\IDeviceIdentityProvider.cs" />
-    <Compile Include="Mqtt\Persistence\ISessionState.cs" />
-    <Compile Include="Mqtt\Persistence\ISessionStatePersistenceProvider.cs" />
-    <Compile Include="Mqtt\Settings.cs" />
-    <Compile Include="Mqtt\Util.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Instrumentation\SafePerformanceCounter.cs" />
-    <Compile Include="UriPathTemplate.cs" />
+
+  <ItemGroup Condition="'$(TargetFramework)'=='net472'">
+    <Compile Remove="Instrumentation\EmptyPerformanceCounter.cs" Link="Instrumentation\EmptyPerformanceCounter.cs" />
+    <Compile Remove="Instrumentation\EmptyPerformanceCounterManager.cs" Link="Instrumentation\EmptyPerformanceCounterManager.cs" />
   </ItemGroup>
+
   <ItemGroup>
-    <None Include="app.config" />
-    <None Include="packages.config">
-      <SubType>Designer</SubType>
-    </None>
+    <PackageReference Include="DotNetty.Codecs.Mqtt" Version="0.7.0" />
+    <PackageReference Include="DotNetty.Handlers" version="0.7.0" />
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>
