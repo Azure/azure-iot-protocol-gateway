@@ -39,18 +39,24 @@ namespace Microsoft.Azure.Devices.ProtocolGateway.Mqtt.Persistence
             return false;
         }
 
-        public void AddOrUpdateSubscription(string topicFilter, QualityOfService qos)
+        public bool AddOrUpdateSubscription(string topicFilter, QualityOfService qos)
         {
             int index = this.FindSubscriptionIndex(topicFilter);
 
             if (index >= 0)
             {
-                this.subscriptions[index] = this.subscriptions[index].CreateUpdated(qos);
+                if (this.subscriptions[index].QualityOfService != qos)
+                {
+                    this.subscriptions[index] = this.subscriptions[index].CreateUpdated(qos);
+                    return true;
+                }
             }
             else
             {
                 this.subscriptions.Add(new TransientSubscription(topicFilter, qos));
+                return true;
             }
+            return false;
         }
 
         int FindSubscriptionIndex(string topicFilter)
