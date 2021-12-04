@@ -78,10 +78,10 @@ The Service Fabric host runs the protocol gateway in a Service Fabric Cluster us
  	
 
 ----------
-`Import-Module "$ModuleFolderPath\ServiceFabricSdk.psm1"` 
-	`Connect-ServiceFabricCluster -ConnectEndpoint 'localhost:19000'`
-	`Test-ServiceFabricClusterConnection`
-	`./Deploy-FabricApplication.ps1 -ApplicationPackagePath '..\pkg\Release' -UseExistingClusterConnection` 
+`Import-Module "$ModuleFolderPath\ServiceFabricSdk.psm1"`   
+`Connect-ServiceFabricCluster -ConnectEndpoint 'localhost:19000'`   
+`Test-ServiceFabricClusterConnection`   
+`./Deploy-FabricApplication.ps1 -ApplicationPackagePath '..\pkg\Release' -UseExistingClusterConnection` 
 
 
 ----------
